@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — AutoReach{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}overview of your outreach pipeline{% endblock %}
+
+{% block content %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Leads</div>
+        <div class="stat-value">{{ stats.total_leads }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Have Email</div>
+        <div class="stat-value" style="color:var(--teal);">{{ stats.leads_with_emails }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Emails Sent</div>
+        <div class="stat-value" style="color:var(--coral);">{{ stats.emails_sent }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value">{{ [stats.leads_with_emails - stats.emails_sent, 0] | max }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Pipeline Progress</div>
+    {% set pct = ((stats.emails_sent / stats.leads_with_emails * 100) | int) if stats.leads_with_emails > 0 else 0 %}
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+        <div style="flex:1; background:rgba(255,255,255,0.06); border-radius:6px; height:10px;">
+            <div style="width:{{ pct }}%; background:var(--coral); border-radius:6px; height:10px; transition:width 0.6s ease; box-shadow:0 0 10px rgba(232,128,106,0.4);"></div>
+        </div>
+        <span style="font-size:20px; font-weight:800; color:var(--coral); min-width:50px; text-align:right;">{{ pct }}%</span>
+    </div>
+    <p style="font-size:12px; color:var(--text-dim); font-style:italic;">
+        {{ stats.emails_sent }} of {{ stats.leads_with_emails }} contactable leads reached
+    </p>
+</div>
+
+<div class="card">
+    <div class="card-title">Quick Actions</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{{ url_for('find_leads') }}" class="btn btn-primary">🔍 Find New Leads</a>
+        <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">➕ Add Manually</a>
+        <form method="POST" action="{{ url_for('scrape_emails_route') }}" style="display:inline;">
+            <button type="submit" class="btn btn-secondary">🕸️ Scrape Emails</button>
+        </form>
+        <a href="{{ url_for('outreach') }}" class="btn btn-success">📤 Run Outreach</a>
+    </div>
+</div>
+
+{% endblock %}

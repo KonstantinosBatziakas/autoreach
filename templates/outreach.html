@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Outreach — AutoReach{% endblock %}
+{% block page_title %}Outreach{% endblock %}
+{% block page_subtitle %}Send AI-generated cold emails to your leads{% endblock %}
+
+{% block content %}
+
+<div style="max-width:600px;">
+
+    <div class="info-box warning">
+        <h3>⚠️ Before you start</h3>
+        Make sure you have leads with email addresses, your Gmail credentials are set in <code style="background:#1a1a1a; padding:1px 6px; border-radius:4px;">.env</code>, and you've reviewed your email template in <code style="background:#1a1a1a; padding:1px 6px; border-radius:4px;">emailer.py</code>.
+    </div>
+
+    <div class="card">
+        <div class="card-title">Campaign Settings</div>
+        <p style="font-size:14px; color:#777; margin-bottom:20px; line-height:1.6;">
+            This will send personalized AI-generated emails (via Groq / Llama 3.1) to every lead that has an email address and has not been contacted yet. Already-contacted leads are automatically skipped.
+        </p>
+
+        <form method="POST">
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">📤 Start Outreach Campaign</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-title">What happens</div>
+        <ol style="font-size:14px; color:#777; line-height:2; padding-left:18px;">
+            <li>Each lead with an email is loaded from <strong style="color:#aaa;">businesses.csv</strong></li>
+            <li>Groq AI generates a unique cold outreach email per business</li>
+            <li>Email is sent via your Gmail account (SMTP)</li>
+            <li>Sent records are logged in <strong style="color:#aaa;">sent_log.csv</strong></li>
+        </ol>
+    </div>
+</div>
+
+{% endblock %}

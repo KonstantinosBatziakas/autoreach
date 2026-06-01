@@ -1,0 +1,25 @@
+# ── DANGEROUS — never commit these ──────────────────────────
+.env                  # API keys, Gmail password, Google Maps key
+
+# ── Python environment — too large, not needed ──────────────
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── Your personal data ───────────────────────────────────────
+businesses.csv        # your leads list (private)
+sent_log.csv          # who you emailed (private)
+
+# ── OS junk ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor junk ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

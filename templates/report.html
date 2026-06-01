@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Report — AutoReach{% endblock %}
+{% block page_title %}Report{% endblock %}
+{% block page_subtitle %}Outreach performance summary{% endblock %}
+
+{% block content %}
+
+{% if report %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Sent</div>
+        <div class="stat-value">{{ report.total_sent }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Sent Today</div>
+        <div class="stat-value">{{ report.today_count }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Contacted Businesses</div>
+    <div class="table-wrap" style="border:none; border-radius:0; margin:-24px; margin-top:0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Business</th>
+                    <th>Email Address</th>
+                    <th>Subject</th>
+                    <th>Date Sent</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in report.emails %}
+                <tr>
+                    <td style="color:#444; width:40px;">{{ loop.index }}</td>
+                    <td style="font-weight:600; color:#ddd;">{{ e.business_name }}</td>
+                    <td style="color:#777;">{{ e.email }}</td>
+                    <td>{{ e.subject }}</td>
+                    <td style="color:#555; font-size:13px;">{{ e.date_sent }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📊</div>
+    <p>No report data available yet.</p>
+    <a href="{{ url_for('outreach') }}" class="btn btn-primary">📤 Run Outreach</a>
+</div>
+{% endif %}
+
+{% endblock %}

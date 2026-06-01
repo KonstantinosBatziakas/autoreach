@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Add Lead — AutoReach{% endblock %}
+{% block page_title %}Add Lead{% endblock %}
+{% block page_subtitle %}Manually add a business to your leads database{% endblock %}
+
+{% block content %}
+
+<div style="max-width:600px;">
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Business Name <span style="color:#f06060;">*</span></label>
+                <input type="text" id="name" name="name" required placeholder="e.g. Acme Coffee Shop">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" placeholder="e.g. 123 Main St, Athens">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone" placeholder="e.g. +30 210 0000000">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="website">Website</label>
+                <input type="url" id="website" name="website" placeholder="https://example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="contact@example.com">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">➕ Add Lead</button>
+                <a href="{{ url_for('leads') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
