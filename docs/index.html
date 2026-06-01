@@ -634,6 +634,193 @@ section { position: relative; z-index: 1; }
 }
 
 /* ══════════════════════════════════════
+   SUPPORT / DONATION
+══════════════════════════════════════ */
+.support-section {
+    padding: 100px 24px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.support-box {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #050e0e;
+    border: 1px solid rgba(78,205,196,0.15);
+    border-radius: 16px;
+    padding: 56px 48px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated scan line */
+.support-box::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--teal), transparent);
+    top: 0;
+    animation: scan 6s linear infinite;
+}
+@keyframes scan {
+    0%   { top: 0%;   opacity: 0; }
+    5%   { opacity: 1; }
+    95%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* Corner brackets */
+.support-box::after {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border: 1px solid transparent;
+    border-image: linear-gradient(135deg, rgba(78,205,196,0.3), transparent 40%, transparent 60%, rgba(232,128,106,0.3)) 1;
+    pointer-events: none;
+}
+
+.support-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--teal);
+    background: rgba(78,205,196,0.06);
+    border: 1px solid rgba(78,205,196,0.18);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+}
+.support-badge .blink {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 1.5s infinite;
+}
+
+.support-box h2 {
+    font-size: clamp(22px, 3.5vw, 36px);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+.support-box h2 .acc-coral { color: var(--coral); }
+.support-box h2 .acc-teal  { color: var(--teal); }
+
+.support-box .sub {
+    font-size: 13px;
+    color: var(--dim);
+    line-height: 1.8;
+    margin-bottom: 36px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* HUD stat row */
+.hud-row {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 36px;
+    border: 1px solid rgba(78,205,196,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.hud-cell {
+    flex: 1;
+    padding: 14px 10px;
+    border-right: 1px solid rgba(78,205,196,0.1);
+    background: rgba(78,205,196,0.03);
+}
+.hud-cell:last-child { border-right: none; }
+.hud-val {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--teal);
+    margin-bottom: 3px;
+}
+.hud-lbl {
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* Ko-fi button */
+.kofi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #e8806a, #c4614a);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    border-radius: 8px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 0 0 rgba(232,128,106,0);
+    margin-bottom: 16px;
+}
+.kofi-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.kofi-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,128,106,0.35);
+}
+.kofi-btn:hover::before { opacity: 1; }
+
+.kofi-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.support-note {
+    font-size: 11px;
+    color: var(--dim);
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Floating particle grid (decorative) */
+.support-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(78,205,196,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(78,205,196,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+}
+.support-inner { position: relative; z-index: 1; }
+
+@media (max-width: 640px) {
+    .support-box { padding: 36px 20px; }
+    .hud-row { flex-direction: column; }
+    .hud-cell { border-right: none; border-bottom: 1px solid rgba(78,205,196,0.1); }
+    .hud-cell:last-child { border-bottom: none; }
+}
+
+/* ══════════════════════════════════════
    FOOTER
 ══════════════════════════════════════ */
 footer {
@@ -682,6 +869,7 @@ footer a:hover { color: var(--teal); }
         <li><a href="#preview">See it work</a></li>
         <li><a href="#how">How it works</a></li>
         <li><a href="#start">Get started</a></li>
+        <li><a href="#support">Support</a></li>
     </ul>
     <a href="https://github.com/KonstantinosBatziakas/autoreach" class="nav-gh" target="_blank">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
@@ -739,8 +927,8 @@ footer a:hover { color: var(--teal); }
         <span class="stat-label">English &amp; Greek — more soon</span>
     </div>
     <div class="stat-item reveal reveal-delay-3">
-        <span class="stat-num"><span class="s-accent" data-target="6">0</span> modules</span>
-        <span class="stat-label">All-in-one pipeline</span>
+        <span class="stat-num"><span class="s-accent">450</span>+/day</span>
+        <span class="stat-label">Emails with 3 Gmail accounts</span>
     </div>
 </div>
 
@@ -758,18 +946,18 @@ footer a:hover { color: var(--teal); }
             <div class="fc-body">
                 <span class="feature-icon">🔍</span>
                 <h3>Lead Discovery</h3>
-                <p>Search Google Maps by city and business type. AutoReach pulls names, addresses, phones, and websites straight into your leads database.</p>
+                <p>Search Google Maps by city and business type. AutoReach pulls names, addresses, phones, and websites straight into your local SQLite database.</p>
             </div>
         </div>
         <div class="feature-card reveal reveal-delay-2">
             <div class="fc-header">
                 <div class="fc-dots"><span></span><span></span><span></span></div>
-                <div class="fc-filename">email_scraper.py</div>
+                <div class="fc-filename">scraper.py</div>
             </div>
             <div class="fc-body">
                 <span class="feature-icon">🕸️</span>
                 <h3>Email Scraping</h3>
-                <p>Crawls business websites and their contact pages to extract email addresses automatically — no manual copy-pasting.</p>
+                <p>Crawls business websites and contact pages to extract email addresses automatically — no manual copy-pasting.</p>
             </div>
         </div>
         <div class="feature-card reveal reveal-delay-3">
@@ -780,40 +968,40 @@ footer a:hover { color: var(--teal); }
             <div class="fc-body">
                 <span class="feature-icon">🤖</span>
                 <h3>AI Email Generation</h3>
-                <p>Groq's Llama 3.1 writes a unique, personalized cold email for each business. Supports English and Greek out of the box.</p>
+                <p>Groq's Llama 3.1 writes a unique, personalized cold email for each business — never a template. English and Greek supported.</p>
             </div>
         </div>
         <div class="feature-card reveal reveal-delay-4">
             <div class="fc-header">
                 <div class="fc-dots"><span></span><span></span><span></span></div>
-                <div class="fc-filename">emailer.py → send()</div>
+                <div class="fc-filename">rotation.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">📤</span>
-                <h3>Automated Sending</h3>
-                <p>Sends via your own Gmail. Tracks every contact and skips duplicates — you'll never email the same lead twice.</p>
+                <span class="feature-icon">🔄</span>
+                <h3>Multi-Account Rotation</h3>
+                <p>Add multiple Gmail accounts and AutoReach round-robins sends across them — scale past the 150/day single-account limit automatically.</p>
             </div>
         </div>
         <div class="feature-card reveal reveal-delay-5">
             <div class="fc-header">
                 <div class="fc-dots"><span></span><span></span><span></span></div>
-                <div class="fc-filename">app.py → /dashboard</div>
+                <div class="fc-filename">followup.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">📊</span>
-                <h3>Dashboard &amp; Reports</h3>
-                <p>Web UI shows pipeline stats, progress, sent log, and full outreach history at a glance.</p>
+                <span class="feature-icon">🔁</span>
+                <h3>Follow-up Sequences</h3>
+                <p>Automatically sends up to 3 follow-ups per lead at +3, +7, and +14 days. Detects replies via IMAP and cancels follow-ups for leads who respond.</p>
             </div>
         </div>
         <div class="feature-card reveal reveal-delay-6">
             <div class="fc-header">
                 <div class="fc-dots"><span></span><span></span><span></span></div>
-                <div class="fc-filename">scheduler.py</div>
+                <div class="fc-filename">desktop/app.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🕐</span>
-                <h3>Scheduled Sending</h3>
-                <p>Set a daily send time and let AutoReach run while you sleep. Consistent outreach with zero manual effort.</p>
+                <span class="feature-icon">🖥️</span>
+                <h3>Desktop GUI + CLI</h3>
+                <p>Native CustomTkinter desktop app with full dashboard, lead management, and live email preview. Also ships as a pip-installable CLI for power users.</p>
             </div>
         </div>
     </div>
@@ -878,28 +1066,35 @@ footer a:hover { color: var(--teal); }
                 <div class="step-num">01</div>
                 <div class="step-content">
                     <h3>Find Leads</h3>
-                    <p>Enter a city and business type (e.g. "restaurants" in "Athens"). AutoReach queries the Google Maps Places API and saves every result to your leads database.</p>
+                    <p>Enter a city and business type (e.g. "restaurants" in "Athens"). AutoReach queries the Google Maps Places API and saves every result to your local SQLite database.</p>
                 </div>
             </div>
             <div class="step reveal reveal-delay-2">
                 <div class="step-num">02</div>
                 <div class="step-content">
                     <h3>Scrape Emails</h3>
-                    <p>Click "Scrape Emails" and AutoReach crawls each business website — homepage, <code>/contact</code>, <code>/about</code> — and extracts whatever email addresses it finds.</p>
+                    <p>AutoReach crawls each business website — homepage, <code>/contact</code>, <code>/about</code> — and extracts whatever email addresses it finds automatically.</p>
                 </div>
             </div>
             <div class="step reveal reveal-delay-3">
                 <div class="step-num">03</div>
                 <div class="step-content">
                     <h3>Generate &amp; Send</h3>
-                    <p>Run Outreach and Groq AI writes a tailored cold email for every lead. Sent via Gmail SMTP in seconds — duplicates automatically skipped.</p>
+                    <p>Preview the AI-written email, then hit Send. AutoReach rotates across your Gmail accounts so you're never limited to 150/day — duplicates automatically skipped.</p>
                 </div>
             </div>
             <div class="step reveal reveal-delay-4">
                 <div class="step-num">04</div>
                 <div class="step-content">
-                    <h3>Track Results</h3>
-                    <p>The dashboard shows your pipeline progress. The Sent Emails log and Report page give you a full history of every contact made.</p>
+                    <h3>Follow-ups Run Automatically</h3>
+                    <p>Leads who don't reply get up to 3 follow-ups at +3, +7, and +14 days. AutoReach checks your inbox via IMAP and stops following up the moment someone replies.</p>
+                </div>
+            </div>
+            <div class="step reveal reveal-delay-5">
+                <div class="step-num">05</div>
+                <div class="step-content">
+                    <h3>Track &amp; Scale</h3>
+                    <p>The dashboard shows pipeline progress, per-account daily capacity, reply rates, and full send history. Add more Gmail accounts any time to scale output.</p>
                 </div>
             </div>
         </div>
@@ -915,18 +1110,67 @@ footer a:hover { color: var(--teal); }
         <div class="cta-install">
             <span class="prompt">$ </span>git clone https://github.com/KonstantinosBatziakas/autoreach<br>
             <span class="prompt">$ </span>cd autoreach<br>
-            <span class="prompt">$ </span>python -m venv venv &amp;&amp; venv\Scripts\activate<br>
-            <span class="prompt">$ </span>pip install flask requests groq python-dotenv beautifulsoup4 schedule<br>
-            <span class="prompt">$ </span>python app.py
+            <span class="prompt">$ </span>python -m venv venv &amp;&amp; source venv/Scripts/activate<br>
+            <span class="prompt">$ </span>pip install -r requirements.txt customtkinter<br>
+            <span class="prompt">$ </span>python desktop/app.py
         </div>
 
         <p class="cta-note">
-            Requires a free <a href="https://console.groq.com" target="_blank">Groq API key</a>, a Gmail app password, and a Google Maps API key.
+            Requires a free <a href="https://console.groq.com" target="_blank">Groq API key</a>, a Gmail app password, and a Google Maps API key. Add credentials in the Settings tab after launch.
         </p>
 
         <div class="cta-buttons">
             <a href="https://github.com/KonstantinosBatziakas/autoreach" class="btn btn-coral" target="_blank">View on GitHub</a>
             <a href="https://github.com/KonstantinosBatziakas/autoreach/archive/refs/heads/main.zip" class="btn btn-outline" target="_blank">Download ZIP</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ SUPPORT ═══ -->
+<section class="support-section" id="support">
+    <div class="support-box reveal">
+        <div class="support-grid"></div>
+        <div class="support-inner">
+            <div class="support-badge">
+                <span class="blink"></span>
+                Open Source · Free Forever
+            </div>
+
+            <h2>
+                Built free.<br>
+                Kept alive by <span class="acc-coral">humans</span> like <span class="acc-teal">you</span>.
+            </h2>
+
+            <p class="sub">
+                AutoReach is 100% open source and always will be — no SaaS fees, no paywalls, no telemetry.
+                If it saved you time or helped you land clients, consider fuelling the next feature.
+            </p>
+
+            <div class="hud-row">
+                <div class="hud-cell">
+                    <span class="hud-val">100%</span>
+                    <span class="hud-lbl">Open Source</span>
+                </div>
+                <div class="hud-cell">
+                    <span class="hud-val">€0</span>
+                    <span class="hud-lbl">SaaS Fees</span>
+                </div>
+                <div class="hud-cell">
+                    <span class="hud-val">∞</span>
+                    <span class="hud-lbl">Free Forever</span>
+                </div>
+                <div class="hud-cell">
+                    <span class="hud-val">0%</span>
+                    <span class="hud-lbl">Ko-fi Fees</span>
+                </div>
+            </div>
+
+            <a href="https://ko-fi.com/autoreach" target="_blank" class="kofi-btn">
+                <span class="kofi-icon">☕</span>
+                Support on Ko-fi
+            </a>
+
+            <p class="support-note">One coffee = one feature closer to shipping.</p>
         </div>
     </div>
 </section>
@@ -940,6 +1184,7 @@ footer a:hover { color: var(--teal); }
     </div>
     <div class="footer-links">
         <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>
+        <a href="https://ko-fi.com/autoreach" target="_blank">Ko-fi ☕</a>
         <a href="https://console.groq.com" target="_blank">Groq API</a>
         <a href="https://developers.google.com/maps" target="_blank">Google Maps API</a>
     </div>
@@ -1014,19 +1259,20 @@ window.addEventListener('scroll', () => {
 
 // ── Terminal typewriter animation ────────────────────────────
 const lines = [
-    { delay: 400,  type: 'cmd',  text: 'python app.py' },
-    { delay: 900,  type: 'out',  text: ' * AutoReach starting...' },
-    { delay: 1300, type: 'out',  text: ' * Loaded 47 leads from businesses.csv' },
-    { delay: 1700, type: 'out',  text: ' * Running on http://localhost:5000' },
-    { delay: 2200, type: 'cmd',  text: 'python main.py --send' },
-    { delay: 2700, type: 'dim',  text: '[1/8] Taverna Acropolis Athens' },
-    { delay: 2950, type: 'dim',  text: '      → Generating email (Groq Llama 3.1)...' },
-    { delay: 3300, type: 'ok',   text: '      ✓ Sent to info@taverna-acropolis.gr' },
-    { delay: 3550, type: 'dim',  text: '[2/8] Κουζίνα Θεσσαλονίκη' },
-    { delay: 3800, type: 'dim',  text: '      → Generating email (Greek)...' },
-    { delay: 4200, type: 'ok',   text: '      ✓ Sent to hello@kouzina-thess.gr' },
-    { delay: 4600, type: 'out',  text: ' * 8/8 emails sent. Log saved.' },
-    { delay: 5000, type: 'prompt-only', text: '' },
+    { delay: 400,  type: 'cmd',  text: 'python desktop/app.py' },
+    { delay: 900,  type: 'out',  text: ' * AutoReach Desktop starting...' },
+    { delay: 1400, type: 'cmd',  text: 'autoreach accounts add' },
+    { delay: 1800, type: 'dim',  text: '  Gmail address: sender2@gmail.com' },
+    { delay: 2100, type: 'ok',   text: '  ✓ Added sender2@gmail.com (limit: 150/day)' },
+    { delay: 2500, type: 'cmd',  text: 'autoreach send --auto' },
+    { delay: 2900, type: 'dim',  text: '[1/12] Taverna Acropolis Athens' },
+    { delay: 3100, type: 'dim',  text: '       → Generating email (Groq Llama 3.1)...' },
+    { delay: 3500, type: 'ok',   text: '       ✓ [sender1] Sent → info@taverna-acropolis.gr' },
+    { delay: 3750, type: 'dim',  text: '[2/12] Κουζίνα Θεσσαλονίκη' },
+    { delay: 4000, type: 'ok',   text: '       ✓ [sender2] Sent → hello@kouzina-thess.gr' },
+    { delay: 4300, type: 'out',  text: ' * Follow-ups scheduled: +3d, +7d, +14d' },
+    { delay: 4700, type: 'ok',   text: ' * Session done — Sent: 12  Capacity left: 288' },
+    { delay: 5100, type: 'prompt-only', text: '' },
 ];
 
 const termBody = document.getElementById('terminal-body');
