@@ -13,6 +13,10 @@ __pycache__/
 businesses.csv        # your leads list (private)
 sent_log.csv          # who you emailed (private)
 
+# ── Unused legacy files ──────────────────────────────────────
+static/style.css
+README_DASHBOARD.md
+
 # ── OS junk ─────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
