@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AutoReach — AI-Powered Cold Email Outreach</title>
+<title>AutoReach — AI Cold Email Outreach</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
-    --bg:      #1a2e2e;
-    --bg-dark: #0f1f1f;
+    --bg:      #111c1c;
+    --bg-dark: #0a1414;
     --coral:   #e8806a;
     --coral-d: #c4614a;
     --teal:    #4ecdc4;
+    --teal-d:  #2aafa6;
     --text:    #cde0de;
     --dim:     #6a9090;
-    --border:  rgba(255,255,255,0.08);
+    --border:  rgba(255,255,255,0.07);
     --font:    'JetBrains Mono', monospace;
+    --glass:   rgba(255,255,255,0.03);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
-
 body {
     font-family: var(--font);
     background: var(--bg);
@@ -29,49 +29,53 @@ body {
     overflow-x: hidden;
 }
 
-/* ── Animated wave canvas ── */
+/* ── Canvas background ── */
 #wave-canvas {
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.55;
+    opacity: 0.5;
 }
 
-/* ── Fade-in-up animation on scroll ── */
+/* ── Scroll reveal ── */
 .reveal {
     opacity: 0;
-    transform: translateY(32px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
+    transform: translateY(28px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
 }
-.reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-.reveal-delay-1 { transition-delay: 0.1s; }
-.reveal-delay-2 { transition-delay: 0.2s; }
-.reveal-delay-3 { transition-delay: 0.3s; }
-.reveal-delay-4 { transition-delay: 0.4s; }
-.reveal-delay-5 { transition-delay: 0.5s; }
-.reveal-delay-6 { transition-delay: 0.6s; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+.reveal-delay-4 { transition-delay: 0.32s; }
+.reveal-delay-5 { transition-delay: 0.40s; }
+.reveal-delay-6 { transition-delay: 0.48s; }
 
-/* ── Navbar ── */
+/* ══════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════ */
 nav {
     position: fixed;
     top: 0; left: 0; right: 0;
-    z-index: 100;
+    z-index: 200;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 60px;
-    height: 60px;
-    background: rgba(10, 22, 22, 0.85);
+    padding: 0 48px;
+    height: 58px;
+    background: rgba(8, 18, 18, 0.9);
     border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(18px);
+    transition: height 0.3s ease, background 0.3s ease;
+}
+nav.scrolled {
+    height: 48px;
+    background: rgba(8, 18, 18, 0.97);
 }
 
 .nav-logo {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     letter-spacing: 2px;
     color: #fff;
@@ -79,46 +83,73 @@ nav {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
 }
-
 .nav-logo .logo-icon {
-    width: 28px; height: 28px;
+    width: 26px; height: 26px;
     background: var(--coral);
-    border-radius: 6px;
+    border-radius: 5px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
+    flex-shrink: 0;
 }
-
 .nav-logo span { color: var(--coral); }
 
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 36px;
+    gap: 32px;
     list-style: none;
 }
-
 .nav-links a {
     color: var(--dim);
     text-decoration: none;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
+    letter-spacing: 0.5px;
     transition: color 0.15s;
 }
-
 .nav-links a:hover { color: var(--text); }
 
-.nav-cta {
-    display: flex;
+/* GitHub pill — always visible, always inside the bar */
+.nav-gh {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 7px;
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
+.nav-gh:hover { border-color: var(--teal); color: var(--teal); }
+.nav-gh svg { flex-shrink: 0; }
+
+/* Mobile: hide nav links, keep logo + github */
+@media (max-width: 640px) {
+    nav { padding: 0 16px; gap: 0; }
+    .nav-links { display: none; }
+    .nav-logo { font-size: 13px; }
+    .nav-logo .logo-icon { width: 22px; height: 22px; font-size: 11px; }
+    .nav-gh { padding: 5px 11px; font-size: 11px; }
+}
+
+/* ══════════════════════════════════════
+   SHARED LAYOUT
+══════════════════════════════════════ */
+section { position: relative; z-index: 1; }
 
 .btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 9px 20px;
+    padding: 10px 22px;
     border-radius: 6px;
     font-size: 13px;
     font-weight: 700;
@@ -129,294 +160,507 @@ nav {
     font-family: var(--font);
     letter-spacing: 0.3px;
 }
-
 .btn-coral { background: var(--coral); color: #fff; }
-.btn-coral:hover { background: var(--coral-d); }
-
+.btn-coral:hover { background: var(--coral-d); transform: translateY(-1px); }
 .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
 
-/* ── Sections ── */
-section { position: relative; z-index: 1; }
+.section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 14px;
+    text-align: center;
+}
+.section-title {
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 56px;
+    line-height: 1.2;
+}
+.section-title .accent { color: var(--coral); }
 
-/* ── Hero ── */
+/* ══════════════════════════════════════
+   HERO — SPLIT LAYOUT
+══════════════════════════════════════ */
 .hero {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 120px 24px 80px;
+    gap: 60px;
+    padding: 110px 60px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
+
+.hero-left { display: flex; flex-direction: column; }
 
 .hero-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     color: var(--teal);
-    background: rgba(78,205,196,0.1);
-    border: 1px solid rgba(78,205,196,0.2);
-    padding: 6px 14px;
+    background: rgba(78,205,196,0.08);
+    border: 1px solid rgba(78,205,196,0.18);
+    padding: 5px 12px;
     border-radius: 20px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
+    width: fit-content;
+}
+.hero-eyebrow .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2s infinite;
 }
 
+@keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* Glitch title */
 .hero h1 {
-    font-size: clamp(36px, 6vw, 72px);
+    font-size: clamp(32px, 4.5vw, 58px);
     font-weight: 800;
     line-height: 1.1;
     color: #fff;
-    max-width: 800px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    position: relative;
+}
+.glitch {
+    display: inline-block;
+    color: var(--coral);
+    position: relative;
+}
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+}
+.glitch::before {
+    color: var(--teal);
+    clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+    animation: glitch1 4s infinite;
+}
+.glitch::after {
+    color: var(--coral-d);
+    clip-path: polygon(0 66%, 100% 66%, 100% 100%, 0 100%);
+    animation: glitch2 4s infinite;
+}
+@keyframes glitch1 {
+    0%,90%,100% { transform: translateX(0); opacity: 0; }
+    92%          { transform: translateX(-3px); opacity: 0.8; }
+    94%          { transform: translateX(3px); opacity: 0.8; }
+    96%          { transform: translateX(0); opacity: 0; }
+}
+@keyframes glitch2 {
+    0%,90%,100% { transform: translateX(0); opacity: 0; }
+    93%          { transform: translateX(3px); opacity: 0.8; }
+    95%          { transform: translateX(-3px); opacity: 0.8; }
+    97%          { transform: translateX(0); opacity: 0; }
 }
 
-.hero h1 .accent { color: var(--coral); }
-
-.hero p {
-    font-size: clamp(14px, 1.8vw, 16px);
+.hero-desc {
+    font-size: clamp(13px, 1.5vw, 15px);
     line-height: 1.8;
     color: var(--dim);
-    max-width: 560px;
     margin-bottom: 10px;
+    max-width: 460px;
 }
-
-.hero p.footnote {
-    font-size: 12px;
+.hero-footnote {
+    font-size: 11px;
     font-style: italic;
-    color: rgba(106,144,144,0.6);
-    margin-bottom: 40px;
+    color: rgba(106,144,144,0.55);
+    margin-bottom: 36px;
 }
 
-.hero-buttons {
+.hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-buttons .btn { padding: 12px 26px; font-size: 14px; }
+
+/* Right side: terminal window */
+.hero-terminal {
+    background: #0a1414;
+    border: 1px solid rgba(78,205,196,0.15);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(78,205,196,0.05);
+}
+.terminal-bar {
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+.terminal-dots {
+    display: flex; gap: 6px;
+}
+.terminal-dots span {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+}
+.terminal-dots .d-red   { background: #ff5f56; }
+.terminal-dots .d-yellow{ background: #ffbd2e; }
+.terminal-dots .d-green { background: #27c93f; }
+.terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.5px;
+}
+.terminal-body {
+    padding: 20px 20px 22px;
+    font-size: 12px;
+    line-height: 2;
+    min-height: 220px;
+}
+.t-prompt { color: var(--coral); }
+.t-cmd    { color: #fff; }
+.t-out    { color: var(--teal); }
+.t-dim    { color: var(--dim); }
+.t-ok     { color: #27c93f; }
+.t-cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--teal);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Hero responsive */
+@media (max-width: 900px) {
+    .hero {
+        grid-template-columns: 1fr;
+        padding: 100px 28px 60px;
+        gap: 40px;
+    }
+    .hero-desc, .hero h1 { max-width: 100%; }
 }
 
-.hero-buttons .btn { padding: 12px 28px; font-size: 14px; }
+/* ══════════════════════════════════════
+   STATS BAR
+══════════════════════════════════════ */
+.stats-bar {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    padding: 28px 60px;
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+}
+.stat-item {
+    text-align: center;
+}
+.stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    display: block;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.stat-num .s-accent { color: var(--coral); }
+.stat-label {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+@media (max-width: 640px) {
+    .stats-bar { padding: 24px 20px; gap: 28px; }
+}
 
-/* ── Features ── */
+/* ══════════════════════════════════════
+   FEATURES — terminal card style
+══════════════════════════════════════ */
 .features {
     padding: 100px 60px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-.section-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 16px;
-    text-align: center;
-}
-
-.section-title {
-    font-size: clamp(26px, 4vw, 44px);
-    font-weight: 800;
-    color: #fff;
-    text-align: center;
-    margin-bottom: 60px;
-    line-height: 1.2;
-}
-
-.section-title .accent { color: var(--coral); }
-
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    gap: 16px;
 }
 
 .feature-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px;
+    background: #0a1414;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    overflow: hidden;
     transition: all 0.2s;
 }
-
 .feature-card:hover {
-    border-color: rgba(78,205,196,0.25);
-    background: rgba(78,205,196,0.04);
+    border-color: rgba(78,205,196,0.22);
     transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.fc-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.025);
+}
+.fc-dots { display: flex; gap: 5px; }
+.fc-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.12); }
+.fc-filename { font-size: 10px; color: var(--dim); letter-spacing: 0.5px; }
+.fc-body { padding: 22px 20px 24px; }
+.feature-icon { font-size: 26px; margin-bottom: 14px; display: block; }
+.feature-card h3 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.feature-card p  { font-size: 12px; color: var(--dim); line-height: 1.75; }
+
+@media (max-width: 640px) {
+    .features { padding: 70px 20px; }
 }
 
-.feature-icon {
-    font-size: 32px;
-    margin-bottom: 18px;
-    display: block;
+/* ══════════════════════════════════════
+   EMAIL PREVIEW SECTION
+══════════════════════════════════════ */
+.preview-section {
+    padding: 100px 60px;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
 }
-
-.feature-card h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 10px;
-}
-
-.feature-card p {
+.preview-text .section-label,
+.preview-text .section-title { text-align: left; }
+.preview-text .section-title { margin-bottom: 20px; }
+.preview-text p {
     font-size: 13px;
     color: var(--dim);
-    line-height: 1.7;
+    line-height: 1.8;
+    margin-bottom: 14px;
 }
-
-/* ── How it works ── */
-.how {
-    padding: 100px 60px;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-}
-
-.steps::before {
-    content: '';
-    position: absolute;
-    left: 22px;
-    top: 0; bottom: 0;
-    width: 1px;
-    background: linear-gradient(to bottom, var(--coral), var(--teal), transparent);
-    opacity: 0.3;
-}
-
-.step {
-    display: flex;
-    gap: 28px;
-    padding: 32px 0;
-    position: relative;
-}
-
-.step-num {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: rgba(232,128,106,0.15);
-    border: 1px solid rgba(232,128,106,0.3);
-    color: var(--coral);
-    font-size: 14px;
-    font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-}
-
-.step-content h3 {
-    font-size: 16px;
+.preview-text .tag {
+    display: inline-block;
+    background: rgba(78,205,196,0.1);
+    border: 1px solid rgba(78,205,196,0.2);
+    color: var(--teal);
+    font-size: 10px;
     font-weight: 700;
-    color: #fff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-right: 8px;
     margin-bottom: 8px;
 }
 
-.step-content p {
-    font-size: 13px;
-    color: var(--dim);
-    line-height: 1.7;
+.email-card {
+    background: #0c1a1a;
+    border: 1px solid rgba(78,205,196,0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.email-topbar {
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.email-topbar-dots { display: flex; gap: 5px; }
+.email-topbar-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.email-topbar-dots .d-r { background: #ff5f56; }
+.email-topbar-dots .d-y { background: #ffbd2e; }
+.email-topbar-dots .d-g { background: #27c93f; }
+.email-topbar-label { font-size: 10px; color: var(--dim); }
+
+.email-body { padding: 20px 22px; font-size: 12px; line-height: 1.9; }
+.email-field { margin-bottom: 4px; }
+.email-field .lbl { color: var(--dim); }
+.email-field .val { color: var(--text); }
+.email-divider { height: 1px; background: var(--border); margin: 14px 0; }
+.email-content { color: var(--text); white-space: pre-wrap; }
+.email-highlight { color: var(--coral); font-weight: 700; }
+.email-teal { color: var(--teal); }
+.ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(232,128,106,0.1);
+    border: 1px solid rgba(232,128,106,0.2);
+    color: var(--coral);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px 3px 8px;
+    border-radius: 20px;
+    margin-top: 14px;
+}
+.ai-badge svg { width: 10px; height: 10px; }
+
+@media (max-width: 900px) {
+    .preview-section {
+        grid-template-columns: 1fr;
+        padding: 70px 20px;
+        gap: 36px;
+    }
+    .preview-text .section-title { text-align: center; }
+    .preview-text .section-label { text-align: center; }
 }
 
+/* ══════════════════════════════════════
+   HOW IT WORKS
+══════════════════════════════════════ */
+.how {
+    padding: 100px 60px;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.steps { display: flex; flex-direction: column; position: relative; }
+.steps::before {
+    content: '';
+    position: absolute;
+    left: 21px; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--coral), var(--teal), transparent);
+    opacity: 0.25;
+}
+.step { display: flex; gap: 26px; padding: 28px 0; position: relative; }
+.step-num {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(232,128,106,0.1);
+    border: 1px solid rgba(232,128,106,0.25);
+    color: var(--coral);
+    font-size: 13px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative; z-index: 1;
+}
+.step-content h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 7px; }
+.step-content p  { font-size: 12px; color: var(--dim); line-height: 1.75; }
 .step-content code {
     background: rgba(78,205,196,0.1);
     border: 1px solid rgba(78,205,196,0.2);
     color: var(--teal);
-    padding: 2px 8px;
+    padding: 1px 7px;
     border-radius: 4px;
     font-family: var(--font);
-    font-size: 12px;
+    font-size: 11px;
 }
 
-/* ── CTA section ── */
-.cta-section {
-    padding: 100px 24px;
-    text-align: center;
+@media (max-width: 640px) {
+    .how { padding: 70px 20px; }
 }
+
+/* ══════════════════════════════════════
+   CTA
+══════════════════════════════════════ */
+.cta-section { padding: 100px 24px; text-align: center; }
 
 .cta-box {
-    max-width: 640px;
+    max-width: 620px;
     margin: 0 auto;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border);
+    background: #0a1414;
+    border: 1px solid rgba(78,205,196,0.12);
     border-radius: 16px;
-    padding: 56px 48px;
+    padding: 52px 44px;
     position: relative;
     overflow: hidden;
 }
-
 .cta-box::before {
     content: '';
     position: absolute;
     top: 0; left: 50%; transform: translateX(-50%);
-    width: 60%; height: 1px;
+    width: 55%; height: 1px;
     background: linear-gradient(to right, transparent, var(--coral), transparent);
 }
-
-.cta-box h2 {
-    font-size: 32px;
-    font-weight: 800;
-    color: #fff;
-    margin-bottom: 16px;
-    line-height: 1.2;
+.cta-box::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 35%; height: 1px;
+    background: linear-gradient(to right, transparent, var(--teal), transparent);
 }
-
-.cta-box p {
-    font-size: 14px;
-    color: var(--dim);
-    margin-bottom: 32px;
-    line-height: 1.7;
-}
+.cta-box h2 { font-size: 30px; font-weight: 800; color: #fff; margin-bottom: 14px; line-height: 1.2; }
+.cta-box h2 span { color: var(--coral); }
+.cta-box > p { font-size: 13px; color: var(--dim); margin-bottom: 28px; line-height: 1.7; }
 
 .cta-install {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.35);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 14px 20px;
-    font-size: 13px;
+    padding: 14px 18px;
+    font-size: 12px;
     color: var(--teal);
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     text-align: left;
-    font-family: var(--font);
-    line-height: 1.8;
+    line-height: 2;
+}
+.cta-install .prompt { color: var(--coral); user-select: none; }
+.cta-note { font-size: 11px; color: var(--dim); margin-bottom: 28px; font-style: italic; line-height: 1.6; }
+.cta-note a { color: var(--teal); text-decoration: underline; }
+.cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.cta-buttons .btn { padding: 12px 26px; font-size: 13px; }
+
+@media (max-width: 640px) {
+    .cta-box { padding: 36px 20px; }
 }
 
-.cta-install .prompt { color: var(--coral); user-select: none; }
-
-.cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.cta-buttons .btn { padding: 12px 28px; font-size: 14px; }
-
-/* ── Footer ── */
+/* ══════════════════════════════════════
+   FOOTER
+══════════════════════════════════════ */
 footer {
     position: relative; z-index: 1;
     border-top: 1px solid var(--border);
-    padding: 32px 60px;
+    padding: 28px 48px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--dim);
     flex-wrap: wrap;
     gap: 12px;
 }
-
-footer a { color: var(--dim); text-decoration: none; }
+footer a { color: var(--dim); text-decoration: none; transition: color 0.15s; }
 footer a:hover { color: var(--teal); }
+.footer-links { display: flex; gap: 22px; }
+.footer-made {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--dim);
+}
+.flag {
+    font-size: 14px;
+    line-height: 1;
+}
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
-    nav { padding: 0 24px; }
-    .nav-links { display: none; }
-    .features, .how { padding: 70px 24px; }
-    footer { padding: 28px 24px; flex-direction: column; text-align: center; }
+@media (max-width: 640px) {
+    footer { padding: 24px 20px; flex-direction: column; align-items: center; text-align: center; }
 }
 </style>
 </head>
@@ -424,80 +668,203 @@ footer a:hover { color: var(--teal); }
 
 <canvas id="wave-canvas"></canvas>
 
-<!-- Navbar -->
-<nav>
+<!-- ═══ NAVBAR ═══ -->
+<nav id="navbar">
     <a href="#" class="nav-logo">
         <div class="logo-icon">✉</div>
         AUTO<span>REACH</span>
     </a>
     <ul class="nav-links">
         <li><a href="#features">Features</a></li>
+        <li><a href="#preview">See it work</a></li>
         <li><a href="#how">How it works</a></li>
         <li><a href="#start">Get started</a></li>
     </ul>
-    <div class="nav-cta">
-        <a href="https://github.com/KonstantinosBatziakas/autoreach" class="btn btn-outline" target="_blank">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
-            GitHub
-        </a>
-    </div>
+    <a href="https://github.com/KonstantinosBatziakas/autoreach" class="nav-gh" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+        GitHub
+    </a>
 </nav>
 
-<!-- Hero -->
+<!-- ═══ HERO ═══ -->
 <section class="hero" id="home">
-    <div class="hero-eyebrow reveal">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="var(--coral)"><circle cx="5" cy="5" r="5"/></svg>
-        Open Source · Self-Hosted · AI-Powered
+    <div class="hero-left">
+        <div class="hero-eyebrow reveal">
+            <span class="dot"></span>
+            Open Source · Self-Hosted · AI-Powered
+        </div>
+        <h1 class="reveal reveal-delay-1">
+            Your own<br>
+            <span class="glitch" data-text="cold outreach">cold outreach</span>,<br>
+            on your machine.
+        </h1>
+        <p class="hero-desc reveal reveal-delay-2">AutoReach finds businesses on Google Maps, scrapes their emails, writes personalized AI cold emails in English or Greek, and sends them — fully automated.</p>
+        <p class="hero-footnote reveal reveal-delay-3">(no SaaS fees, no per-email costs — just you and your leads.)</p>
+        <div class="hero-buttons reveal reveal-delay-4">
+            <a href="#start" class="btn btn-coral">Get started</a>
+            <a href="https://github.com/KonstantinosBatziakas/autoreach" class="btn btn-outline" target="_blank">View on GitHub</a>
+        </div>
     </div>
-    <h1 class="reveal reveal-delay-1">Your own <span class="accent">cold outreach</span>,<br>running on your machine.</h1>
-    <p class="reveal reveal-delay-2">AutoReach finds businesses on Google Maps, scrapes their emails, generates personalized AI cold emails in English or Greek, and sends them — fully automated.</p>
-    <p class="footnote reveal reveal-delay-3">(no SaaS subscriptions, no per-email fees — just you and your leads.)</p>
-    <div class="hero-buttons reveal reveal-delay-4">
-        <a href="#start" class="btn btn-coral">Get started</a>
-        <a href="https://github.com/KonstantinosBatziakas/autoreach" class="btn btn-outline" target="_blank">View on GitHub</a>
+
+    <!-- Live terminal animation -->
+    <div class="hero-terminal reveal reveal-delay-2">
+        <div class="terminal-bar">
+            <div class="terminal-dots">
+                <span class="d-red"></span>
+                <span class="d-yellow"></span>
+                <span class="d-green"></span>
+            </div>
+            <div class="terminal-title">autoreach — python app.py</div>
+        </div>
+        <div class="terminal-body" id="terminal-body">
+        </div>
     </div>
 </section>
 
-<!-- Features -->
+<!-- ═══ STATS BAR ═══ -->
+<div class="stats-bar">
+    <div class="stat-item reveal">
+        <span class="stat-num"><span class="s-accent" data-target="100">0</span>%</span>
+        <span class="stat-label">Free &amp; Open Source</span>
+    </div>
+    <div class="stat-item reveal reveal-delay-1">
+        <span class="stat-num"><span class="s-accent" data-target="0">0</span> SaaS fees</span>
+        <span class="stat-label">No subscriptions ever</span>
+    </div>
+    <div class="stat-item reveal reveal-delay-2">
+        <span class="stat-num"><span class="s-accent" data-target="2">0</span> languages</span>
+        <span class="stat-label">English &amp; Greek</span>
+    </div>
+    <div class="stat-item reveal reveal-delay-3">
+        <span class="stat-num"><span class="s-accent" data-target="6">0</span> modules</span>
+        <span class="stat-label">All-in-one pipeline</span>
+    </div>
+</div>
+
+<!-- ═══ FEATURES ═══ -->
 <section class="features" id="features">
     <div class="section-label">What it does</div>
     <h2 class="section-title">Everything you need to<br><span class="accent">run outreach at scale.</span></h2>
 
     <div class="features-grid">
         <div class="feature-card reveal reveal-delay-1">
-            <span class="feature-icon">🔍</span>
-            <h3>Lead Discovery</h3>
-            <p>Search Google Maps by city and business type. AutoReach pulls names, addresses, phone numbers, and websites automatically.</p>
+            <div class="fc-header">
+                <div class="fc-dots"><span></span><span></span><span></span></div>
+                <div class="fc-filename">lead_finder.py</div>
+            </div>
+            <div class="fc-body">
+                <span class="feature-icon">🔍</span>
+                <h3>Lead Discovery</h3>
+                <p>Search Google Maps by city and business type. AutoReach pulls names, addresses, phones, and websites straight into your leads database.</p>
+            </div>
         </div>
         <div class="feature-card reveal reveal-delay-2">
-            <span class="feature-icon">🕸️</span>
-            <h3>Email Scraping</h3>
-            <p>Scans business websites and their contact pages to extract email addresses — no manual copy-pasting needed.</p>
+            <div class="fc-header">
+                <div class="fc-dots"><span></span><span></span><span></span></div>
+                <div class="fc-filename">email_scraper.py</div>
+            </div>
+            <div class="fc-body">
+                <span class="feature-icon">🕸️</span>
+                <h3>Email Scraping</h3>
+                <p>Crawls business websites and their contact pages to extract email addresses automatically — no manual copy-pasting.</p>
+            </div>
         </div>
         <div class="feature-card reveal reveal-delay-3">
-            <span class="feature-icon">🤖</span>
-            <h3>AI Email Generation</h3>
-            <p>Uses Groq's Llama 3.1 to write a unique, personalized cold email for each business. Supports English and Greek.</p>
+            <div class="fc-header">
+                <div class="fc-dots"><span></span><span></span><span></span></div>
+                <div class="fc-filename">emailer.py</div>
+            </div>
+            <div class="fc-body">
+                <span class="feature-icon">🤖</span>
+                <h3>AI Email Generation</h3>
+                <p>Groq's Llama 3.1 writes a unique, personalized cold email for each business. Supports English and Greek out of the box.</p>
+            </div>
         </div>
         <div class="feature-card reveal reveal-delay-4">
-            <span class="feature-icon">📤</span>
-            <h3>Automated Sending</h3>
-            <p>Sends via your own Gmail account. Tracks who's been contacted and never emails the same lead twice.</p>
+            <div class="fc-header">
+                <div class="fc-dots"><span></span><span></span><span></span></div>
+                <div class="fc-filename">emailer.py → send()</div>
+            </div>
+            <div class="fc-body">
+                <span class="feature-icon">📤</span>
+                <h3>Automated Sending</h3>
+                <p>Sends via your own Gmail. Tracks every contact and skips duplicates — you'll never email the same lead twice.</p>
+            </div>
         </div>
         <div class="feature-card reveal reveal-delay-5">
-            <span class="feature-icon">📊</span>
-            <h3>Dashboard &amp; Reports</h3>
-            <p>Web dashboard shows your pipeline stats, progress bar, sent log, and full outreach history at a glance.</p>
+            <div class="fc-header">
+                <div class="fc-dots"><span></span><span></span><span></span></div>
+                <div class="fc-filename">app.py → /dashboard</div>
+            </div>
+            <div class="fc-body">
+                <span class="feature-icon">📊</span>
+                <h3>Dashboard &amp; Reports</h3>
+                <p>Web UI shows pipeline stats, progress, sent log, and full outreach history at a glance.</p>
+            </div>
         </div>
         <div class="feature-card reveal reveal-delay-6">
-            <span class="feature-icon">🕐</span>
-            <h3>Scheduled Sending</h3>
-            <p>Set a daily time for outreach to run automatically. Keep the terminal open and let it work while you sleep.</p>
+            <div class="fc-header">
+                <div class="fc-dots"><span></span><span></span><span></span></div>
+                <div class="fc-filename">scheduler.py</div>
+            </div>
+            <div class="fc-body">
+                <span class="feature-icon">🕐</span>
+                <h3>Scheduled Sending</h3>
+                <p>Set a daily send time and let AutoReach run while you sleep. Consistent outreach with zero manual effort.</p>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- How it works -->
+<!-- ═══ EMAIL PREVIEW ═══ -->
+<section id="preview">
+    <div class="preview-section">
+        <div class="preview-text">
+            <div class="section-label">See it in action</div>
+            <h2 class="section-title">A real AI-written<br><span class="accent">cold email.</span></h2>
+            <p>AutoReach uses Groq's Llama 3.1 to write a different, personalized email for every business it contacts — in English or Greek, matching the local market.</p>
+            <p>It reads the business name and type, then crafts a natural, professional message that doesn't feel like a template blast.</p>
+            <div>
+                <span class="tag">Llama 3.1</span>
+                <span class="tag">Groq API</span>
+                <span class="tag">Greek</span>
+                <span class="tag">English</span>
+            </div>
+        </div>
+
+        <div class="email-card reveal reveal-delay-1">
+            <div class="email-topbar">
+                <div class="email-topbar-dots">
+                    <span class="d-r"></span>
+                    <span class="d-y"></span>
+                    <span class="d-g"></span>
+                </div>
+                <div class="email-topbar-label">Gmail — Sent</div>
+            </div>
+            <div class="email-body">
+                <div class="email-field"><span class="lbl">To: </span><span class="val">info@taverna-acropolis.gr</span></div>
+                <div class="email-field"><span class="lbl">From: </span><span class="val">you@gmail.com</span></div>
+                <div class="email-field"><span class="lbl">Subject: </span><span class="val email-highlight">Συνεργασία για την Taverna Acropolis</span></div>
+                <div class="email-divider"></div>
+                <div class="email-content">Αγαπητή <span class="email-teal">Taverna Acropolis</span>,
+
+Το όνομά μου είναι Κωνσταντίνος και επικοινωνώ γιατί νομίζω ότι μπορούμε να κάνουμε κάτι ενδιαφέρον μαζί.
+
+Βλέπω ότι δραστηριοποιείστε στην <span class="email-highlight">Αθήνα</span> και έχω μια πρόταση που θα μπορούσε να σας βοηθήσει να <span class="email-teal">προσελκύσετε περισσότερους πελάτες</span> online — χωρίς επιπλέον κόστος διαφήμισης.
+
+Θα χαρώ να μιλήσουμε αν έχετε 10 λεπτά.
+
+Με εκτίμηση,<br>Κωνσταντίνος</div>
+                <div class="ai-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    Generated by Llama 3.1 via Groq
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
 <section id="how">
     <div class="how">
         <div class="section-label">How it works</div>
@@ -522,7 +889,7 @@ footer a:hover { color: var(--teal); }
                 <div class="step-num">03</div>
                 <div class="step-content">
                     <h3>Generate &amp; Send</h3>
-                    <p>Run Outreach and Groq AI writes a tailored cold email for every lead with an address. It's sent via Gmail SMTP in seconds, with duplicates automatically skipped.</p>
+                    <p>Run Outreach and Groq AI writes a tailored cold email for every lead. Sent via Gmail SMTP in seconds — duplicates automatically skipped.</p>
                 </div>
             </div>
             <div class="step reveal reveal-delay-4">
@@ -536,10 +903,10 @@ footer a:hover { color: var(--teal); }
     </div>
 </section>
 
-<!-- CTA / Get started -->
+<!-- ═══ CTA ═══ -->
 <section class="cta-section" id="start">
     <div class="cta-box">
-        <h2>Start in<br><span style="color:var(--coral);">60 seconds.</span></h2>
+        <h2>Start in<br><span>60 seconds.</span></h2>
         <p>Clone the repo, add your API keys to <code style="color:var(--teal); background:rgba(78,205,196,0.1); padding:2px 6px; border-radius:4px;">.env</code>, and launch the dashboard.</p>
 
         <div class="cta-install">
@@ -550,8 +917,8 @@ footer a:hover { color: var(--teal); }
             <span class="prompt">$ </span>python app.py
         </div>
 
-        <p style="font-size:12px; color:var(--dim); margin-bottom:28px; font-style:italic;">
-            Requires a free <a href="https://console.groq.com" target="_blank" style="color:var(--teal); text-decoration:underline;">Groq API key</a>, a Gmail app password, and a Google Maps API key.
+        <p class="cta-note">
+            Requires a free <a href="https://console.groq.com" target="_blank">Groq API key</a>, a Gmail app password, and a Google Maps API key.
         </p>
 
         <div class="cta-buttons">
@@ -561,10 +928,14 @@ footer a:hover { color: var(--teal); }
     </div>
 </section>
 
-<!-- Footer -->
+<!-- ═══ FOOTER ═══ -->
 <footer>
-    <span>© 2026 AutoReach — yours for the outreach.</span>
-    <div style="display:flex; gap:24px;">
+    <div class="footer-made">
+        <span>Built with</span>
+        <span class="flag">🇬🇷</span>
+        <span>by <a href="https://github.com/KonstantinosBatziakas" target="_blank">KonstantinosBatziakas</a></span>
+    </div>
+    <div class="footer-links">
         <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>
         <a href="https://console.groq.com" target="_blank">Groq API</a>
         <a href="https://developers.google.com/maps" target="_blank">Google Maps API</a>
@@ -572,10 +943,10 @@ footer a:hover { color: var(--teal); }
 </footer>
 
 <script>
-// ── Animated flowing waves ──────────────────────────────────
+// ── Animated dual-colour flowing waves ──────────────────────
 const canvas = document.getElementById('wave-canvas');
-const ctx = canvas.getContext('2d');
-let W, H, t = 0;
+const ctx    = canvas.getContext('2d');
+let W, H, t  = 0;
 
 function resize() {
     W = canvas.width  = window.innerWidth;
@@ -584,27 +955,28 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-const WAVES = Array.from({length: 14}, (_, i) => ({
-    yBase: (i / 13) * 1.2,   // 0..1.2 of screen height
-    speed: 0.0004 + i * 0.00008,
-    amp:   18 + Math.sin(i * 1.3) * 12,
-    freq:  0.003 + i * 0.0002,
-    phase: i * 0.7,
+const WAVES = Array.from({length: 18}, (_, i) => ({
+    yBase: (i / 17) * 1.3,
+    speed: 0.00035 + i * 0.00007,
+    amp:   16 + Math.sin(i * 1.2) * 11,
+    freq:  0.0025 + i * 0.00018,
+    phase: i * 0.65,
+    coral: i % 3 === 0,   // every 3rd wave is coral-toned
 }));
 
 function drawWaves(ts) {
     t = ts * 0.001;
     ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = '#4ecdc4';
-    ctx.lineWidth = 1.1;
+    ctx.lineWidth = 1.0;
 
     WAVES.forEach(w => {
-        ctx.globalAlpha = 0.06 + Math.sin(t * 0.3 + w.phase) * 0.015;
+        ctx.strokeStyle = w.coral ? '#e8806a' : '#4ecdc4';
+        ctx.globalAlpha = 0.045 + Math.sin(t * 0.25 + w.phase) * 0.012;
         ctx.beginPath();
         for (let x = -10; x <= W + 10; x += 3) {
             const y = w.yBase * H
                 + Math.sin(x * w.freq + t * w.speed * 1000 + w.phase) * w.amp
-                + Math.sin(x * w.freq * 0.5 + t * w.speed * 700 + w.phase * 1.3) * (w.amp * 0.5);
+                + Math.sin(x * w.freq * 0.45 + t * w.speed * 600 + w.phase * 1.4) * (w.amp * 0.45);
             x === -10 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         ctx.stroke();
@@ -614,29 +986,83 @@ function drawWaves(ts) {
 }
 requestAnimationFrame(drawWaves);
 
-// ── Scroll reveal ───────────────────────────────────────────
-const observer = new IntersectionObserver((entries) => {
+// ── Scroll reveal ────────────────────────────────────────────
+const revealObs = new IntersectionObserver(entries => {
     entries.forEach(e => {
         if (e.isIntersecting) {
             e.target.classList.add('visible');
-            observer.unobserve(e.target);
+            revealObs.unobserve(e.target);
         }
     });
-}, { threshold: 0.12 });
+}, { threshold: 0.1 });
 
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
-// Trigger hero elements immediately (they're already in view)
+// Trigger hero elements immediately
 document.querySelectorAll('.hero .reveal').forEach((el, i) => {
-    setTimeout(() => el.classList.add('visible'), 100 + i * 120);
+    setTimeout(() => el.classList.add('visible'), 80 + i * 110);
 });
 
-// ── Navbar shrink on scroll ─────────────────────────────────
-const nav = document.querySelector('nav');
+// ── Navbar shrink on scroll ──────────────────────────────────
+const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
-    nav.style.height = window.scrollY > 40 ? '50px' : '60px';
-    nav.style.transition = 'height 0.3s ease';
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+// ── Terminal typewriter animation ────────────────────────────
+const lines = [
+    { delay: 400,  type: 'cmd',  text: 'python app.py' },
+    { delay: 900,  type: 'out',  text: ' * AutoReach starting...' },
+    { delay: 1300, type: 'out',  text: ' * Loaded 47 leads from businesses.csv' },
+    { delay: 1700, type: 'out',  text: ' * Running on http://localhost:5000' },
+    { delay: 2200, type: 'cmd',  text: 'python main.py --send' },
+    { delay: 2700, type: 'dim',  text: '[1/8] Taverna Acropolis Athens' },
+    { delay: 2950, type: 'dim',  text: '      → Generating email (Groq Llama 3.1)...' },
+    { delay: 3300, type: 'ok',   text: '      ✓ Sent to info@taverna-acropolis.gr' },
+    { delay: 3550, type: 'dim',  text: '[2/8] Κουζίνα Θεσσαλονίκη' },
+    { delay: 3800, type: 'dim',  text: '      → Generating email (Greek)...' },
+    { delay: 4200, type: 'ok',   text: '      ✓ Sent to hello@kouzina-thess.gr' },
+    { delay: 4600, type: 'out',  text: ' * 8/8 emails sent. Log saved.' },
+    { delay: 5000, type: 'prompt-only', text: '' },
+];
+
+const termBody = document.getElementById('terminal-body');
+let termContent = '';
+
+function addLine(type, text) {
+    let html = '';
+    if (type === 'cmd') {
+        html = `<div><span class="t-prompt">❯ </span><span class="t-cmd">${text}</span></div>`;
+    } else if (type === 'out') {
+        html = `<div><span class="t-out">${text}</span></div>`;
+    } else if (type === 'dim') {
+        html = `<div><span class="t-dim">${text}</span></div>`;
+    } else if (type === 'ok') {
+        html = `<div><span class="t-ok">${text}</span></div>`;
+    } else if (type === 'prompt-only') {
+        html = `<div><span class="t-prompt">❯ </span><span class="t-cursor"></span></div>`;
+    }
+    termContent += html;
+    termBody.innerHTML = termContent;
+}
+
+// Initial prompt
+termBody.innerHTML = `<div><span class="t-prompt">❯ </span><span class="t-cursor"></span></div>`;
+
+lines.forEach(l => {
+    setTimeout(() => addLine(l.type, l.text), l.delay);
 });
+
+// Loop after completion
+setTimeout(() => {
+    setInterval(() => {
+        termContent = '';
+        termBody.innerHTML = `<div><span class="t-prompt">❯ </span><span class="t-cursor"></span></div>`;
+        lines.forEach(l => {
+            setTimeout(() => addLine(l.type, l.text), l.delay);
+        });
+    }, 7500);
+}, 5500);
 </script>
 </body>
 </html>
