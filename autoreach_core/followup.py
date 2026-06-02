@@ -52,9 +52,11 @@ def _scan_inbox_for_replies(gmail_user: str, gmail_app_password: str,
             if not lead_map:
                 break
             try:
-                _, msg_data = mail.fetch(msg_id, "(BODY[HEADER.FIELDS (FROM)])")
+                _, msg_data = mail.fetch(msg_id, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")
                 raw = msg_data[0][1].decode("utf-8", errors="ignore")
-                from_header = email_lib.message_from_string(raw).get("From", "").lower()
+                parsed = email_lib.message_from_string(raw)
+                from_header    = parsed.get("From", "").lower()
+                subject_header = parsed.get("Subject", "").strip().lower()
 
                 sender_addr = from_header
                 if "<" in from_header:
@@ -62,10 +64,22 @@ def _scan_inbox_for_replies(gmail_user: str, gmail_app_password: str,
 
                 if sender_addr in lead_map:
                     lead_id, conn = lead_map[sender_addr]
+                    is_unsub = "unsubscribe" in subject_header
+
                     db.mark_lead_replied(conn, lead_id, sender_addr)
+                    if is_unsub:
+                        # Mark as unsubscribed so they never get emailed again
+                        conn.execute(
+                            "UPDATE leads SET status='unsubscribed' WHERE id=?", (lead_id,)
+                        )
+                        conn.commit()
+                        if progress_cb:
+                            progress_cb(f"🚫 Unsubscribe request from {sender_addr} — removed from all sequences")
+                    else:
+                        if progress_cb:
+                            progress_cb(f"↩ Reply detected from {sender_addr}")
+
                     found += 1
-                    if progress_cb:
-                        progress_cb(f"Reply detected from {sender_addr}")
                     del lead_map[sender_addr]
 
             except Exception:

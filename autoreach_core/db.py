@@ -102,7 +102,10 @@ def _migrate(conn: sqlite3.Connection):
 def get_leads(conn, with_email_only=False):
     if with_email_only:
         return conn.execute(
-            "SELECT * FROM leads WHERE email != '' AND email IS NOT NULL ORDER BY id"
+            """SELECT * FROM leads
+               WHERE email != '' AND email IS NOT NULL
+               AND status != 'unsubscribed'
+               ORDER BY id"""
         ).fetchall()
     return conn.execute("SELECT * FROM leads ORDER BY id").fetchall()
 

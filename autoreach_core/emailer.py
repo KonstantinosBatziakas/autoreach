@@ -58,31 +58,130 @@ def generate_email(business: dict, language: str, groq_api_key: str) -> tuple[st
 def build_html(body: str, business_name: str, sender_email: str) -> str:
     # Sanitise newlines
     body_html = body.replace("\n", "<br>")
-    unsub_text = (
-        f"To unsubscribe from future emails, reply with 'UNSUBSCRIBE' "
-        f"or email {sender_email} with the subject 'Unsubscribe'."
-    )
+    unsub_href = f"mailto:{sender_email}?subject=UNSUBSCRIBE"
     return f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  body      {{ margin:0; padding:0; background:#0f1f1f; font-family:'Segoe UI',Arial,sans-serif; }}
-  .wrap     {{ max-width:600px; margin:32px auto; background:#1a2e2e; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); }}
-  .hdr      {{ background:#0a1414; padding:24px 36px; border-bottom:1px solid rgba(255,255,255,0.07); }}
-  .hdr h1   {{ color:#fff; margin:0; font-size:20px; letter-spacing:3px; font-weight:800; }}
-  .hdr p    {{ color:#6a9090; margin:4px 0 0; font-size:12px; }}
-  .body     {{ padding:36px; color:#cde0de; font-size:15px; line-height:1.75; }}
-  .body p   {{ margin:0 0 16px; }}
-  .footer   {{ padding:20px 36px; border-top:1px solid rgba(255,255,255,0.07);
-               color:#4a7070; font-size:11px; line-height:1.6; }}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+  *     {{ box-sizing:border-box; margin:0; padding:0; }}
+  body  {{ background:#080f0f; font-family:'Inter',Arial,sans-serif; padding:24px 12px; }}
+
+  .wrap {{
+    max-width:560px; margin:0 auto;
+    background:#0d1a1a;
+    border-radius:12px;
+    overflow:hidden;
+    border:1px solid rgba(78,205,196,0.12);
+    box-shadow:0 0 40px rgba(0,0,0,0.6);
+  }}
+
+  /* ── Top accent bar ── */
+  .accent-bar {{
+    height:2px;
+    background:linear-gradient(to right, transparent, #4ecdc4, #e8806a, transparent);
+  }}
+
+  /* ── Header ── */
+  .hdr {{
+    background:#060e0e;
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    border-bottom:1px solid rgba(78,205,196,0.08);
+  }}
+  .hdr-icon {{
+    width:36px; height:36px;
+    background:linear-gradient(135deg,#4ecdc4,#2196f3);
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; flex-shrink:0;
+  }}
+  .hdr-text h1 {{
+    color:#fff; font-size:14px; font-weight:600;
+    letter-spacing:2.5px; text-transform:uppercase; margin:0;
+  }}
+  .hdr-text p {{
+    color:#4a7a7a; font-size:11px; margin:2px 0 0;
+    letter-spacing:0.5px;
+  }}
+
+  /* ── Body ── */
+  .body {{
+    padding:32px;
+    color:#c8dede;
+    font-size:14.5px;
+    line-height:1.8;
+  }}
+
+  /* ── Divider ── */
+  .divider {{
+    height:1px;
+    background:linear-gradient(to right, transparent, rgba(78,205,196,0.15), transparent);
+    margin:0 32px;
+  }}
+
+  /* ── Footer ── */
+  .footer {{
+    padding:18px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }}
+  .footer-left {{
+    color:#3a6060;
+    font-size:11px;
+    letter-spacing:0.3px;
+    line-height:1.5;
+  }}
+  .unsub-btn {{
+    display:inline-block;
+    padding:5px 14px;
+    border:1px solid rgba(78,205,196,0.2);
+    border-radius:20px;
+    color:#4a7070;
+    font-size:10px;
+    font-weight:500;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    text-decoration:none;
+    transition:all 0.15s;
+    white-space:nowrap;
+  }}
+  .unsub-btn:hover {{
+    border-color:rgba(78,205,196,0.5);
+    color:#4ecdc4;
+  }}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="hdr"><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
-  <div class="body"><p>{body_html}</p></div>
-  <div class="footer">{unsub_text}</div>
+  <div class="accent-bar"></div>
+
+  <div class="hdr">
+    <div class="hdr-icon">✦</div>
+    <div class="hdr-text">
+      <h1>AutoReach</h1>
+      <p>Digital Presence · Web Design · Marketing</p>
+    </div>
+  </div>
+
+  <div class="body">{body_html}</div>
+
+  <div class="divider"></div>
+
+  <div class="footer">
+    <div class="footer-left">
+      You received this because your business was publicly listed.<br>
+      We respect your inbox.
+    </div>
+    <a href="{unsub_href}" class="unsub-btn">Unsubscribe</a>
+  </div>
 </div>
 </body>
 </html>"""
