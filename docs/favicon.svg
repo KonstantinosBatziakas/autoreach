@@ -1,8 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="50" fill="#0a1414"/>
+
+  <!-- AR circuit icon — redrawn from the logo -->
+  <!-- Gradient definition -->
   <defs>
-    <clipPath id="circle">
-      <circle cx="50" cy="50" r="50"/>
-    </clipPath>
+    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ecdc4"/>
+      <stop offset="100%" stop-color="#2196f3"/>
+    </linearGradient>
   </defs>
-  <image href="favicon.jpeg" x="0" y="0" width="100" height="100" clip-path="url(#circle)"/>
+
+  <!-- A shape: left leg, right leg, crossbar -->
+  <line x1="28" y1="75" x2="45" y2="30" stroke="url(#teal)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="45" y1="30" x2="50" y2="42" stroke="url(#teal)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="32" y1="58" x2="47" y2="58" stroke="url(#teal)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- R shape: vertical, top curve, diagonal leg -->
+  <line x1="55" y1="30" x2="55" y2="75" stroke="url(#teal)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M55,30 Q72,30 72,42 Q72,54 55,54" fill="none" stroke="url(#teal)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="55" y1="54" x2="74" y2="75" stroke="url(#teal)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Circuit nodes -->
+  <circle cx="45" cy="30" r="4" fill="#4ecdc4"/>
+  <circle cx="28" cy="75" r="4" fill="#2196f3"/>
+  <circle cx="55" cy="54" r="4" fill="#4ecdc4"/>
+  <circle cx="72" cy="42" r="3.5" fill="#2196f3"/>
+  <circle cx="74" cy="75" r="4" fill="#4ecdc4"/>
+  <circle cx="39" cy="58" r="3" fill="#2196f3"/>
 </svg>
