@@ -44,16 +44,28 @@ def _scan_inbox_for_replies(gmail_user: str, gmail_app_password: str,
 
     found = 0
     try:
-        _, data = mail.search(None, "ALL")
+        # Only search last 60 days — avoids scanning entire inbox history
+        since_date = (datetime.now().replace(day=1) - __import__('datetime').timedelta(days=60)).strftime("%d-%b-%Y")
+        _, data = mail.search(None, f'(SINCE "{since_date}")')
         msg_ids = data[0].split()
-        recent = msg_ids[-500:] if len(msg_ids) > 500 else msg_ids
 
-        for msg_id in reversed(recent):
+        if not msg_ids:
+            return 0, lead_map
+
+        if progress_cb:
+            progress_cb(f"  Scanning {len(msg_ids)} recent message(s)…")
+
+        # Batch-fetch all headers in one IMAP round trip
+        id_range = ",".join(m.decode() for m in msg_ids)
+        _, fetch_data = mail.fetch(id_range, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")
+
+        for item in fetch_data:
             if not lead_map:
                 break
+            if not isinstance(item, tuple):
+                continue
             try:
-                _, msg_data = mail.fetch(msg_id, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")
-                raw = msg_data[0][1].decode("utf-8", errors="ignore")
+                raw = item[1].decode("utf-8", errors="ignore")
                 parsed = email_lib.message_from_string(raw)
                 from_header    = parsed.get("From", "").lower()
                 subject_header = parsed.get("Subject", "").strip().lower()
@@ -68,16 +80,15 @@ def _scan_inbox_for_replies(gmail_user: str, gmail_app_password: str,
 
                     db.mark_lead_replied(conn, lead_id, sender_addr)
                     if is_unsub:
-                        # Mark as unsubscribed so they never get emailed again
                         conn.execute(
                             "UPDATE leads SET status='unsubscribed' WHERE id=?", (lead_id,)
                         )
                         conn.commit()
                         if progress_cb:
-                            progress_cb(f"🚫 Unsubscribe request from {sender_addr} — removed from all sequences")
+                            progress_cb(f"🚫 Unsubscribed: {sender_addr}")
                     else:
                         if progress_cb:
-                            progress_cb(f"↩ Reply detected from {sender_addr}")
+                            progress_cb(f"↩ Reply from {sender_addr}")
 
                     found += 1
                     del lead_map[sender_addr]
