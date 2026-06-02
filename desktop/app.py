@@ -455,9 +455,13 @@ class AutoReachApp(ctk.CTk):
                 font=FONT_S, text_color=CORAL, justify="center").pack(pady=30)
             return
 
-        leads    = [dict(r) for r in db.get_leads(self.conn, with_email_only=True)]
-        sent_set = db.get_sent_emails_set(self.conn)
-        pending  = [l for l in leads if l["email"].lower() not in sent_set]
+        all_leads = [dict(r) for r in db.get_leads(self.conn, with_email_only=True)]
+        sent_set  = db.get_sent_emails_set(self.conn)
+        # Show ALL leads — mark already-sent ones but don't exclude them
+        pending   = [l for l in all_leads if l["email"].lower() not in sent_set]
+        already   = [l for l in all_leads if l["email"].lower() in sent_set]
+        # Queue: unsent first, then already-sent at the end
+        leads     = pending + already
 
         # Options card
         opt_card = card_frame(frame)
@@ -475,8 +479,9 @@ class AutoReachApp(ctk.CTk):
 
         row2 = ctk.CTkFrame(opt_inner, fg_color="transparent")
         row2.pack(fill="x", pady=(0, 10))
-        ctk.CTkLabel(row2, text="Pending leads", font=FONT_XS, text_color=DIM, width=120, anchor="w").pack(side="left")
-        ctk.CTkLabel(row2, text=str(len(pending)), font=FONT_S, text_color=TEAL).pack(side="left")
+        ctk.CTkLabel(row2, text="Leads", font=FONT_XS, text_color=DIM, width=120, anchor="w").pack(side="left")
+        ctk.CTkLabel(row2, text=f"{len(pending)} new  ·  {len(already)} already sent",
+                     font=FONT_S, text_color=TEAL).pack(side="left")
 
         from autoreach_core.rotation import total_remaining_today
         remaining = total_remaining_today(self.conn)
@@ -521,7 +526,7 @@ class AutoReachApp(ctk.CTk):
             body_box.configure(state="disabled")
 
         def generate_next():
-            if self._current_idx[0] >= len(pending):
+            if self._current_idx[0] >= len(leads):
                 lead_label_var.set("✓ All leads processed for this session.")
                 gen_btn.configure(state="disabled")
                 send_btn.configure(state="disabled")
@@ -531,8 +536,10 @@ class AutoReachApp(ctk.CTk):
                 lead_label_var.set("⚠ Daily limit reached across all sender accounts.")
                 return
 
-            lead = pending[self._current_idx[0]]
-            lead_label_var.set(f"Generating for: {lead['name']} ({lead['email']})")
+            lead = leads[self._current_idx[0]]
+            already_sent = lead["email"].lower() in sent_set
+            status_note  = "  ⚠ already sent before" if already_sent else ""
+            lead_label_var.set(f"Generating for: {lead['name']} ({lead['email']}){status_note}")
             gen_btn.configure(state="disabled")
             send_btn.configure(state="disabled")
 
@@ -542,7 +549,9 @@ class AutoReachApp(ctk.CTk):
                     self._current_body[0] = body
                     self._current_subj[0] = subj
                     set_body(subj, body)
-                    lead_label_var.set(f"Lead: {lead['name']}  ·  {lead['email']}")
+                    already_sent2 = lead["email"].lower() in sent_set
+                    note = "  ⚠ already sent before — sending again" if already_sent2 else ""
+                    lead_label_var.set(f"Lead: {lead['name']}  ·  {lead['email']}{note}")
                     send_btn.configure(state="normal")
                 except Exception as e:
                     lead_label_var.set(f"✗ Generation failed: {e}")
@@ -552,9 +561,9 @@ class AutoReachApp(ctk.CTk):
             threading.Thread(target=task, daemon=True).start()
 
         def send_current():
-            if self._current_idx[0] >= len(pending):
+            if self._current_idx[0] >= len(leads):
                 return
-            lead = pending[self._current_idx[0]]
+            lead = leads[self._current_idx[0]]
             send_btn.configure(state="disabled")
 
             def task():
@@ -610,7 +619,7 @@ class AutoReachApp(ctk.CTk):
         send_btn.pack(side="left")
         send_btn.configure(state="disabled")
 
-        if pending:
+        if leads:
             generate_next()
 
     # ── Follow-ups ────────────────────────────────────────────────────────
