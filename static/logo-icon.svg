@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Node graph icon: 4 circles connected by lines -->
+  <!-- Top center node -->
+  <circle cx="60" cy="18" r="10" fill="#4AABF0"/>
+  <!-- Bottom left node -->
+  <circle cx="20" cy="90" r="10" fill="#4AABF0"/>
+  <!-- Bottom center node -->
+  <circle cx="55" cy="90" r="10" fill="#4AABF0"/>
+  <!-- Right node -->
+  <circle cx="100" cy="60" r="10" fill="#5BC8F5"/>
+  <!-- Lines connecting nodes -->
+  <line x1="60" y1="28" x2="20" y2="80" stroke="#4AABF0" stroke-width="4" stroke-linecap="round"/>
+  <line x1="60" y1="28" x2="55" y2="80" stroke="#4AABF0" stroke-width="4" stroke-linecap="round"/>
+  <line x1="60" y1="28" x2="100" y2="50" stroke="#5BC8F5" stroke-width="4" stroke-linecap="round"/>
+</svg>
