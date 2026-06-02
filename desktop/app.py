@@ -663,16 +663,69 @@ class AutoReachApp(ctk.CTk):
 
         def run_fu():
             cfg = db.get_all_config(self.conn)
-            missing = [k for k in ("groq_api_key", "gmail_user", "gmail_app_password") if not cfg.get(k)]
+            missing = [k for k in ("groq_api_key",) if not cfg.get(k)]
             if missing:
                 append_log(f"✗ Missing config: {', '.join(missing)} — go to Settings.")
                 return
             run_btn.configure(state="disabled")
             check_btn.configure(state="disabled")
 
+            def confirm_cb(row, subj, body):
+                """
+                Called from the background thread for each follow-up.
+                Shows a blocking dialog on the main thread and returns
+                's' send / 'k' skip.
+                """
+                result = [None]
+                event  = threading.Event()
+
+                def show_dialog():
+                    win = ctk.CTkToplevel(self)
+                    win.title("Send Follow-up?")
+                    win.geometry("520x420")
+                    win.configure(fg_color=BG_DARK)
+                    win.grab_set()
+                    win.lift()
+                    win.focus_force()
+
+                    ctk.CTkLabel(win,
+                        text=f"Follow-up #{row['sequence_num']} — {row['business_name']}",
+                        font=FONT_M, text_color=WHITE).pack(anchor="w", padx=24, pady=(20, 2))
+                    ctk.CTkLabel(win,
+                        text=f"Scheduled: {row['scheduled_for']}  ·  To: {row['email']}",
+                        font=FONT_XS, text_color=DIM).pack(anchor="w", padx=24, pady=(0, 10))
+
+                    ctk.CTkLabel(win, text=f"Subject: {subj}",
+                        font=FONT_XS, text_color=CORAL).pack(anchor="w", padx=24, pady=(0, 6))
+
+                    body_box = ctk.CTkTextbox(win, height=160, fg_color=BG_CARD,
+                        text_color=TEXT, font=FONT_XS, border_color=BORDER, border_width=1)
+                    body_box.pack(fill="x", padx=24, pady=(0, 16))
+                    body_box.insert("1.0", body)
+                    body_box.configure(state="disabled")
+
+                    btn_row = ctk.CTkFrame(win, fg_color="transparent")
+                    btn_row.pack(padx=24, anchor="w")
+
+                    def choose(val):
+                        result[0] = val
+                        win.destroy()
+                        event.set()
+
+                    styled_btn(btn_row, "Send ✓",  lambda: choose("s"), width=120).pack(side="left", padx=(0, 8))
+                    styled_btn(btn_row, "Skip →",  lambda: choose("k"), colour=BG_CARD, fg=DIM, width=100).pack(side="left")
+
+                    win.protocol("WM_DELETE_WINDOW", lambda: choose("k"))
+
+                self.after(0, show_dialog)
+                event.wait(timeout=120)   # wait up to 2 min for user response
+                return result[0] if result[0] else "k"
+
             def task():
                 counts = run_due_followups(
-                    self.conn, cfg, auto=True, progress_cb=append_log
+                    self.conn, cfg, auto=False,
+                    progress_cb=append_log,
+                    confirm_cb=confirm_cb,
                 )
                 append_log(
                     f"\nDone — Sent: {counts['sent']}  Skipped: {counts['skipped']}  "
