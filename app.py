@@ -10,7 +10,7 @@ from report_generator import generate_report
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-CORS(app, resources={r"/aria/*": {"origins": "*"}})
+CORS(app, supports_credentials=False)
 
 def read_businesses():
     businesses = []
@@ -148,6 +148,49 @@ def report():
 @app.route('/api/stats')
 def api_stats():
     return jsonify(count_stats())
+
+# ── ARIA Support Bot ──────────────────────────────────────────
+@app.route('/aria')
+def aria():
+    return render_template('aria.html')
+
+@app.route('/aria/chat', methods=['POST', 'OPTIONS'])
+def aria_chat():
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        return response, 200
+
+    data = request.get_json()
+    message = data.get('message', '')
+    history = data.get('history', [])
+    system  = data.get('system', 'You are ARIA, an AutoReach support assistant.')
+    api_key = os.getenv('GROQ_API_KEY', '')
+
+    if not api_key:
+        return jsonify({'reply': 'ARIA is not configured yet. Add your GROQ_API_KEY to activate me!'})
+
+    try:
+        import requests as req_lib
+        resp = req_lib.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+            json={
+                'model': 'llama-3.1-8b-instant',
+                'messages': [{'role': 'system', 'content': system}, *history[-8:], {'role': 'user', 'content': message}],
+                'temperature': 0.6,
+                'max_tokens': 400
+            },
+            timeout=15
+        )
+        reply = resp.json()['choices'][0]['message']['content']
+        response = jsonify({'reply': reply})
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
+    except Exception as e:
+        return jsonify({'reply': f'ARIA encountered an error: {str(e)}'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
