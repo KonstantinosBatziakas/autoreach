@@ -918,7 +918,7 @@ footer a:hover { color: var(--teal); }
 <!-- ═══ STATS BAR ═══ -->
 <div class="stats-bar">
     <div class="stat-item reveal">
-        <span class="stat-num"><span class="s-accent" data-target="100">0</span>%</span>
+        <span class="stat-num"><span class="s-accent" data-target="100">100</span>%</span>
         <span class="stat-label">Free &amp; Open Source</span>
     </div>
     <div class="stat-item reveal reveal-delay-1">
@@ -1355,7 +1355,8 @@ setTimeout(() => {
 <div id="aria-bubble">
     <div id="aria-window">
         <div id="aria-header">
-            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#2aafa6);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">A</div>
+            <img src="aria-logo.jpg" alt="ARIA" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';document.getElementById('aria-header-fallback').style.display='flex'">
+            <div id="aria-header-fallback" style="display:none;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#2aafa6);align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">A</div>
             <div>
                 <div class="aria-hname">ARIA</div>
                 <div class="aria-hsub"><span class="aria-sdot"></span>AutoReach Intelligent Assistant</div>
@@ -1371,7 +1372,8 @@ setTimeout(() => {
         </div>
     </div>
     <button id="aria-toggle">
-        <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">A</div>
+        <img src="aria-logo.jpg" alt="ARIA" style="width:34px;height:34px;border-radius:50%;object-fit:cover;" onerror="this.src='';this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div style="display:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.15);align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">A</div>
         <div id="aria-notif"></div>
     </button>
 </div>
