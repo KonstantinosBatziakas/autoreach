@@ -9,7 +9,7 @@ from datetime import datetime
 
 load_dotenv()
 
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+groq_client = None  # initialized lazily on first use
 GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_PASS = os.getenv("GMAIL_APP_PASSWORD")
 SENT_LOG_FILE = "sent_log.csv"
@@ -42,6 +42,9 @@ def log_sent_email(business_name, email, subject, body):
         })
 
 def generate_email(business, language="english"):
+    global groq_client
+    if groq_client is None:
+        groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
     if language.lower() == "greek":
         prompt = f"Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση {business['name']} που βρίσκεται στη διεύθυνση {business['address']}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email."
     else:
