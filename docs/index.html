@@ -1316,5 +1316,101 @@ setTimeout(() => {
     }, 7500);
 }, 5500);
 </script>
+
+<!-- ═══ ARIA CHAT WIDGET ═══ -->
+<style>
+#aria-bubble{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:12px;font-family:'JetBrains Mono',monospace}
+#aria-toggle{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#2aafa6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(78,205,196,0.45);transition:transform .2s,box-shadow .2s;position:relative}
+#aria-toggle:hover{transform:scale(1.08);box-shadow:0 6px 32px rgba(78,205,196,0.6)}
+#aria-notif{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#e8806a;border:2px solid #111c1c;animation:pulse 2s infinite}
+#aria-window{width:340px;max-height:480px;background:#0a1414;border:1px solid rgba(78,205,196,0.2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.6);display:none;flex-direction:column;overflow:hidden}
+#aria-window.open{display:flex;animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+#aria-header{padding:14px 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(78,205,196,0.1);display:flex;align-items:center;gap:10px}
+.aria-hname{font-size:13px;font-weight:700;color:#fff}
+.aria-hsub{font-size:10px;color:#4ecdc4;display:flex;align-items:center;gap:4px}
+.aria-sdot{width:6px;height:6px;border-radius:50%;background:#4ecdc4;animation:pulse 2s infinite}
+#aria-close{background:none;border:none;color:#6a9090;cursor:pointer;font-size:18px;margin-left:auto;transition:color .15s}
+#aria-close:hover{color:#cde0de}
+#aria-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:320px}
+#aria-messages::-webkit-scrollbar{width:3px}
+#aria-messages::-webkit-scrollbar-thumb{background:rgba(78,205,196,0.2);border-radius:3px}
+.aria-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:12px;line-height:1.6}
+.aria-msg.bot{background:rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.15);color:#cde0de;align-self:flex-start;border-bottom-left-radius:4px}
+.aria-msg.user{background:rgba(232,128,106,0.12);border:1px solid rgba(232,128,106,0.2);color:#cde0de;align-self:flex-end;border-bottom-right-radius:4px}
+.aria-typing{display:flex;gap:4px;align-items:center;padding:10px 13px;background:rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.15);border-radius:12px;border-bottom-left-radius:4px;align-self:flex-start}
+.aria-typing span{width:6px;height:6px;border-radius:50%;background:#4ecdc4;opacity:.4;animation:typingB 1.2s infinite}
+.aria-typing span:nth-child(2){animation-delay:.2s}
+.aria-typing span:nth-child(3){animation-delay:.4s}
+@keyframes typingB{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+#aria-input-row{padding:12px;border-top:1px solid rgba(78,205,196,0.1);display:flex;gap:8px}
+#aria-input{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(78,205,196,0.15);border-radius:8px;padding:9px 12px;color:#cde0de;font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s}
+#aria-input:focus{border-color:rgba(78,205,196,0.4)}
+#aria-input::placeholder{color:#4a6060}
+#aria-send{background:linear-gradient(135deg,#4ecdc4,#2aafa6);border:none;border-radius:8px;padding:9px 14px;color:#fff;font-size:13px;cursor:pointer;transition:opacity .15s}
+#aria-send:hover{opacity:.85}
+#aria-send:disabled{opacity:.4;cursor:not-allowed}
+</style>
+
+<div id="aria-bubble">
+    <div id="aria-window">
+        <div id="aria-header">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#2aafa6);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">A</div>
+            <div>
+                <div class="aria-hname">ARIA</div>
+                <div class="aria-hsub"><span class="aria-sdot"></span>AutoReach Intelligent Assistant</div>
+            </div>
+            <button id="aria-close">✕</button>
+        </div>
+        <div id="aria-messages">
+            <div class="aria-msg bot">Hey! I'm <strong>ARIA</strong> — AutoReach's AI assistant. Ask me anything about setting up AutoReach, finding leads, or sending campaigns 🚀</div>
+        </div>
+        <div id="aria-input-row">
+            <input id="aria-input" type="text" placeholder="Ask ARIA anything..." maxlength="300">
+            <button id="aria-send">➤</button>
+        </div>
+    </div>
+    <button id="aria-toggle">
+        <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">A</div>
+        <div id="aria-notif"></div>
+    </button>
+</div>
+
+<script>
+(function(){
+    const RAILWAY_URL = 'https://YOUR-APP.railway.app/aria/chat';
+    const SYSTEM = `You are ARIA (AutoReach Intelligent Assistant), a helpful support bot for AutoReach — an open-source automated lead generation and cold email outreach tool. AutoReach finds businesses on Google Maps, scrapes their emails, uses Groq Llama 3.1 to write personalized cold emails, and sends them via Gmail. Be concise and friendly. GitHub: https://github.com/KonstantinosBatziakas/autoreach`;
+
+    const toggle=document.getElementById('aria-toggle'),win=document.getElementById('aria-window'),
+          closeBtn=document.getElementById('aria-close'),input=document.getElementById('aria-input'),
+          sendBtn=document.getElementById('aria-send'),msgs=document.getElementById('aria-messages'),
+          notif=document.getElementById('aria-notif');
+    let history=[];
+
+    toggle.addEventListener('click',()=>{win.classList.toggle('open');notif.style.display='none';if(win.classList.contains('open'))input.focus()});
+    closeBtn.addEventListener('click',()=>win.classList.remove('open'));
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}});
+    sendBtn.addEventListener('click',sendMsg);
+
+    function addMsg(text,role){const d=document.createElement('div');d.className='aria-msg '+role;d.innerHTML=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+    function showTyping(){const d=document.createElement('div');d.className='aria-typing';d.id='aria-typing-ind';d.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+    function removeTyping(){const t=document.getElementById('aria-typing-ind');if(t)t.remove()}
+
+    async function sendMsg(){
+        const text=input.value.trim();if(!text)return;
+        input.value='';sendBtn.disabled=true;
+        addMsg(text,'user');history.push({role:'user',content:text});showTyping();
+        try{
+            const res=await fetch(RAILWAY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history:history.slice(-8),system:SYSTEM})});
+            const data=await res.json();removeTyping();
+            const reply=data.reply||"Sorry, I couldn't get a response. Try again!";
+            history.push({role:'assistant',content:reply});
+            addMsg(reply.replace(/\n/g,'<br>'),'bot');
+        }catch(e){removeTyping();addMsg("Can't reach ARIA right now. Try again in a moment!","bot")}
+        sendBtn.disabled=false;input.focus();
+    }
+})();
+</script>
+
 </body>
 </html>
