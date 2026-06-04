@@ -10,7 +10,7 @@ from report_generator import generate_report
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-CORS(app, resources={r"/aria/*": {"origins": ["https://konstantinosbatziakas.github.io", "http://localhost:*"]}})
+CORS(app, resources={r"/aria/*": {"origins": "*"}})
 
 def read_businesses():
     businesses = []
