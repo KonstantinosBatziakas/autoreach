@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Email Templates — AutoReach{% endblock %}
+{% block page_title %}Email Template{% endblock %}
+{% block page_subtitle %}Customise the outreach email — Groq will personalise it per lead{% endblock %}
+
+{% block content %}
+<div style="max-width:700px;">
+    <div class="info-box" style="margin-bottom:24px;">
+        <h3>Available Placeholders</h3>
+        Use these in your template and they'll be filled in automatically per lead:<br><br>
+        <code>{name}</code> — business name &nbsp;·&nbsp;
+        <code>{address}</code> — business address &nbsp;·&nbsp;
+        <code>{sender_name}</code> — your name (from SENDER_NAME env var)
+    </div>
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <label>Email Body Template</label>
+                <textarea name="template" rows="16"
+                          style="font-size:13px; line-height:1.7;">{{ template }}</textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">💾 Save Template</button>
+                <a href="{{ url_for('outreach') }}" class="btn btn-secondary">← Back to Outreach</a>
+            </div>
+        </form>
+    </div>
+    <div class="info-box warning" style="margin-top:16px;">
+        <h3>Note</h3>
+        If no template is saved, AutoReach generates emails entirely from scratch using Groq AI.
+        With a template, Groq only personalises the filled-in text — giving you more control.
+    </div>
+</div>
+{% endblock %}

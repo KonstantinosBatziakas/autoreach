@@ -41,14 +41,39 @@ def log_sent_email(business_name, email, subject, body):
             "body": body
         })
 
+def _load_custom_template():
+    data_dir = os.getenv('DATA_DIR', '/data')
+    template_file = os.path.join(data_dir, 'email_template.txt')
+    if os.path.exists(template_file):
+        with open(template_file, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    return None
+
 def generate_email(business, language="english"):
     global groq_client
     if groq_client is None:
         groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    if language.lower() == "greek":
+
+    custom_template = _load_custom_template()
+
+    if custom_template:
+        # Fill placeholders then ask Groq to lightly personalise
+        filled = custom_template.format(
+            name=business.get('name', ''),
+            address=business.get('address', ''),
+            sender_name=os.getenv('SENDER_NAME', 'AutoReach Team'),
+        )
+        prompt = (
+            f"Here is an email template already filled in for a business called {business['name']}:\n\n"
+            f"{filled}\n\n"
+            f"Lightly personalise this email to feel less generic. Keep the same structure and length. "
+            f"Return only the final email body, no subject line."
+        )
+    elif language.lower() == "greek":
         prompt = f"Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση {business['name']} που βρίσκεται στη διεύθυνση {business['address']}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email."
     else:
         prompt = f"Write a short professional cold outreach email offering web design and digital marketing services to {business['name']} located at {business['address']}. Under 150 words. Only return the email body."
+
     response = groq_client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}]

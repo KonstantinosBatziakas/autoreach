@@ -20,6 +20,14 @@
         <div class="stat-value" style="color:var(--coral);">{{ stats.emails_sent }}</div>
     </div>
     <div class="stat-card">
+        <div class="stat-label">Follow-ups Sent</div>
+        <div class="stat-value" style="color:#e0b84a;">{{ stats.followups_sent }}</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer;" onclick="location.href='{{ url_for('pipeline') }}'">
+        <div class="stat-label">Replied</div>
+        <div class="stat-value" style="color:#7dd87d;">{{ stats.replied }}</div>
+    </div>
+    <div class="stat-card">
         <div class="stat-label">Remaining</div>
         <div class="stat-value">{{ [stats.leads_with_emails - stats.emails_sent, 0] | max }}</div>
     </div>

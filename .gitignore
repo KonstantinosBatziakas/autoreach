@@ -1,29 +1,40 @@
-# ── DANGEROUS — never commit these ──────────────────────────
-.env                  # API keys, Gmail password, Google Maps key
+# ── SECRETS — never commit these ─────────────────────────────
+.env
+/etc/autoreach.env
+*.key               # SSH private keys
+*.pem               # SSL certificates / private keys
+*.ppk               # PuTTY private keys
 
-# ── Python environment — too large, not needed ──────────────
+# ── PERSONAL DATA — private to each user ──────────────────────
+businesses.csv
+sent_log.csv
+followup_log.csv
+autoreach_users.db  # SQLite user database
+email_template.txt  # user's custom email template
+/data/              # Fly.io / Oracle volume mount
+
+# ── PYTHON ENVIRONMENT ────────────────────────────────────────
 venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+*.egg-info/
+dist/
+build/
 
-# ── Your personal data ───────────────────────────────────────
-businesses.csv        # your leads list (private)
-sent_log.csv          # who you emailed (private)
-
-# ── Unused legacy files ──────────────────────────────────────
-static/style.css
-README_DASHBOARD.md
-
-# ── OS junk ─────────────────────────────────────────────────
+# ── OS JUNK ──────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# ── Editor junk ─────────────────────────────────────────────
+# ── EDITOR JUNK ──────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# ── LEGACY ───────────────────────────────────────────────────
+static/style.css
+README_DASHBOARD.md

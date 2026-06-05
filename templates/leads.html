@@ -6,7 +6,9 @@
 
 {% block topbar_actions %}
 <div style="display:flex; gap:10px;">
-    <form method="POST" action="{{ url_for('scrape_emails_route') }}">
+    <a href="{{ url_for('pipeline') }}" class="btn btn-secondary">🗂 Pipeline View</a>
+    <a href="{{ url_for('export_leads') }}" class="btn btn-secondary">⬇ Export CSV</a>
+    <form method="POST" action="{{ url_for('scrape_emails_route') }}" style="display:inline;">
         <button type="submit" class="btn btn-secondary">🕸️ Scrape Emails</button>
     </form>
     <a href="{{ url_for('add_lead') }}" class="btn btn-primary">➕ Add Lead</a>
@@ -18,6 +20,7 @@
 <div class="action-bar">
     <div class="action-bar-left">
         <a href="{{ url_for('find_leads') }}" class="btn btn-secondary">🔍 Find from Google Maps</a>
+        <a href="{{ url_for('import_leads') }}" class="btn btn-secondary">⬆ Import CSV</a>
     </div>
     <span style="font-size:13px; color:#555;">
         {{ businesses | selectattr('email') | list | length }} with email &nbsp;·&nbsp;
@@ -36,6 +39,9 @@
                 <th>Phone</th>
                 <th>Website</th>
                 <th>Email</th>
+                <th>Stage</th>
+                <th>Notes</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -59,6 +65,39 @@
                         <span class="badge badge-gray">No email</span>
                     {% endif %}
                 </td>
+                <td>
+                    <select class="stage-select"
+                            data-name="{{ b.name }}"
+                            style="background:transparent; border:1px solid rgba(255,255,255,0.1);
+                                   border-radius:5px; padding:4px 8px; font-size:12px;
+                                   font-family:var(--font); cursor:pointer;
+                                   color:{{ stage_colors[b.stage or 'New'] }};">
+                        {% for s in stages %}
+                        <option value="{{ s }}" {% if (b.stage or 'New') == s %}selected{% endif %}
+                                style="background:#1a2e2e; color:{{ stage_colors[s] }};">
+                            {{ s }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <input type="text"
+                           class="notes-input"
+                           data-name="{{ b.name }}"
+                           value="{{ b.notes or '' }}"
+                           placeholder="Add note…"
+                           style="background:transparent; border:1px solid rgba(255,255,255,0.07);
+                                  border-radius:5px; padding:4px 8px; font-size:12px;
+                                  font-family:var(--font); color:var(--text-dim); width:150px;">
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('delete_lead') }}"
+                          onsubmit="return confirm('Delete {{ b.name }}?');" style="display:inline;">
+                        <input type="hidden" name="name" value="{{ b.name }}">
+                        <button type="submit" class="btn btn-danger"
+                                style="padding:4px 10px; font-size:11px;">✕</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -74,5 +113,47 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+// Stage dropdown — instant AJAX save
+document.querySelectorAll('.stage-select').forEach(sel => {
+    sel.addEventListener('change', async function() {
+        const colors = {{ stage_colors | tojson }};
+        try {
+            const resp = await fetch('/update_stage', {
+                method: 'POST',
+                headers: {'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},
+                body: `name=${encodeURIComponent(this.dataset.name)}&stage=${encodeURIComponent(this.value)}`
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                this.style.color = colors[this.value];
+                this.style.borderColor = colors[this.value];
+                setTimeout(() => this.style.borderColor = 'rgba(255,255,255,0.1)', 1000);
+            }
+        } catch(e) { console.error('Stage update failed', e); }
+    });
+});
+
+// Notes input — debounced auto-save (800ms after typing stops)
+document.querySelectorAll('.notes-input').forEach(inp => {
+    let timer;
+    inp.addEventListener('input', function() {
+        clearTimeout(timer);
+        const el = this;
+        timer = setTimeout(async () => {
+            try {
+                await fetch('/update_notes', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},
+                    body: `name=${encodeURIComponent(el.dataset.name)}&notes=${encodeURIComponent(el.value)}`
+                });
+                el.style.borderColor = '#4ecdc4';
+                setTimeout(() => el.style.borderColor = 'rgba(255,255,255,0.07)', 1000);
+            } catch(e) { console.error('Notes save failed', e); }
+        }, 800);
+    });
+});
+</script>
 
 {% endblock %}

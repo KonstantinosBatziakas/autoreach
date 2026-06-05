@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Follow-ups — AutoReach{% endblock %}
+{% block page_title %}Follow-up Sequences{% endblock %}
+{% block page_subtitle %}Automated +3 / +7 / +14 day follow-ups{% endblock %}
+
+{% block topbar_actions %}
+<form method="POST" action="{{ url_for('run_followups_route') }}" style="display:inline;">
+    <button type="submit" class="btn btn-primary">▶ Run Follow-ups Now</button>
+</form>
+{% endblock %}
+
+{% block content %}
+
+<div class="info-box">
+    <h3>How it works</h3>
+    AutoReach automatically sends follow-up emails at <strong>+3, +7, and +14 days</strong> after the initial outreach.
+    If a lead replies at any point, the sequence stops for that contact. Follow-ups run automatically every 24 hours,
+    or you can trigger them manually above.
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Follow-ups Sent</div>
+        <div class="stat-value">{{ stats.total_followups }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Day +3 Sent</div>
+        <div class="stat-value" style="color: var(--teal);">{{ stats.step_counts[3] }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Day +7 Sent</div>
+        <div class="stat-value" style="color: var(--coral);">{{ stats.step_counts[7] }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Day +14 Sent</div>
+        <div class="stat-value" style="color: #e0b84a;">{{ stats.step_counts[14] }}</div>
+    </div>
+</div>
+
+<!-- Recent follow-ups -->
+<div class="card">
+    <div class="card-title">Recent Follow-ups</div>
+    {% if stats.recent %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Business</th>
+                    <th>Email</th>
+                    <th>Step</th>
+                    <th>Subject</th>
+                    <th>Sent At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in stats.recent %}
+                <tr>
+                    <td style="font-weight:600; color:#ddd;">{{ f.business_name }}</td>
+                    <td style="color:#777;">{{ f.email }}</td>
+                    <td>
+                        {% if f.followup_step == '3' %}
+                            <span class="badge badge-green">Day +3</span>
+                        {% elif f.followup_step == '7' %}
+                            <span class="badge" style="background:rgba(232,128,106,0.15);color:var(--coral);">Day +7</span>
+                        {% else %}
+                            <span class="badge badge-yellow">Day +14</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ f.subject }}</td>
+                    <td style="color:#555; font-size:12px;">{{ f.date_sent }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📬</div>
+        <p>No follow-ups sent yet.</p>
+        <p style="font-size:12px;">Follow-ups will be sent automatically once initial emails are 3+ days old.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

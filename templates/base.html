@@ -350,6 +350,10 @@
            class="{{ 'active' if request.endpoint == 'leads' else '' }}">
             <span class="icon">🏢</span> Leads
         </a>
+        <a href="{{ url_for('pipeline') }}"
+           class="{{ 'active' if request.endpoint == 'pipeline' else '' }}">
+            <span class="icon">🗂</span> Pipeline
+        </a>
         <a href="{{ url_for('find_leads') }}"
            class="{{ 'active' if request.endpoint == 'find_leads' else '' }}">
             <span class="icon">🔍</span> Find Leads
@@ -362,6 +366,14 @@
            class="{{ 'active' if request.endpoint == 'sent' else '' }}">
             <span class="icon">✉️</span> Sent Emails
         </a>
+        <a href="{{ url_for('followups') }}"
+           class="{{ 'active' if request.endpoint == 'followups' else '' }}">
+            <span class="icon">🔁</span> Follow-ups
+        </a>
+        <a href="{{ url_for('email_templates') }}"
+           class="{{ 'active' if request.endpoint == 'email_templates' else '' }}">
+            <span class="icon">✏️</span> Templates
+        </a>
         <a href="{{ url_for('report') }}"
            class="{{ 'active' if request.endpoint == 'report' else '' }}">
             <span class="icon">📊</span> Report
@@ -371,6 +383,9 @@
             <span class="icon">➕</span> Add Lead
         </a>
     </nav>
+    <div style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="{{ url_for('web_logout') }}" style="font-size:12px; color:#6a9090; text-decoration:none;">⎋ Log out</a>
+    </div>
 </aside>
 
 <div class="main">

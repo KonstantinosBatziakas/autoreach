@@ -1,0 +1,28 @@
+# fly.toml — AutoReach on Fly.io
+# App name will be set when you run `fly launch` or `fly deploy`
+
+app = "autoreach"
+primary_region = "lhr"  # London — change to "iad" (US East) or "fra" (Frankfurt) if preferred
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true   # free tier: stop when idle, wake on request
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# Persistent volume for SQLite databases (users + leads CSVs)
+[mounts]
+  source = "autoreach_data"
+  destination = "/data"
