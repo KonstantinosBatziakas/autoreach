@@ -431,7 +431,7 @@ section { position: relative; z-index: 1; }
 .fc-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.12); }
 .fc-filename { font-size: 10px; color: var(--dim); letter-spacing: 0.5px; }
 .fc-body { padding: 22px 20px 24px; }
-.feature-icon { font-size: 26px; margin-bottom: 14px; display: block; }
+.feature-icon { margin-bottom: 14px; display: block; line-height: 1; }
 .feature-card h3 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 8px; }
 .feature-card p  { font-size: 12px; color: var(--dim); line-height: 1.75; }
 
@@ -947,7 +947,7 @@ footer a:hover { color: var(--teal); }
                 <div class="fc-filename">lead_finder.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🔍</span>
+                <span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#4ecdc4" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></span>
                 <h3>Lead Discovery</h3>
                 <p>Search Google Maps by city and business type. AutoReach pulls names, addresses, phones, and websites straight into your local SQLite database.</p>
             </div>
@@ -958,7 +958,7 @@ footer a:hover { color: var(--teal); }
                 <div class="fc-filename">scraper.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🕸️</span>
+                <span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#4ecdc4" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c0-4.97 2-9 2-9m-2 9c0-4.97-2-9-2-9m2 9V3m9 9H3"/></svg></span>
                 <h3>Email Scraping</h3>
                 <p>Crawls business websites and contact pages to extract email addresses automatically — no manual copy-pasting.</p>
             </div>
@@ -969,7 +969,7 @@ footer a:hover { color: var(--teal); }
                 <div class="fc-filename">emailer.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🤖</span>
+                <span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#4ecdc4" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg></span>
                 <h3>AI Email Generation</h3>
                 <p>Groq's Llama 3.1 writes a unique, personalized cold email for each business — never a template. English and Greek supported.</p>
             </div>
@@ -980,7 +980,7 @@ footer a:hover { color: var(--teal); }
                 <div class="fc-filename">rotation.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🔄</span>
+                <span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#4ecdc4" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"/></svg></span>
                 <h3>Multi-Account Rotation</h3>
                 <p>Add multiple Gmail accounts and AutoReach round-robins sends across them — scale past the 150/day single-account limit automatically.</p>
             </div>
@@ -991,7 +991,7 @@ footer a:hover { color: var(--teal); }
                 <div class="fc-filename">followup.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🔁</span>
+                <span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#4ecdc4" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
                 <h3>Follow-up Sequences</h3>
                 <p>Automatically sends up to 3 follow-ups per lead at +3, +7, and +14 days. Detects replies via IMAP and cancels follow-ups for leads who respond.</p>
             </div>
@@ -1002,7 +1002,7 @@ footer a:hover { color: var(--teal); }
                 <div class="fc-filename">desktop/app.py</div>
             </div>
             <div class="fc-body">
-                <span class="feature-icon">🖥️</span>
+                <span class="feature-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#4ecdc4" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3"/></svg></span>
                 <h3>Desktop GUI + CLI</h3>
                 <p>Native CustomTkinter desktop app with full dashboard, lead management, and live email preview. Also ships as a pip-installable CLI for power users.</p>
             </div>
