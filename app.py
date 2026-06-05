@@ -212,11 +212,20 @@ EMAIL SCRAPING:
 - Extracts email addresses using regex pattern matching
 - Click "Scrape Emails" button on the Leads page
 
+LOGIN / AUTHENTICATION:
+- AutoReach supports sign in via GitHub, Discord, or Google
+- Available on the desktop app
+- No username/password required — use your existing GitHub, Discord or Google account
+
 ANDROID APP:
 - Built with Flutter
 - Available as APK for sideloading (not on Google Play Store)
 - Can be submitted to Amazon Appstore, APKPure, Samsung Galaxy Store
-- Settings screen for API keys — same keys as desktop version
+- Sign in using GitHub, Discord, or Google account
+- First thing to do after logging in: go to Settings and enter your API keys
+- Same features as desktop: Find Leads, Scrape Emails, Add Lead, Outreach, Sent, Report
+- Settings screen stores: Google Maps API key, Groq API key, Gmail address, Gmail App Password
+- Data is stored locally on the device (no cloud sync)
 
 YOUR ONLY ALLOWED TOPICS:
 - AutoReach setup, installation, and configuration
