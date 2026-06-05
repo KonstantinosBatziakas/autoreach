@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARIA — AutoReach Intelligent Assistant</title>
+<link rel="icon" type="image/jpeg" href="aria-logo.jpg">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:    #111c1c;
+    --card:  #0a1414;
+    --teal:  #4ecdc4;
+    --teal-d:#2aafa6;
+    --coral: #e8806a;
+    --text:  #cde0de;
+    --dim:   #6a9090;
+    --border:rgba(255,255,255,0.07);
+    --font:  'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── Navbar ── */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 54px;
+    background: rgba(8,18,18,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(18px);
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.nav-brand img {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.nav-brand-fallback {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4ecdc4, #2aafa6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: #fff;
+}
+
+.nav-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.nav-subtitle {
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 1px;
+}
+
+.nav-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--teal);
+}
+
+.status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+
+.nav-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--dim);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.nav-back:hover { color: var(--text); }
+
+/* ── Suggestions bar ── */
+.suggestions-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,18,18,0.6);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+.suggestions-bar::-webkit-scrollbar { display: none; }
+
+.chip {
+    white-space: nowrap;
+    padding: 5px 14px;
+    background: rgba(78,205,196,0.06);
+    border: 1px solid rgba(78,205,196,0.18);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--teal);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.chip:hover { background: rgba(78,205,196,0.15); }
+
+/* ── Messages ── */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-thumb { background: rgba(78,205,196,0.15); border-radius: 4px; }
+
+.msg-row {
+    display: flex;
+    gap: 14px;
+    padding: 0 24px;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.msg-row.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    margin-top: 2px;
+}
+
+.msg-avatar.aria-av {
+    background: linear-gradient(135deg, #4ecdc4, #2aafa6);
+    overflow: hidden;
+}
+.msg-avatar.aria-av img { width: 100%; height: 100%; object-fit: cover; }
+.msg-avatar.user-av {
+    background: rgba(232,128,106,0.2);
+    color: var(--coral);
+    border: 1px solid rgba(232,128,106,0.3);
+}
+
+.msg-content { flex: 1; }
+
+.msg-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--dim);
+}
+.msg-row.user .msg-label { text-align: right; }
+
+.msg-bubble {
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.75;
+    max-width: 680px;
+}
+
+.msg-bubble.aria {
+    background: rgba(78,205,196,0.06);
+    border: 1px solid rgba(78,205,196,0.14);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+}
+
+.msg-bubble.user {
+    background: rgba(232,128,106,0.08);
+    border: 1px solid rgba(232,128,106,0.18);
+    color: var(--text);
+    border-bottom-right-radius: 4px;
+    margin-left: auto;
+}
+
+.typing-bubble {
+    display: flex; gap: 5px; align-items: center;
+    padding: 13px 16px;
+    background: rgba(78,205,196,0.06);
+    border: 1px solid rgba(78,205,196,0.14);
+    border-radius: 14px; border-bottom-left-radius: 4px;
+    width: fit-content;
+}
+.typing-bubble span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--teal); opacity: 0.4;
+    animation: tb 1.2s infinite;
+}
+.typing-bubble span:nth-child(2){animation-delay:.2s}
+.typing-bubble span:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+
+/* ── Input area ── */
+.input-area {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border);
+    background: rgba(8,18,18,0.8);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+#msg-input {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(78,205,196,0.2);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+    height: 48px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+#msg-input:focus { border-color: rgba(78,205,196,0.5); }
+#msg-input::placeholder { color: #3a5a5a; }
+
+#send-btn {
+    background: linear-gradient(135deg, var(--teal), var(--teal-d));
+    border: none;
+    border-radius: 10px;
+    padding: 13px 22px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+}
+#send-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+#send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+.input-hint {
+    text-align: center;
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 8px;
+    opacity: 0.6;
+}
+
+/* ── Canvas bg ── */
+#wave-canvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.3;
+}
+
+.navbar, .suggestions-bar, .messages, .input-area { position: relative; z-index: 1; }
+
+@media (max-width: 640px) {
+    .navbar { padding: 0 16px; }
+    .input-area { padding: 12px 16px 16px; }
+    .msg-row { padding: 0 14px; }
+    .nav-subtitle { display: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="wave-canvas"></canvas>
+
+<nav class="navbar">
+    <div class="nav-brand">
+        <img src="aria-logo.jpg" alt="ARIA" onerror="this.style.display='none';document.getElementById('nav-av-fallback').style.display='flex'">
+        <div class="nav-brand-fallback" id="nav-av-fallback" style="display:none">A</div>
+        <div>
+            <div class="nav-title">ARIA</div>
+            <div class="nav-subtitle">AutoReach Intelligent Assistant</div>
+        </div>
+    </div>
+    <div class="nav-status">
+        <span class="status-dot"></span>
+        Online · Ready to help
+    </div>
+    <a href="index.html" class="nav-back">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Back to AutoReach
+    </a>
+</nav>
+
+<div class="suggestions-bar">
+    <button class="chip" onclick="suggest(this)">How do I install AutoReach?</button>
+    <button class="chip" onclick="suggest(this)">How do I get a Google Maps API key?</button>
+    <button class="chip" onclick="suggest(this)">How do I set up Gmail?</button>
+    <button class="chip" onclick="suggest(this)">What is the Groq API?</button>
+    <button class="chip" onclick="suggest(this)">How does email scraping work?</button>
+    <button class="chip" onclick="suggest(this)">How many emails can I send per day?</button>
+    <button class="chip" onclick="suggest(this)">How do I use the Android app?</button>
+    <button class="chip" onclick="suggest(this)">What are follow-up sequences?</button>
+</div>
+
+<div class="messages" id="messages">
+    <div class="msg-row">
+        <div class="msg-avatar aria-av">
+            <img src="aria-logo.jpg" alt="A" onerror="this.parentElement.innerHTML='A'">
+        </div>
+        <div class="msg-content">
+            <div class="msg-label">ARIA</div>
+            <div class="msg-bubble aria">
+                Hey! I'm <strong>ARIA</strong> — AutoReach's Intelligent Assistant.<br><br>
+                I'm here to help you get the most out of AutoReach — whether that's finding leads, setting up Gmail, configuring your API keys, or using the Android app.<br><br>
+                What can I help you with? 🚀
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="input-area">
+    <div class="input-row">
+        <textarea id="msg-input" placeholder="Ask ARIA anything about AutoReach..." rows="1"></textarea>
+        <button id="send-btn" onclick="sendMsg()">Send ➤</button>
+    </div>
+    <div class="input-hint">ARIA only answers AutoReach-related questions · Powered by Groq Llama 3.1</div>
+</div>
+
+<script>
+const RAILWAY_URL = 'https://web-production-1c4ae.up.railway.app/aria/chat';
+const SYSTEM = `You are ARIA (AutoReach Intelligent Assistant). Only answer AutoReach questions.`;
+let history = [];
+
+const input = document.getElementById('msg-input');
+const sendBtn = document.getElementById('send-btn');
+const msgs = document.getElementById('messages');
+
+// Auto-resize textarea
+input.addEventListener('input', () => {
+    input.style.height = '48px';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+});
+
+input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+
+function suggest(btn) {
+    input.value = btn.textContent;
+    sendMsg();
+}
+
+function addMsg(text, role) {
+    const isAria = role === 'aria';
+    const row = document.createElement('div');
+    row.className = 'msg-row' + (isAria ? '' : ' user');
+    row.innerHTML = `
+        <div class="msg-avatar ${isAria ? 'aria-av' : 'user-av'}">
+            ${isAria ? '<img src="aria-logo.jpg" alt="A" onerror="this.parentElement.innerHTML=\'A\'">' : 'You'}
+        </div>
+        <div class="msg-content">
+            <div class="msg-label">${isAria ? 'ARIA' : 'You'}</div>
+            <div class="msg-bubble ${isAria ? 'aria' : 'user'}">${text}</div>
+        </div>`;
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+    const row = document.createElement('div');
+    row.className = 'msg-row'; row.id = 'typing-row';
+    row.innerHTML = `
+        <div class="msg-avatar aria-av"><img src="aria-logo.jpg" alt="A" onerror="this.parentElement.innerHTML='A'"></div>
+        <div class="msg-content">
+            <div class="msg-label">ARIA</div>
+            <div class="typing-bubble"><span></span><span></span><span></span></div>
+        </div>`;
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+    const t = document.getElementById('typing-row');
+    if (t) t.remove();
+}
+
+async function sendMsg() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = '48px';
+    sendBtn.disabled = true;
+    addMsg(text, 'user');
+    history.push({ role: 'user', content: text });
+    showTyping();
+
+    try {
+        const res = await fetch(RAILWAY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, history: history.slice(-8), system: SYSTEM })
+        });
+        const data = await res.json();
+        removeTyping();
+        const reply = data.reply || "Sorry, I couldn't get a response. Try again!";
+        history.push({ role: 'assistant', content: reply });
+        addMsg(reply.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'), 'aria');
+    } catch(e) {
+        removeTyping();
+        addMsg("Can't reach ARIA right now. Try again in a moment!", 'aria');
+    }
+    sendBtn.disabled = false;
+    input.focus();
+}
+
+// Wave background
+const canvas = document.getElementById('wave-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, t = 0;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+const WAVES = Array.from({length: 12}, (_, i) => ({
+    yBase: (i/11)*1.2, speed: 0.00035+i*0.00007, amp: 14+Math.sin(i*1.2)*10,
+    freq: 0.0025+i*0.00018, phase: i*0.65, coral: i%3===0
+}));
+function draw(ts) {
+    t = ts*0.001; ctx.clearRect(0,0,W,H);
+    WAVES.forEach(w => {
+        ctx.strokeStyle = w.coral ? '#e8806a' : '#4ecdc4';
+        ctx.globalAlpha = 0.04; ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x=-10; x<=W+10; x+=3) {
+            const y = w.yBase*H + Math.sin(x*w.freq+t*w.speed*1000+w.phase)*w.amp;
+            x===-10 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+    });
+    requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
