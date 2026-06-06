@@ -1,8 +1,8 @@
 """
 db.py — Central database layer for AutoReach
 =============================================
-Uses Turso (libsql) when TURSO_DB_URL + TURSO_AUTH_TOKEN are set,
-otherwise falls back to local SQLite (for local dev / first boot).
+Uses Turso's HTTP API when TURSO_DB_URL + TURSO_AUTH_TOKEN are set.
+Falls back to local SQLite for local dev.
 
 All other modules do:
     from db import get_db, init_db
@@ -10,14 +10,19 @@ All other modules do:
 
 import os
 import sqlite3
+import json
+import requests as _requests
 
-TURSO_DB_URL    = os.getenv('TURSO_DB_URL', '')
+TURSO_DB_URL     = os.getenv('TURSO_DB_URL', '')      # e.g. libsql://autoreach-xxx.turso.io
 TURSO_AUTH_TOKEN = os.getenv('TURSO_AUTH_TOKEN', '')
 
-# ── Turso wrapper ─────────────────────────────────────────────────────────────
-# libsql returns plain tuples with no row_factory support.
-# We wrap it so every fetchone/fetchall returns _DictRow objects,
-# matching the sqlite3.Row interface used throughout the codebase.
+# Convert libsql:// → https:// for the HTTP API
+def _http_url():
+    url = TURSO_DB_URL.replace('libsql://', 'https://')
+    return url.rstrip('/')
+
+
+# ── Row wrapper ───────────────────────────────────────────────────────────────
 
 class _DictRow(dict):
     """Dict that also supports integer index access like sqlite3.Row."""
@@ -27,63 +32,105 @@ class _DictRow(dict):
         return super().__getitem__(key)
 
 
-class _TursoCursor:
-    def __init__(self, cursor):
-        self._cur = cursor
+# ── Turso HTTP connection ─────────────────────────────────────────────────────
 
-    @property
-    def description(self):
-        return self._cur.description
-
-    def _to_dict_row(self, row):
-        if row is None:
-            return None
-        if self._cur.description:
-            cols = [d[0] for d in self._cur.description]
-            return _DictRow(zip(cols, row))
-        return row
+class _TursoConn:
+    """
+    Mimics the sqlite3 connection interface but sends SQL to Turso's
+    HTTP pipeline API. Statements are queued and flushed on commit().
+    """
+    def __init__(self):
+        self._pending = []   # list of SQL strings + params queued for commit
+        self._last_rows = []
+        self._last_cols = []
 
     def execute(self, sql, params=()):
-        self._cur.execute(sql, params)
+        """
+        Execute immediately (for SELECTs) or queue for commit (for writes).
+        Returns self so callers can chain .fetchone() / .fetchall().
+        """
+        stmt = self._build_stmt(sql, params)
+        is_read = sql.strip().upper().startswith('SELECT')
+
+        if is_read:
+            result = self._pipeline([stmt])
+            rows_data = result[0].get('rows', [])
+            cols_data = result[0].get('cols', [])
+            self._last_cols = [c['name'] for c in cols_data]
+            self._last_rows = [
+                _DictRow(zip(self._last_cols, r)) for r in rows_data
+            ]
+        else:
+            # Queue write — will be sent on commit()
+            self._pending.append(stmt)
+            self._last_rows = []
+            self._last_cols = []
+
         return self
 
     def fetchone(self):
-        return self._to_dict_row(self._cur.fetchone())
+        return self._last_rows[0] if self._last_rows else None
 
     def fetchall(self):
-        return [self._to_dict_row(r) for r in self._cur.fetchall()]
-
-    def __iter__(self):
-        for row in self._cur.fetchall():
-            yield self._to_dict_row(row)
-
-
-class _TursoConn:
-    def __init__(self, conn):
-        self._conn = conn
-
-    def execute(self, sql, params=()):
-        cur = self._conn.execute(sql, params)
-        return _TursoCursor(cur)
+        return list(self._last_rows)
 
     def commit(self):
-        self._conn.commit()
+        if not self._pending:
+            return
+        stmts = list(self._pending)
+        stmts.append({"type": "close"})
+        self._pipeline(stmts)
+        self._pending.clear()
 
     def close(self):
-        self._conn.close()
+        # Flush any un-committed writes (shouldn't normally happen)
+        if self._pending:
+            self.commit()
+
+    # ── Internal ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _build_stmt(sql, params):
+        """Convert sql + params into a Turso pipeline statement object."""
+        args = []
+        for p in params:
+            if p is None:
+                args.append({"type": "null", "value": None})
+            elif isinstance(p, int):
+                args.append({"type": "integer", "value": str(p)})
+            elif isinstance(p, float):
+                args.append({"type": "float", "value": p})
+            else:
+                args.append({"type": "text", "value": str(p)})
+        return {"type": "execute", "stmt": {"sql": sql, "args": args}}
+
+    def _pipeline(self, stmts):
+        url = _http_url() + '/v2/pipeline'
+        headers = {
+            'Authorization': f'Bearer {TURSO_AUTH_TOKEN}',
+            'Content-Type': 'application/json',
+        }
+        resp = _requests.post(url, headers=headers,
+                              data=json.dumps({"requests": stmts}),
+                              timeout=15)
+        resp.raise_for_status()
+        results = resp.json().get('results', [])
+        # Each result has type "ok" or "error"
+        out = []
+        for r in results:
+            if r.get('type') == 'error':
+                raise Exception(f"Turso error: {r.get('error', {}).get('message', r)}")
+            if r.get('type') == 'ok':
+                out.append(r.get('response', {}).get('result', {}))
+        return out
 
 
 # ── Connection factory ────────────────────────────────────────────────────────
 
 def get_db():
-    """Return a DB connection. Turso if env vars are set, else local SQLite."""
+    """Return a DB connection. Turso HTTP if env vars are set, else local SQLite."""
     if TURSO_DB_URL and TURSO_AUTH_TOKEN:
-        try:
-            import libsql  # type: ignore
-            conn = libsql.connect(TURSO_DB_URL, auth_token=TURSO_AUTH_TOKEN)
-            return _TursoConn(conn)
-        except ImportError:
-            pass  # fall through to sqlite3
+        return _TursoConn()
 
     # Local SQLite fallback
     data_dir = os.getenv('DATA_DIR', '.')
