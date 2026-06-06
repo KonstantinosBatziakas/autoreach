@@ -58,7 +58,11 @@ class _TursoConn:
             cols_data = result[0].get('cols', [])
             self._last_cols = [c['name'] for c in cols_data]
             self._last_rows = [
-                _DictRow(zip(self._last_cols, r)) for r in rows_data
+                _DictRow(zip(self._last_cols, [
+                    cell.get('value') if isinstance(cell, dict) else cell
+                    for cell in r
+                ]))
+                for r in rows_data
             ]
         else:
             # Queue write — will be sent on commit()
