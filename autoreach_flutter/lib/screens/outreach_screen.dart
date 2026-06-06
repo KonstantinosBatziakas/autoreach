@@ -72,7 +72,9 @@ class _OutreachScreenState extends State<OutreachScreen> {
   }
 
   Future<void> _sendEmail(String businessName, String email, String subject, String body) async {
-    final token = await AuthService.getToken();
+    final token     = await AuthService.getToken();
+    final gmailUser = await SettingsService.getGmailUser();
+    final gmailPass = await SettingsService.getGmailPass();
     final resp = await http.post(
       Uri.parse('$_baseUrl/api/send-email'),
       headers: {
@@ -84,6 +86,8 @@ class _OutreachScreenState extends State<OutreachScreen> {
         'email': email,
         'subject': subject,
         'body': body,
+        'gmail_user': gmailUser,
+        'gmail_pass': gmailPass,
       }),
     ).timeout(const Duration(seconds: 20));
 

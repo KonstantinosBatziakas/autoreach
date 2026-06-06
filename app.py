@@ -613,17 +613,18 @@ def api_send_email():
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 
-    gmail_user = os.getenv('GMAIL_USER', '')
-    gmail_pass = os.getenv('GMAIL_APP_PASSWORD', '')
-
-    if not gmail_user or not gmail_pass:
-        return jsonify({'error': 'Gmail credentials not configured on server'}), 500
-
     data = request.get_json(silent=True) or {}
     business_name = (data.get('business_name') or '').strip()
     to_email      = (data.get('email') or '').strip()
     subject       = (data.get('subject') or '').strip()
     body          = (data.get('body') or '').strip()
+
+    # Gmail creds come from the client (each user uses their own account)
+    gmail_user = (data.get('gmail_user') or os.getenv('GMAIL_USER', '')).strip()
+    gmail_pass = (data.get('gmail_pass') or os.getenv('GMAIL_APP_PASSWORD', '')).strip()
+
+    if not gmail_user or not gmail_pass:
+        return jsonify({'error': 'Gmail credentials not provided. Set them in Settings.'}), 400
 
     if not to_email or not subject or not body:
         return jsonify({'error': 'email, subject, and body are required'}), 400
