@@ -10,6 +10,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.8; }
 nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; height: 58px; background: rgba(8,18,18,0.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(18px); }
+@media (max-width: 640px) { nav { padding: 0 16px; } .content { padding: 90px 16px 60px; } body { overflow-x: hidden; } }
 .nav-logo { font-size: 15px; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
 .nav-logo span { color: var(--coral); }
 .back-link { font-size: 12px; color: var(--dim); text-decoration: none; transition: color 0.15s; }

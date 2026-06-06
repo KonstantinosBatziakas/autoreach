@@ -854,6 +854,39 @@ footer a:hover { color: var(--teal); }
 
 @media (max-width: 640px) {
     footer { padding: 24px 20px; flex-direction: column; align-items: center; text-align: center; }
+    .footer-links { flex-wrap: wrap; justify-content: center; gap: 14px; }
+}
+
+/* ══════════════════════════════════════
+   MOBILE GLOBAL FIXES
+══════════════════════════════════════ */
+@media (max-width: 640px) {
+    /* Prevent any horizontal overflow */
+    body { overflow-x: hidden; }
+
+    /* Hero terminal — scale down on mobile */
+    .hero-right { width: 100%; overflow: hidden; }
+    .terminal-window { font-size: 11px; max-width: 100%; }
+
+    /* CTA install block — allow wrapping on mobile */
+    .cta-install { white-space: pre-wrap; word-break: break-all; font-size: 11px; }
+
+    /* Section padding tightening */
+    .features { padding: 60px 16px; }
+    .how { padding: 60px 16px; }
+    .preview-section { padding: 60px 16px; }
+    .cta-section { padding: 60px 16px; }
+    .support-section { padding: 60px 16px; }
+
+    /* Buttons full-width on very small screens */
+    .cta-buttons { flex-direction: column; align-items: center; }
+    .cta-buttons .btn { width: 100%; justify-content: center; }
+
+    /* Support box */
+    .support-box { padding: 28px 16px; }
+
+    /* Compliance page nav */
+    nav { padding: 0 16px; }
 }
 </style>
 </head>
