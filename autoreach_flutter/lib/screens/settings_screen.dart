@@ -10,8 +10,8 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _googleKey  = TextEditingController();
-  final _gmailUser  = TextEditingController();
-  final _gmailPass  = TextEditingController();
+  final _resendKey  = TextEditingController();
+  final _fromEmail  = TextEditingController();
   final _groqKey    = TextEditingController();
   final _senderName = TextEditingController();
   bool _loaded = false, _saving = false, _showPasswords = false;
@@ -21,8 +21,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _load() async {
     _googleKey.text  = await SettingsService.getGoogleApiKey();
-    _gmailUser.text  = await SettingsService.getGmailUser();
-    _gmailPass.text  = await SettingsService.getGmailPass();
+    _resendKey.text  = await SettingsService.getResendApiKey();
+    _fromEmail.text  = await SettingsService.getFromEmail();
     _groqKey.text    = await SettingsService.getGroqApiKey();
     _senderName.text = await SettingsService.getSenderName();
     setState(() => _loaded = true);
@@ -31,8 +31,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     await SettingsService.setGoogleApiKey(_googleKey.text.trim());
-    await SettingsService.setGmailUser(_gmailUser.text.trim());
-    await SettingsService.setGmailPass(_gmailPass.text.trim());
+    await SettingsService.setResendApiKey(_resendKey.text.trim());
+    await SettingsService.setFromEmail(_fromEmail.text.trim());
     await SettingsService.setGroqApiKey(_groqKey.text.trim());
     await SettingsService.setSenderName(_senderName.text.trim());
     setState(() => _saving = false);
@@ -61,9 +61,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _field(_senderName, 'Your Name / Company Name', Icons.person),
           _section('Google Maps API'),
           _field(_googleKey, 'Google Maps API Key', Icons.map, obscure: !_showPasswords),
-          _section('Gmail SMTP'),
-          _field(_gmailUser, 'Gmail Address', Icons.email),
-          _field(_gmailPass, 'Gmail App Password', Icons.lock, obscure: !_showPasswords),
+          _section('Resend (Email Sending)'),
+          _field(_resendKey, 'Resend API Key (free at resend.com)', Icons.send, obscure: !_showPasswords),
+          _field(_fromEmail, 'From Email (verified in Resend)', Icons.alternate_email),
           _section('Groq AI'),
           _field(_groqKey, 'Groq API Key', Icons.psychology, obscure: !_showPasswords),
           const SizedBox(height: 24),

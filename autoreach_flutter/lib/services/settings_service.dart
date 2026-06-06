@@ -14,16 +14,16 @@ class SettingsService {
   static Future<void> setGoogleApiKey(String v) async =>
       _storage.write(key: 'google_api_key', value: v);
 
-  // ── Gmail credentials ────────────────────────────────────────────────────
-  static Future<String> getGmailUser() async =>
-      await _storage.read(key: 'gmail_user') ?? '';
-  static Future<void> setGmailUser(String v) async =>
-      _storage.write(key: 'gmail_user', value: v);
+  // ── Resend credentials ───────────────────────────────────────────────────
+  static Future<String> getResendApiKey() async =>
+      await _storage.read(key: 'resend_api_key') ?? '';
+  static Future<void> setResendApiKey(String v) async =>
+      _storage.write(key: 'resend_api_key', value: v);
 
-  static Future<String> getGmailPass() async =>
-      await _storage.read(key: 'gmail_pass') ?? '';
-  static Future<void> setGmailPass(String v) async =>
-      _storage.write(key: 'gmail_pass', value: v);
+  static Future<String> getFromEmail() async =>
+      await _storage.read(key: 'from_email') ?? '';
+  static Future<void> setFromEmail(String v) async =>
+      _storage.write(key: 'from_email', value: v);
 
   // ── Groq API key ─────────────────────────────────────────────────────────
   static Future<String> getGroqApiKey() async =>

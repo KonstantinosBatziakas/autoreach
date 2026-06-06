@@ -72,9 +72,9 @@ class _OutreachScreenState extends State<OutreachScreen> {
   }
 
   Future<void> _sendEmail(String businessName, String email, String subject, String body) async {
-    final token     = await AuthService.getToken();
-    final gmailUser = await SettingsService.getGmailUser();
-    final gmailPass = await SettingsService.getGmailPass();
+    final token      = await AuthService.getToken();
+    final resendKey  = await SettingsService.getResendApiKey();
+    final fromEmail  = await SettingsService.getFromEmail();
     final resp = await http.post(
       Uri.parse('$_baseUrl/api/send-email'),
       headers: {
@@ -86,8 +86,8 @@ class _OutreachScreenState extends State<OutreachScreen> {
         'email': email,
         'subject': subject,
         'body': body,
-        'gmail_user': gmailUser,
-        'gmail_pass': gmailPass,
+        'resend_api_key': resendKey,
+        'from_email': fromEmail.isNotEmpty ? fromEmail : 'onboarding@resend.dev',
       }),
     ).timeout(const Duration(seconds: 20));
 
@@ -98,14 +98,21 @@ class _OutreachScreenState extends State<OutreachScreen> {
   }
 
   Future<void> _runCampaign() async {
-    final groqKey = await SettingsService.getGroqApiKey();
+    final groqKey   = await SettingsService.getGroqApiKey();
+    final resendKey = await SettingsService.getResendApiKey();
+
     if (groqKey.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Set your Groq API key in Settings first.'),
-          backgroundColor: Color(0xFFE74C3C),
-        ));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Set your Groq API key in Settings first.'),
+        backgroundColor: Color(0xFFE74C3C),
+      ));
+      return;
+    }
+    if (resendKey.isEmpty) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Set your Resend API key in Settings first. Free at resend.com.'),
+        backgroundColor: Color(0xFFE74C3C),
+      ));
       return;
     }
 

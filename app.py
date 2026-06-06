@@ -605,31 +605,26 @@ def api_leads():
 @web_login_required
 def api_send_email():
     """
-    Receive a ready-to-send email from the client and deliver it via Gmail SMTP.
-    Body JSON: {business_name, email, subject, body}
-    The AI generation (Groq) is done on the client side.
+    Receive a ready-to-send email from the client and deliver it via Resend HTTP API.
+    Body JSON: {business_name, email, subject, body, resend_api_key, from_email}
+    Groq generation and all credentials are handled client-side.
+    Resend is used because Render free tier blocks outbound SMTP.
     """
-    import smtplib
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
+    import requests as req
 
     data = request.get_json(silent=True) or {}
-    business_name = (data.get('business_name') or '').strip()
-    to_email      = (data.get('email') or '').strip()
-    subject       = (data.get('subject') or '').strip()
-    body          = (data.get('body') or '').strip()
+    business_name  = (data.get('business_name') or '').strip()
+    to_email       = (data.get('email') or '').strip()
+    subject        = (data.get('subject') or '').strip()
+    body           = (data.get('body') or '').strip()
+    resend_api_key = (data.get('resend_api_key') or '').strip()
+    from_email     = (data.get('from_email') or 'onboarding@resend.dev').strip()
 
-    # Gmail creds come from the client (each user uses their own account)
-    gmail_user = (data.get('gmail_user') or os.getenv('GMAIL_USER', '')).strip()
-    gmail_pass = (data.get('gmail_pass') or os.getenv('GMAIL_APP_PASSWORD', '')).strip()
-
-    if not gmail_user or not gmail_pass:
-        return jsonify({'error': 'Gmail credentials not provided. Set them in Settings.'}), 400
-
+    if not resend_api_key:
+        return jsonify({'error': 'Resend API key not provided. Get a free key at resend.com.'}), 400
     if not to_email or not subject or not body:
         return jsonify({'error': 'email, subject, and body are required'}), 400
 
-    # Build HTML email
     html = (
         "<!DOCTYPE html><html><head><style>"
         "body{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}"
@@ -647,14 +642,23 @@ def api_send_email():
     )
 
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From']    = gmail_user
-        msg['To']      = to_email
-        msg.attach(MIMEText(html, 'html'))
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, to_email, msg.as_string())
+        resp = req.post(
+            'https://api.resend.com/emails',
+            headers={
+                'Authorization': f'Bearer {resend_api_key}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'from': from_email,
+                'to': [to_email],
+                'subject': subject,
+                'html': html,
+            },
+            timeout=15,
+        )
+        if not resp.ok:
+            err = resp.json().get('message', resp.text)
+            return jsonify({'error': f'Resend error: {err}'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

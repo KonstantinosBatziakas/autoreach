@@ -23,13 +23,13 @@
           style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
       </label>
       <label style="font-size:13px; color:#aaa;">
-        Gmail Address
-        <input id="gmail-user" type="email" placeholder="you@gmail.com"
+        Resend API Key <span style="color:#555;">(free at <a href="https://resend.com" target="_blank" style="color:#4ecdc4;">resend.com</a> — 3,000 emails/month free)</span>
+        <input id="resend-key" type="password" placeholder="re_…"
           style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
       </label>
       <label style="font-size:13px; color:#aaa;">
-        Gmail App Password <span style="color:#555;">(16-char, not your login password)</span>
-        <input id="gmail-pass" type="password" placeholder="xxxx xxxx xxxx xxxx"
+        From Email <span style="color:#555;">(must be verified in Resend — use onboarding@resend.dev to test)</span>
+        <input id="from-email" type="email" placeholder="you@yourdomain.com"
           style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
       </label>
       <label style="font-size:13px; color:#aaa;">
@@ -109,13 +109,12 @@ async function callGroq(apiKey, businessName, address, language) {
 async function startCampaign() {
   _stop = false;
   const apiKey    = document.getElementById('groq-key').value.trim();
-  const gmailUser = document.getElementById('gmail-user').value.trim();
-  const gmailPass = document.getElementById('gmail-pass').value.trim();
+  const resendKey = document.getElementById('resend-key').value.trim();
+  const fromEmail = document.getElementById('from-email').value.trim() || 'onboarding@resend.dev';
   const lang      = document.getElementById('lang').value;
 
   if (!apiKey)    { alert('Please enter your Groq API key.'); return; }
-  if (!gmailUser) { alert('Please enter your Gmail address.'); return; }
-  if (!gmailPass) { alert('Please enter your Gmail App Password.'); return; }
+  if (!resendKey) { alert('Please enter your Resend API key. Get one free at resend.com.'); return; }
 
   document.getElementById('start-btn').disabled = true;
   document.getElementById('stop-btn').style.display = 'inline-block';
@@ -173,7 +172,7 @@ async function startCampaign() {
       const r = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ business_name: lead.name, email: lead.email, subject, body, gmail_user: gmailUser, gmail_pass: gmailPass }),
+        body: JSON.stringify({ business_name: lead.name, email: lead.email, subject, body, resend_api_key: resendKey, from_email: fromEmail }),
       });
       const result = await r.json();
       if (!r.ok) throw new Error(result.error || r.status);
