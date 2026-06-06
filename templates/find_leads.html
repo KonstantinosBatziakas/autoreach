@@ -1,36 +1,36 @@
 {% extends "base.html" %}
-
 {% block title %}Find Leads — AutoReach{% endblock %}
 {% block page_title %}Find Leads{% endblock %}
-{% block page_subtitle %}Search Google Maps for businesses to add to your pipeline{% endblock %}
+{% block page_subtitle %}Search Google Maps for businesses to target{% endblock %}
 
 {% block content %}
+<div style="max-width:560px;">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px;">Search Google Maps</div>
+    <form method="POST">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">City <span style="color:var(--coral);">*</span></label>
+          <input type="text" name="city" required placeholder="e.g. Athens, Thessaloniki" autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Business Type <span style="color:var(--coral);">*</span></label>
+          <input type="text" name="business_type" required placeholder="e.g. restaurants, gyms">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">⌕ Search</button>
+        <a href="{{ url_for('leads') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
 
-<div style="max-width:600px;">
-    <div class="card">
-        <div class="card-title">Search Parameters</div>
-        <form method="POST">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="city">City <span style="color:#f06060;">*</span></label>
-                    <input type="text" id="city" name="city" required placeholder="e.g. Athens, Thessaloniki">
-                </div>
-                <div class="form-group">
-                    <label for="business_type">Business Type <span style="color:#f06060;">*</span></label>
-                    <input type="text" id="business_type" name="business_type" required placeholder="e.g. restaurants, gyms, hotels">
-                </div>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Search Leads</button>
-                <a href="{{ url_for('leads') }}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
+  <div class="notice notice-info">
+    <span class="notice-icon">ℹ</span>
+    <div>
+      AutoReach queries Google Maps for matching businesses and saves their name, address, phone, and website.
+      After searching, use <strong>Scrape Emails</strong> on the Leads page to automatically find contact emails from each website.
     </div>
-
-    <div class="info-box">
-        <h3>How it works</h3>
-        Searches Google Maps for businesses matching your query, then fetches their phone number and website. Results are appended to your leads database. After searching, use <strong>Scrape Emails</strong> on the Leads page to automatically find contact emails from the business websites.
-    </div>
+  </div>
 </div>
-
 {% endblock %}

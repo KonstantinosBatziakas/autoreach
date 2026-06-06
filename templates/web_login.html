@@ -1,106 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — AutoReach</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: #1a2e2e;
-            color: #cde0de;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 40px;
-            width: 100%;
-            max-width: 380px;
-            backdrop-filter: blur(12px);
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .logo h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: 2px;
-        }
-        .logo p { font-size: 12px; color: #6a9090; margin-top: 6px; }
-        label {
-            display: block;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #6a9090;
-            margin-bottom: 8px;
-        }
-        input[type=password] {
-            width: 100%;
-            padding: 12px 14px;
-            background: rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px;
-            color: #cde0de;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.2s;
-            margin-bottom: 20px;
-        }
-        input[type=password]:focus { border-color: #4ecdc4; }
-        button {
-            width: 100%;
-            padding: 13px;
-            background: #e8806a;
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-            transition: background 0.15s;
-        }
-        button:hover { background: #c4614a; }
-        .error {
-            background: rgba(232,80,80,0.12);
-            border: 1px solid rgba(232,80,80,0.3);
-            color: #f07070;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 16px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — AutoReach</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0a0f;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      width: 100%;
+      max-width: 360px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px; height: 44px;
+      background: rgba(94,234,212,.1);
+      border: 1px solid rgba(94,234,212,.2);
+      border-radius: 12px;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    .logo h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -.02em;
+    }
+    .logo p { font-size: 13px; color: #475569; margin-top: 4px; }
+
+    .card {
+      background: #111118;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    input[type=password] {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0a0a0f;
+      border: 1px solid #2a2a3e;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .12s, box-shadow .12s;
+      margin-bottom: 16px;
+    }
+    input[type=password]:focus {
+      border-color: #5eead4;
+      box-shadow: 0 0 0 3px rgba(94,234,212,.08);
+    }
+
+    button {
+      width: 100%;
+      padding: 11px;
+      background: #5eead4;
+      border: none;
+      border-radius: 8px;
+      color: #0a0a0f;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .12s;
+    }
+    button:hover { opacity: .88; }
+
+    .flash-error {
+      background: rgba(251,113,133,.08);
+      border: 1px solid rgba(251,113,133,.2);
+      color: #fb7185;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo">
-            <h1>AUTOREACH</h1>
-            <p>Admin dashboard login</p>
-        </div>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="error">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
-        <form method="POST">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" autofocus placeholder="Enter dashboard password">
-            <button type="submit">Sign In →</button>
-        </form>
+  <div class="wrap">
+    <div class="logo">
+      <div class="logo-mark">◎</div>
+      <h1>AutoReach</h1>
+      <p>Sign in to your dashboard</p>
     </div>
+    <div class="card">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash-error">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+      <form method="POST">
+        <label for="password">Dashboard password</label>
+        <input type="password" id="password" name="password" autofocus placeholder="••••••••">
+        <button type="submit">Sign in →</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

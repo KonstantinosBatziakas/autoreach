@@ -1,31 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Import Leads — AutoReach{% endblock %}
 {% block page_title %}Import Leads{% endblock %}
-{% block page_subtitle %}Bulk upload leads from a CSV file{% endblock %}
+{% block page_subtitle %}Bulk upload from a CSV file{% endblock %}
 
 {% block content %}
-<div style="max-width:560px;">
-    <div class="info-box" style="margin-bottom:24px;">
-        <h3>CSV Format</h3>
-        Your CSV must have a header row. Supported columns:<br><br>
-        <code>name, address, phone, website, email, stage, notes</code><br><br>
-        Only <strong>name</strong> is required. Duplicate names are skipped automatically.
-        Stage must be one of: New, Contacted, Replied, Closed.
+<div style="max-width:520px;">
+  <div class="notice notice-info" style="margin-bottom:16px;">
+    <span class="notice-icon">ℹ</span>
+    <div>
+      CSV must have a header row. Supported columns: <code>name, address, phone, website, email, stage, notes</code><br>
+      Only <strong>name</strong> is required. Duplicates are skipped automatically.
     </div>
-    <div class="card">
-        <form method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label>CSV File</label>
-                <input type="file" name="csv_file" accept=".csv" required
-                       style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08);
-                              border-radius:6px; padding:10px 14px; color:var(--text); width:100%;
-                              font-family:var(--font); font-size:13px;">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Import</button>
-                <a href="{{ url_for('leads') }}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
-    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px;">Upload CSV</div>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">CSV file</label>
+        <input type="file" name="csv_file" accept=".csv" required
+               style="background:var(--bg); border:1px solid var(--border-hi); border-radius:var(--radius);
+                      padding:9px 12px; color:var(--text); width:100%; font-family:var(--font); font-size:13px;">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">↑ Import</button>
+        <a href="{{ url_for('leads') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

@@ -1,153 +1,145 @@
 {% extends "base.html" %}
-
-{% block title %}Outreach — AutoReach{% endblock %}
-{% block page_title %}Outreach{% endblock %}
-{% block page_subtitle %}Send AI-generated cold emails to your leads{% endblock %}
+{% block title %}Campaign — AutoReach{% endblock %}
+{% block page_title %}Campaign{% endblock %}
+{% block page_subtitle %}AI-generated cold emails sent from your browser{% endblock %}
 
 {% block content %}
-<div style="max-width:700px;">
+<div style="max-width:660px;">
 
-  <div class="info-box warning" style="margin-bottom:20px;">
-    <h3>ℹ️ How this works</h3>
-    Groq AI runs <strong>directly in your browser</strong> — no IP restrictions.
-    Emails are sent via <strong>Resend</strong> (free at resend.com, 3,000/month).
+  <div class="notice notice-info" style="margin-bottom:20px;">
+    <span class="notice-icon">ℹ</span>
+    <div>
+      Groq AI runs <strong>directly in your browser</strong> — no server IP restrictions.
+      Emails are sent via <strong>Resend</strong> (free tier: 3,000/month at resend.com).
+    </div>
   </div>
 
-  <!-- Config inputs -->
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-title">Campaign Settings</div>
-    <div style="display:flex; flex-direction:column; gap:14px; margin-top:4px;">
+  <!-- Settings card -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="margin-bottom:16px;">Campaign Settings</div>
+    <div style="display:flex; flex-direction:column; gap:13px;">
 
-      <label style="font-size:13px; color:#aaa;">
-        Your Name / Company Name <span style="color:#555;">(used in email sign-off)</span>
-        <input id="sender-name" type="text" placeholder="e.g. Alex from AutoReach"
-          style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
-      </label>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Your name / company <span style="color:var(--text-3);">(used in email sign-off)</span></label>
+        <input id="sender-name" type="text" placeholder="e.g. Alex from AutoReach">
+      </div>
 
-      <label style="font-size:13px; color:#aaa;">
-        Groq API Key <span style="color:#555;">(stays in your browser only)</span>
-        <input id="groq-key" type="password" placeholder="gsk_…"
-          style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
-      </label>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Groq API Key <span style="color:var(--text-3);">(stays in your browser only)</span></label>
+        <input id="groq-key" type="password" placeholder="gsk_…">
+      </div>
 
-      <label style="font-size:13px; color:#aaa;">
-        Resend API Key <span style="color:#555;">(free at <a href="https://resend.com" target="_blank" style="color:#4ecdc4;">resend.com</a>)</span>
-        <input id="resend-key" type="password" placeholder="re_…"
-          style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
-      </label>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Resend API Key <span style="color:var(--text-3);">(<a href="https://resend.com" target="_blank" style="color:var(--teal);">free at resend.com</a>)</span></label>
+        <input id="resend-key" type="password" placeholder="re_…">
+      </div>
 
-      <label style="font-size:13px; color:#aaa;">
-        From Email <span style="color:#555;">(verified domain in Resend, e.g. <code style="color:#aaa;">AutoReach &lt;hello@mail.autoreach.dev&gt;</code>)</span>
-        <input id="from-email" type="text" placeholder="AutoReach <hello@mail.autoreach.dev>"
-          style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
-      </label>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">From email <span style="color:var(--text-3);">(verified in Resend — e.g. <code>AutoReach &lt;hello@mail.autoreach.dev&gt;</code>)</span></label>
+        <input id="from-email" type="text" placeholder="AutoReach <hello@mail.autoreach.dev>">
+      </div>
 
-      <label style="font-size:13px; color:#aaa;">
-        Email language
-        <select id="lang" style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Language</label>
+        <select id="lang">
           <option value="english">English</option>
           <option value="greek">Greek</option>
         </select>
-      </label>
+      </div>
     </div>
   </div>
 
   <!-- Template picker -->
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-title">Email Template</div>
-    <p style="font-size:13px; color:#666; margin:4px 0 16px;">Choose the visual style for your emails.</p>
-    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px;" id="template-grid">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="margin-bottom:4px;">Email Template</div>
+    <p style="font-size:12px; color:var(--text-3); margin-bottom:14px;">Choose a visual style for your emails.</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:10px;" id="template-grid">
 
       <div class="tpl-card" data-id="classic" onclick="selectTemplate('classic')"
-        style="border:2px solid #4ecdc4; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
-        <div style="background:#000; padding:10px 12px;">
-          <div style="color:#fff; font-size:10px; font-weight:bold; letter-spacing:1px;">AUTOREACH</div>
-          <div style="color:#aaa; font-size:8px;">Digital Presence</div>
+        style="border:2px solid var(--teal); border-radius:8px; overflow:hidden; cursor:pointer; transition:all .15s;">
+        <div style="background:#000; padding:9px 10px;">
+          <div style="color:#fff; font-size:9px; font-weight:700; letter-spacing:1px;">AUTOREACH</div>
+          <div style="color:#888; font-size:7px;">Digital Presence</div>
         </div>
-        <div style="padding:8px 12px; background:#fff;">
-          <div style="color:#333; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        <div style="padding:7px 10px; background:#fff;">
+          <div style="color:#333; font-size:7px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
         </div>
-        <div style="padding:4px 12px; background:#f4f4f4; color:#aaa; font-size:8px;">© AutoReach</div>
-        <div style="padding:6px; text-align:center; background:#111; color:#4ecdc4; font-size:11px; font-weight:bold;">✓ Classic Black</div>
+        <div style="padding:5px; text-align:center; background:var(--bg-raised); color:var(--teal); font-size:10px; font-weight:600;">✓ Classic</div>
       </div>
 
       <div class="tpl-card" data-id="clean" onclick="selectTemplate('clean')"
-        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
-        <div style="background:#fff; padding:10px 12px; border-bottom:3px solid #3B82F6;">
-          <div style="color:#1a1a1a; font-size:10px; font-weight:bold;">AutoReach</div>
-          <div style="color:#6B7280; font-size:8px;">Digital Presence</div>
+        style="border:2px solid var(--border-hi); border-radius:8px; overflow:hidden; cursor:pointer; transition:all .15s;">
+        <div style="background:#fff; padding:9px 10px; border-bottom:2px solid #3B82F6;">
+          <div style="color:#1a1a1a; font-size:9px; font-weight:700;">AutoReach</div>
+          <div style="color:#6B7280; font-size:7px;">Digital Presence</div>
         </div>
-        <div style="padding:8px 12px; background:#fff;">
-          <div style="color:#374151; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        <div style="padding:7px 10px; background:#fff;">
+          <div style="color:#374151; font-size:7px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
         </div>
-        <div style="padding:4px 12px; background:#F9FAFB; color:#9CA3AF; font-size:8px;">© AutoReach</div>
-        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Clean White</div>
+        <div style="padding:5px; text-align:center; background:var(--bg-raised); color:var(--text-3); font-size:10px;">Clean</div>
       </div>
 
       <div class="tpl-card" data-id="purple" onclick="selectTemplate('purple')"
-        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
-        <div style="background:linear-gradient(135deg,#6C63FF,#9B59B6); padding:10px 12px;">
-          <div style="color:#fff; font-size:10px; font-weight:bold; letter-spacing:1px;">AUTOREACH</div>
-          <div style="color:rgba(255,255,255,0.7); font-size:8px;">Digital Presence</div>
+        style="border:2px solid var(--border-hi); border-radius:8px; overflow:hidden; cursor:pointer; transition:all .15s;">
+        <div style="background:linear-gradient(135deg,#6C63FF,#9B59B6); padding:9px 10px;">
+          <div style="color:#fff; font-size:9px; font-weight:700; letter-spacing:1px;">AUTOREACH</div>
+          <div style="color:rgba(255,255,255,.7); font-size:7px;">Digital Presence</div>
         </div>
-        <div style="padding:8px 12px; background:#fff;">
-          <div style="color:#2D2D2D; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        <div style="padding:7px 10px; background:#fff;">
+          <div style="color:#2D2D2D; font-size:7px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
         </div>
-        <div style="padding:4px 12px; background:#fff; color:#A78BFA; font-size:8px;">© AutoReach</div>
-        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Bold Purple</div>
+        <div style="padding:5px; text-align:center; background:var(--bg-raised); color:var(--text-3); font-size:10px;">Purple</div>
       </div>
 
       <div class="tpl-card" data-id="warm" onclick="selectTemplate('warm')"
-        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
-        <div style="background:linear-gradient(135deg,#F97316,#EF4444); padding:10px 12px;">
-          <div style="color:#fff; font-size:10px; font-weight:bold; letter-spacing:1px;">AUTOREACH</div>
-          <div style="color:rgba(255,255,255,0.8); font-size:8px;">Digital Presence</div>
+        style="border:2px solid var(--border-hi); border-radius:8px; overflow:hidden; cursor:pointer; transition:all .15s;">
+        <div style="background:linear-gradient(135deg,#F97316,#EF4444); padding:9px 10px;">
+          <div style="color:#fff; font-size:9px; font-weight:700; letter-spacing:1px;">AUTOREACH</div>
+          <div style="color:rgba(255,255,255,.8); font-size:7px;">Digital Presence</div>
         </div>
-        <div style="padding:8px 12px; background:#fff;">
-          <div style="color:#431407; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        <div style="padding:7px 10px; background:#fff;">
+          <div style="color:#431407; font-size:7px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
         </div>
-        <div style="padding:4px 12px; background:#FFF7ED; color:#FB923C; font-size:8px;">© AutoReach</div>
-        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Warm Orange</div>
+        <div style="padding:5px; text-align:center; background:var(--bg-raised); color:var(--text-3); font-size:10px;">Warm</div>
       </div>
 
       <div class="tpl-card" data-id="plain" onclick="selectTemplate('plain')"
-        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
-        <div style="padding:10px 12px; background:#fff;">
-          <div style="color:#222; font-size:8px; line-height:1.6;">Dear Team,<br>I hope this finds you well…<br><br>Best regards,<br>AutoReach</div>
+        style="border:2px solid var(--border-hi); border-radius:8px; overflow:hidden; cursor:pointer; transition:all .15s;">
+        <div style="padding:9px 10px; background:#fff;">
+          <div style="color:#222; font-size:7px; line-height:1.6;">Dear Team,<br>I hope this finds you well…<br><br>Best regards,<br>AutoReach</div>
         </div>
-        <div style="padding:4px 12px; background:#fff; color:#aaa; font-size:8px; border-top:1px solid #eee;">AutoReach Team</div>
-        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Plain Text</div>
+        <div style="padding:5px; text-align:center; background:var(--bg-raised); color:var(--text-3); font-size:10px;">Plain</div>
       </div>
 
     </div>
-    <p style="font-size:11px; color:#555; margin-top:12px;">💡 Plain Text has the highest deliverability — looks like a real personal email.</p>
+    <p style="font-size:11px; color:var(--text-3); margin-top:10px;">💡 Plain has the highest deliverability — looks like a personal email.</p>
   </div>
 
-  <!-- Action buttons -->
-  <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+  <!-- Buttons -->
+  <div style="display:flex; gap:8px; margin-bottom:16px;">
     <button id="start-btn" onclick="startCampaign()" class="btn btn-success">▶ Start Campaign</button>
-    <button id="stop-btn" onclick="stopCampaign()" class="btn btn-secondary" style="display:none;">⏹ Stop</button>
+    <button id="stop-btn" onclick="stopCampaign()" class="btn btn-danger" style="display:none;">⏹ Stop</button>
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
   </div>
 
   <!-- Progress -->
-  <div id="progress-box" class="card" style="display:none; margin-bottom:20px;">
-    <div class="card-title">Progress</div>
-    <div style="margin:12px 0 8px;">
-      <div style="background:#1a1a1a; border-radius:6px; height:8px; overflow:hidden;">
-        <div id="progress-bar" style="background:#4ecdc4; height:100%; width:0%; transition:width 0.4s;"></div>
-      </div>
+  <div id="progress-box" class="card" style="display:none; margin-bottom:16px;">
+    <div class="card-header" style="margin-bottom:10px;">
+      <div class="card-title">Progress</div>
+      <span id="progress-text" style="font-size:12px; color:var(--text-3);">Starting…</span>
     </div>
-    <div id="progress-text" style="font-size:13px; color:#aaa; margin-bottom:12px;">Starting…</div>
-    <div id="log" style="font-size:12px; color:#666; max-height:260px; overflow-y:auto; font-family:monospace; line-height:1.8;"></div>
+    <div class="progress-track" style="margin-bottom:14px;">
+      <div id="progress-bar" class="progress-fill" style="width:0%;"></div>
+    </div>
+    <div id="log" style="font-size:12px; color:var(--text-3); max-height:240px; overflow-y:auto; font-family:var(--mono); line-height:1.8;"></div>
   </div>
 
-  <!-- Summary -->
+  <!-- Done -->
   <div id="summary-box" class="card" style="display:none;">
-    <div class="card-title">✅ Campaign Complete</div>
-    <div id="summary-text" style="font-size:14px; color:#aaa; margin-top:8px;"></div>
-    <div style="margin-top:16px;">
-      <a href="{{ url_for('sent') }}" class="btn btn-success">View Sent Emails</a>
+    <div class="card-title" style="color:var(--green); margin-bottom:8px;">✓ Campaign Complete</div>
+    <div id="summary-text" style="font-size:13px; color:var(--text-2);"></div>
+    <div style="margin-top:14px;">
+      <a href="{{ url_for('sent') }}" class="btn btn-success btn-sm">View Sent Emails →</a>
     </div>
   </div>
 
@@ -156,24 +148,22 @@
 <script>
 let _stop = false;
 let _selectedTemplate = 'classic';
+const _LS = 'autoreach_outreach_settings';
 
-const _LS_KEY = 'autoreach_outreach_settings';
-
-function _saveSettings() {
-  const s = {
-    senderName:  document.getElementById('sender-name').value,
-    groqKey:     document.getElementById('groq-key').value,
-    resendKey:   document.getElementById('resend-key').value,
-    fromEmail:   document.getElementById('from-email').value,
-    lang:        document.getElementById('lang').value,
-    templateId:  _selectedTemplate,
-  };
-  localStorage.setItem(_LS_KEY, JSON.stringify(s));
+function _save() {
+  localStorage.setItem(_LS, JSON.stringify({
+    senderName: document.getElementById('sender-name').value,
+    groqKey:    document.getElementById('groq-key').value,
+    resendKey:  document.getElementById('resend-key').value,
+    fromEmail:  document.getElementById('from-email').value,
+    lang:       document.getElementById('lang').value,
+    templateId: _selectedTemplate,
+  }));
 }
 
-function _loadSettings() {
+function _load() {
   try {
-    const s = JSON.parse(localStorage.getItem(_LS_KEY) || '{}');
+    const s = JSON.parse(localStorage.getItem(_LS) || '{}');
     if (s.senderName) document.getElementById('sender-name').value = s.senderName;
     if (s.groqKey)    document.getElementById('groq-key').value    = s.groqKey;
     if (s.resendKey)  document.getElementById('resend-key').value  = s.resendKey;
@@ -183,147 +173,121 @@ function _loadSettings() {
   } catch(e) {}
 }
 
-// Auto-save on any input change
 document.addEventListener('DOMContentLoaded', () => {
-  _loadSettings();
+  _load();
   ['sender-name','groq-key','resend-key','from-email','lang'].forEach(id => {
-    document.getElementById(id).addEventListener('input', _saveSettings);
-    document.getElementById(id).addEventListener('change', _saveSettings);
+    document.getElementById(id).addEventListener('input',  _save);
+    document.getElementById(id).addEventListener('change', _save);
   });
 });
 
 function selectTemplate(id) {
   _selectedTemplate = id;
   document.querySelectorAll('.tpl-card').forEach(c => {
-    c.style.borderColor = c.dataset.id === id ? '#4ecdc4' : '#333';
+    const active = c.dataset.id === id;
+    c.style.borderColor = active ? 'var(--teal)' : 'var(--border-hi)';
     const label = c.querySelector('div:last-child');
-    if (label) label.style.color = c.dataset.id === id ? '#4ecdc4' : '#aaa';
+    if (label) { label.style.color = active ? 'var(--teal)' : 'var(--text-3)'; label.style.fontWeight = active ? '600' : '400'; }
   });
-  _saveSettings();
+  _save();
 }
 
 function stopCampaign() { _stop = true; }
 
-function log(msg, color) {
+function _log(msg, color) {
   const el = document.getElementById('log');
-  const line = document.createElement('div');
-  line.style.color = color || '#888';
-  line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
-  el.appendChild(line);
+  const d = document.createElement('div');
+  d.style.color = color || 'var(--text-3)';
+  d.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+  el.appendChild(d);
   el.scrollTop = el.scrollHeight;
 }
 
-function extractFirstName(email) {
-  // Try to get a name from the local part: john.smith@ → John
-  const local = email.split('@')[0];
-  const part = local.split(/[._\-+]/)[0];
-  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-}
-
-async function callGroq(apiKey, businessName, address, language, senderName) {
-  const recipientHint = `Sign the email as: ${senderName || 'AutoReach Team'}`;
+async function callGroq(apiKey, name, address, lang, senderName) {
+  const sign = `Sign the email as: ${senderName}`;
   const prompts = {
-    english: `Write a short professional cold outreach email offering web design and digital marketing services to the business "${businessName}" located at "${address}". Under 150 words. ${recipientHint}. Only return the email body, no subject line.`,
-    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση "${businessName}" που βρίσκεται στη διεύθυνση "${address}". Υπόγραψε ως: ${senderName || 'AutoReach Team'}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
+    english: `Write a short professional cold outreach email offering web design and digital marketing services to the business "${name}" located at "${address}". Under 150 words. ${sign}. Only return the email body, no subject line.`,
+    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση "${name}" που βρίσκεται στη διεύθυνση "${address}". Υπόγραψε ως: ${senderName}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
   };
-  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      messages: [{ role: 'user', content: prompts[language] || prompts.english }],
-      temperature: 0.7,
-      max_tokens: 300,
-    }),
+    body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: prompts[lang] || prompts.english }], temperature: 0.7, max_tokens: 300 }),
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Groq ${resp.status}`);
-  }
-  return (await resp.json()).choices[0].message.content.trim();
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Groq ${r.status}`); }
+  return (await r.json()).choices[0].message.content.trim();
 }
 
 async function startCampaign() {
   _stop = false;
   const senderName = document.getElementById('sender-name').value.trim() || 'AutoReach Team';
-  const apiKey     = document.getElementById('groq-key').value.trim();
+  const groqKey    = document.getElementById('groq-key').value.trim();
   const resendKey  = document.getElementById('resend-key').value.trim();
   const fromEmail  = document.getElementById('from-email').value.trim() || 'onboarding@resend.dev';
   const lang       = document.getElementById('lang').value;
 
-  if (!apiKey)    { alert('Please enter your Groq API key.'); return; }
-  if (!resendKey) { alert('Please enter your Resend API key. Get one free at resend.com.'); return; }
+  if (!groqKey)   { alert('Please enter your Groq API key.'); return; }
+  if (!resendKey) { alert('Please enter your Resend API key.'); return; }
 
   document.getElementById('start-btn').disabled = true;
-  document.getElementById('stop-btn').style.display = 'inline-block';
+  document.getElementById('stop-btn').style.display = 'inline-flex';
   document.getElementById('progress-box').style.display = 'block';
   document.getElementById('summary-box').style.display = 'none';
   document.getElementById('log').innerHTML = '';
 
-  log('Fetching leads…');
+  _log('Fetching leads…');
   let leads;
   try {
     const r = await fetch('/api/leads');
     leads = await r.json();
+    if (leads.error) throw new Error(leads.error);
   } catch(e) {
-    log('Failed to fetch leads: ' + e.message, '#e74c3c');
+    _log('Failed to fetch leads: ' + e.message, 'var(--coral)');
     document.getElementById('start-btn').disabled = false;
     document.getElementById('stop-btn').style.display = 'none';
     return;
   }
 
   if (!leads.length) {
-    log('No unsent leads found. Add leads with emails first.', '#e0b84a');
+    _log('No unsent leads with emails found.', 'var(--amber)');
     document.getElementById('start-btn').disabled = false;
     document.getElementById('stop-btn').style.display = 'none';
     return;
   }
 
-  log(`Found ${leads.length} lead(s) to contact.`, '#4ecdc4');
+  _log(`Found ${leads.length} lead(s) to contact.`, 'var(--teal)');
   let sent = 0, errors = 0;
 
   for (let i = 0; i < leads.length; i++) {
-    if (_stop) { log('⏹ Stopped by user.', '#e0b84a'); break; }
+    if (_stop) { _log('⏹ Stopped.', 'var(--amber)'); break; }
 
     const lead = leads[i];
     document.getElementById('progress-bar').style.width = Math.round((i / leads.length) * 100) + '%';
-    document.getElementById('progress-text').textContent = `${i + 1} / ${leads.length} — ${lead.name}`;
-    log(`Generating email for ${lead.name}…`);
+    document.getElementById('progress-text').textContent = `${i + 1} / ${leads.length}`;
+    _log(`Generating for ${lead.name}…`);
 
     let body;
     try {
-      body = await callGroq(apiKey, lead.name, lead.address || '', lang, senderName);
+      body = await callGroq(groqKey, lead.name, lead.address || '', lang, senderName);
     } catch(e) {
-      log(`  ✗ Groq error for ${lead.name}: ${e.message}`, '#e74c3c');
-      errors++;
-      continue;
+      _log(`  ✗ Groq: ${e.message}`, 'var(--coral)');
+      errors++; continue;
     }
 
-    const subject = lang === 'greek'
-      ? `Γρήγορη ερώτηση για ${lead.name}`
-      : `Quick question for ${lead.name}`;
+    const subject = lang === 'greek' ? `Γρήγορη ερώτηση για ${lead.name}` : `Quick question for ${lead.name}`;
 
     try {
       const r = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          business_name: lead.name,
-          email: lead.email,
-          subject,
-          body,
-          resend_api_key: resendKey,
-          from_email: fromEmail,
-          template_id: _selectedTemplate,
-          sender_name: senderName,
-        }),
+        body: JSON.stringify({ business_name: lead.name, email: lead.email, subject, body, resend_api_key: resendKey, from_email: fromEmail, template_id: _selectedTemplate, sender_name: senderName }),
       });
       const result = await r.json();
       if (!r.ok) throw new Error(result.error || r.status);
-      log(`  ✓ Sent to ${lead.email}`, '#7dd87d');
+      _log(`  ✓ Sent to ${lead.email}`, 'var(--green)');
       sent++;
     } catch(e) {
-      log(`  ✗ Send failed for ${lead.name}: ${e.message}`, '#e74c3c');
+      _log(`  ✗ Send: ${e.message}`, 'var(--coral)');
       errors++;
     }
 
@@ -331,12 +295,11 @@ async function startCampaign() {
   }
 
   document.getElementById('progress-bar').style.width = '100%';
-  document.getElementById('progress-text').textContent = 'Done.';
+  document.getElementById('progress-text').textContent = 'Done';
   document.getElementById('stop-btn').style.display = 'none';
   document.getElementById('start-btn').disabled = false;
   document.getElementById('summary-box').style.display = 'block';
-  document.getElementById('summary-text').textContent =
-    `Campaign finished — ${sent} email(s) sent, ${errors} error(s).`;
+  document.getElementById('summary-text').textContent = `${sent} email(s) sent · ${errors} error(s).`;
 }
 </script>
 {% endblock %}

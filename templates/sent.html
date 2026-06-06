@@ -1,45 +1,45 @@
 {% extends "base.html" %}
-
-{% block title %}Sent Emails — AutoReach{% endblock %}
+{% block title %}Sent — AutoReach{% endblock %}
 {% block page_title %}Sent Emails{% endblock %}
-{% block page_subtitle %}{{ sent_emails | length }} email{{ 's' if sent_emails | length != 1 }} sent{% endblock %}
+{% block page_subtitle %}{{ sent_emails | length }} email{{ 's' if sent_emails | length != 1 else '' }} sent{% endblock %}
 
 {% block topbar_actions %}
-<a href="{{ url_for('outreach') }}" class="btn btn-success">Run Outreach</a>
+  <a href="{{ url_for('outreach') }}" class="btn btn-primary btn-sm">◎ New Campaign</a>
 {% endblock %}
 
 {% block content %}
 
 {% if sent_emails %}
 <div class="table-wrap">
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Business</th>
-                <th>Email Address</th>
-                <th>Subject</th>
-                <th>Date Sent</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for e in sent_emails %}
-            <tr>
-                <td style="color:#444; width:40px;">{{ loop.index }}</td>
-                <td style="font-weight:600; color:#ddd;">{{ e.business_name }}</td>
-                <td><span style="color:#777;">{{ e.email }}</span></td>
-                <td>{{ e.subject }}</td>
-                <td><span style="color:#555; font-size:13px;">{{ e.date_sent }}</span></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:32px;">#</th>
+        <th>Business</th>
+        <th>Email</th>
+        <th>Subject</th>
+        <th>Sent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in sent_emails %}
+      <tr>
+        <td style="color:var(--text-3); font-family:var(--mono); font-size:11px;">{{ loop.index }}</td>
+        <td style="font-weight:600; color:var(--text);">{{ e.business_name }}</td>
+        <td><span style="font-family:var(--mono); font-size:12px; color:var(--text-2);">{{ e.email }}</span></td>
+        <td style="color:var(--text-2);">{{ e.subject }}</td>
+        <td style="font-family:var(--mono); font-size:11px; color:var(--text-3); white-space:nowrap;">{{ e.date_sent }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% else %}
 <div class="empty-state">
-    <div class="empty-icon">◷</div>
-    <p>No emails sent yet.</p>
-    <a href="{{ url_for('outreach') }}" class="btn btn-primary">Run First Campaign</a>
+  <div class="empty-icon">↗</div>
+  <h3>No emails sent yet</h3>
+  <p>Run your first campaign to start reaching out.</p>
+  <a href="{{ url_for('outreach') }}" class="btn btn-primary">◎ Start Campaign</a>
 </div>
 {% endif %}
 

@@ -1,158 +1,162 @@
 {% extends "base.html" %}
-
 {% block title %}Leads — AutoReach{% endblock %}
 {% block page_title %}Leads{% endblock %}
-{% block page_subtitle %}{{ businesses | length }} total businesses in database{% endblock %}
+{% block page_subtitle %}{{ businesses | length }} businesses tracked{% endblock %}
 
 {% block topbar_actions %}
-<div style="display:flex; gap:10px;">
-    <a href="{{ url_for('pipeline') }}" class="btn btn-secondary">Pipeline View</a>
-    <a href="{{ url_for('export_leads') }}" class="btn btn-secondary">Export CSV</a>
-    <form method="POST" action="{{ url_for('scrape_emails_route') }}" style="display:inline;">
-        <button type="submit" class="btn btn-secondary">Scrape Emails</button>
-    </form>
-    <a href="{{ url_for('add_lead') }}" class="btn btn-primary">Add Lead</a>
-</div>
+  <a href="{{ url_for('import_leads') }}" class="btn btn-secondary btn-sm">↑ Import</a>
+  <a href="{{ url_for('export_leads') }}" class="btn btn-secondary btn-sm">↓ Export</a>
+  <a href="{{ url_for('pipeline') }}" class="btn btn-secondary btn-sm">▥ Pipeline</a>
+  <a href="{{ url_for('add_lead') }}" class="btn btn-primary btn-sm">+ Add Lead</a>
 {% endblock %}
 
 {% block content %}
 
+{% set with_email    = businesses | selectattr('email') | list | length %}
+{% set without_email = businesses | rejectattr('email') | list | length %}
+
 <div class="action-bar">
-    <div class="action-bar-left">
-        <a href="{{ url_for('find_leads') }}" class="btn btn-secondary">Find from Google Maps</a>
-        <a href="{{ url_for('import_leads') }}" class="btn btn-secondary">Import CSV</a>
-    </div>
-    <span style="font-size:13px; color:#555;">
-        {{ businesses | selectattr('email') | list | length }} with email &nbsp;·&nbsp;
-        {{ businesses | rejectattr('email') | list | length }} missing email
-    </span>
+  <div class="action-bar-left">
+    <a href="{{ url_for('find_leads') }}" class="btn btn-secondary btn-sm">⌕ Find via Google Maps</a>
+    <form method="POST" action="{{ url_for('scrape_emails_route') }}" style="display:inline;">
+      <button type="submit" class="btn btn-secondary btn-sm">↯ Scrape Emails</button>
+    </form>
+  </div>
+  <div style="display:flex; gap:12px; font-size:12px; color:var(--text-3);">
+    <span><span style="color:var(--green); font-weight:600;">{{ with_email }}</span> with email</span>
+    <span>·</span>
+    <span><span style="color:var(--text-3);">{{ without_email }}</span> missing email</span>
+  </div>
 </div>
 
 {% if businesses %}
 <div class="table-wrap">
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Business Name</th>
-                <th>Address</th>
-                <th>Phone</th>
-                <th>Website</th>
-                <th>Email</th>
-                <th>Stage</th>
-                <th>Notes</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for b in businesses %}
-            <tr>
-                <td style="color:#444; width:40px;">{{ loop.index }}</td>
-                <td style="font-weight:600; color:#ddd;">{{ b.name }}</td>
-                <td>{{ b.address or '—' }}</td>
-                <td>{{ b.phone or '—' }}</td>
-                <td>
-                    {% if b.website %}
-                        <a href="{{ b.website }}" target="_blank" rel="noopener">
-                            {{ b.website | replace('https://','') | replace('http://','') | truncate(30) }}
-                        </a>
-                    {% else %}—{% endif %}
-                </td>
-                <td>
-                    {% if b.email %}
-                        <span class="badge badge-green">{{ b.email }}</span>
-                    {% else %}
-                        <span class="badge badge-gray">No email</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <select class="stage-select"
-                            data-name="{{ b.name }}"
-                            style="background:transparent; border:1px solid rgba(255,255,255,0.1);
-                                   border-radius:5px; padding:4px 8px; font-size:12px;
-                                   font-family:var(--font); cursor:pointer;
-                                   color:{{ stage_colors[b.stage or 'New'] }};">
-                        {% for s in stages %}
-                        <option value="{{ s }}" {% if (b.stage or 'New') == s %}selected{% endif %}
-                                style="background:#1a2e2e; color:{{ stage_colors[s] }};">
-                            {{ s }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td>
-                    <input type="text"
-                           class="notes-input"
-                           data-name="{{ b.name }}"
-                           value="{{ b.notes or '' }}"
-                           placeholder="Add note…"
-                           style="background:transparent; border:1px solid rgba(255,255,255,0.07);
-                                  border-radius:5px; padding:4px 8px; font-size:12px;
-                                  font-family:var(--font); color:var(--text-dim); width:150px;">
-                </td>
-                <td>
-                    <form method="POST" action="{{ url_for('delete_lead') }}"
-                          onsubmit="return confirm('Delete {{ b.name }}?');" style="display:inline;">
-                        <input type="hidden" name="name" value="{{ b.name }}">
-                        <button type="submit" class="btn btn-danger"
-                                style="padding:4px 10px; font-size:11px;">✕</button>
-                    </form>
-                </td>
-            </tr>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:32px;">#</th>
+        <th>Business</th>
+        <th>Address</th>
+        <th>Contact</th>
+        <th>Stage</th>
+        <th>Notes</th>
+        <th style="width:36px;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in businesses %}
+      {% set stage_color = stage_colors[b.stage or 'New'] %}
+      <tr>
+        <td style="color:var(--text-3); font-family:var(--mono); font-size:11px;">{{ loop.index }}</td>
+
+        <td>
+          <div style="font-weight:600; color:var(--text); font-size:13px;">{{ b.name }}</div>
+          {% if b.website %}
+            <a href="{{ b.website }}" target="_blank" rel="noopener"
+               style="font-size:11px; color:var(--text-3); font-family:var(--mono);">
+              {{ b.website | replace('https://','') | replace('http://','') | truncate(32) }}
+            </a>
+          {% endif %}
+        </td>
+
+        <td style="font-size:12px; color:var(--text-3); max-width:160px;">
+          {{ b.address | truncate(40) if b.address else '—' }}
+        </td>
+
+        <td>
+          {% if b.email %}
+            <span class="badge badge-teal">{{ b.email }}</span>
+          {% elif b.phone %}
+            <span class="badge badge-gray">{{ b.phone }}</span>
+          {% else %}
+            <span class="badge badge-gray" style="opacity:.5;">no contact</span>
+          {% endif %}
+        </td>
+
+        <td>
+          <select class="stage-select" data-name="{{ b.name }}"
+            style="background:transparent; border:1px solid var(--border-hi); border-radius:6px;
+                   padding:4px 8px; font-size:12px; font-family:var(--font); cursor:pointer;
+                   color:{{ stage_color }}; min-width:110px;">
+            {% for s in stages %}
+              <option value="{{ s }}" {% if (b.stage or 'New') == s %}selected{% endif %}
+                      style="background:var(--bg-raised); color:{{ stage_colors[s] }};">
+                {{ s }}
+              </option>
             {% endfor %}
-        </tbody>
-    </table>
+          </select>
+        </td>
+
+        <td>
+          <input type="text" class="notes-input" data-name="{{ b.name }}"
+                 value="{{ b.notes or '' }}" placeholder="Add note…"
+                 style="background:transparent; border:1px solid transparent; border-radius:6px;
+                        padding:4px 8px; font-size:12px; font-family:var(--font);
+                        color:var(--text-2); width:160px; transition:border-color .15s;">
+        </td>
+
+        <td>
+          <form method="POST" action="{{ url_for('delete_lead') }}"
+                onsubmit="return confirm('Delete {{ b.name }}?');">
+            <button type="submit" class="btn btn-danger btn-sm" style="padding:3px 8px; font-size:11px;">✕</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
+
 {% else %}
 <div class="empty-state">
-    <div class="empty-icon">◈</div>
-    <p>No leads yet. Add some to get started.</p>
-    <div style="display:flex; gap:10px; justify-content:center;">
-        <a href="{{ url_for('find_leads') }}" class="btn btn-primary">Find via Google Maps</a>
-        <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">Add Manually</a>
-    </div>
+  <div class="empty-icon">◈</div>
+  <h3>No leads yet</h3>
+  <p>Find businesses or add them manually to get started.</p>
+  <div style="display:flex; gap:8px; justify-content:center;">
+    <a href="{{ url_for('find_leads') }}" class="btn btn-primary">⌕ Find via Google Maps</a>
+    <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">+ Add Manually</a>
+  </div>
 </div>
 {% endif %}
 
 <script>
-// Stage dropdown — instant AJAX save
+const _stageColors = {{ stage_colors | tojson }};
+
 document.querySelectorAll('.stage-select').forEach(sel => {
-    sel.addEventListener('change', async function() {
-        const colors = {{ stage_colors | tojson }};
-        try {
-            const resp = await fetch('/update_stage', {
-                method: 'POST',
-                headers: {'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},
-                body: `name=${encodeURIComponent(this.dataset.name)}&stage=${encodeURIComponent(this.value)}`
-            });
-            const data = await resp.json();
-            if (data.ok) {
-                this.style.color = colors[this.value];
-                this.style.borderColor = colors[this.value];
-                setTimeout(() => this.style.borderColor = 'rgba(255,255,255,0.1)', 1000);
-            }
-        } catch(e) { console.error('Stage update failed', e); }
-    });
+  sel.addEventListener('change', async function() {
+    try {
+      const resp = await fetch('/update_stage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+        body: `name=${encodeURIComponent(this.dataset.name)}&stage=${encodeURIComponent(this.value)}`
+      });
+      if ((await resp.json()).ok) {
+        this.style.color = _stageColors[this.value];
+      }
+    } catch(e) {}
+  });
 });
 
-// Notes input — debounced auto-save (800ms after typing stops)
 document.querySelectorAll('.notes-input').forEach(inp => {
-    let timer;
-    inp.addEventListener('input', function() {
-        clearTimeout(timer);
-        const el = this;
-        timer = setTimeout(async () => {
-            try {
-                await fetch('/update_notes', {
-                    method: 'POST',
-                    headers: {'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},
-                    body: `name=${encodeURIComponent(el.dataset.name)}&notes=${encodeURIComponent(el.value)}`
-                });
-                el.style.borderColor = '#4ecdc4';
-                setTimeout(() => el.style.borderColor = 'rgba(255,255,255,0.07)', 1000);
-            } catch(e) { console.error('Notes save failed', e); }
-        }, 800);
-    });
+  inp.addEventListener('focus', function() { this.style.borderColor = 'var(--border-hi)'; });
+  inp.addEventListener('blur',  function() { this.style.borderColor = 'transparent'; });
+
+  let timer;
+  inp.addEventListener('input', function() {
+    clearTimeout(timer);
+    const el = this;
+    timer = setTimeout(async () => {
+      try {
+        await fetch('/update_notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `name=${encodeURIComponent(el.dataset.name)}&notes=${encodeURIComponent(el.value)}`
+        });
+        el.style.borderColor = 'var(--teal)';
+        setTimeout(() => el.style.borderColor = 'transparent', 1200);
+      } catch(e) {}
+    }, 700);
+  });
 });
 </script>
 
