@@ -1,8 +1,8 @@
-import csv
 import re
 import time
 import requests
 from bs4 import BeautifulSoup
+from db import get_db
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -35,11 +35,11 @@ def find_email_for_business(website):
             return email
     return ""
 
-def scrape_emails(csv_file="businesses.csv"):
-    rows = []
-    with open(csv_file, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
+def scrape_emails():
+    db = get_db()
+    rows = [dict(r) for r in db.execute('SELECT id, name, website, email FROM businesses ORDER BY id').fetchall()]
+    db.close()
+
     for i, business in enumerate(rows):
         if business.get("email"):
             print(f"[{i+1}] {business['name']} - already has email, skipping")
@@ -48,16 +48,15 @@ def scrape_emails(csv_file="businesses.csv"):
         email = find_email_for_business(business.get("website", ""))
         if email:
             print(f"     Found: {email}")
-            rows[i]["email"] = email
+            db2 = get_db()
+            db2.execute('UPDATE businesses SET email = ? WHERE id = ?', (email, business['id']))
+            db2.commit()
+            db2.close()
         else:
             print(f"     No email found")
         time.sleep(2)
-    with open(csv_file, "w", newline="", encoding="utf-8") as f:
-        fieldnames = ["name", "address", "phone", "website", "email"]
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-    print("\nDone! businesses.csv updated.")
+
+    print("\nDone! Business emails updated in database.")
 
 if __name__ == "__main__":
     scrape_emails()

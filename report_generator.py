@@ -1,18 +1,10 @@
-import csv
-import os
 from datetime import datetime
-from emailer import SENT_LOG_FILE, initialize_sent_log
+from db import get_db
 
 def generate_report():
-    initialize_sent_log()
-
-    if not os.path.exists(SENT_LOG_FILE):
-        print("No sent emails yet!")
-        return
-
-    with open(SENT_LOG_FILE, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
+    db = get_db()
+    rows = [dict(r) for r in db.execute('SELECT * FROM sent_log ORDER BY id').fetchall()]
+    db.close()
 
     if not rows:
         print("No sent emails yet!")
@@ -20,7 +12,7 @@ def generate_report():
 
     total_sent = len(rows)
     today_str = datetime.now().strftime("%Y-%m-%d")
-    today_count = sum(1 for row in rows if row["date_sent"].startswith(today_str))
+    today_count = sum(1 for row in rows if row.get("date_sent", "").startswith(today_str))
 
     print("\n=== Email Outreach Report ===")
     print(f"Total emails sent: {total_sent}")

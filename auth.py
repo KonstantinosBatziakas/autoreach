@@ -20,25 +20,22 @@ Required environment variables (set in Railway):
 """
 
 import os
-import sqlite3
 import secrets
 import hashlib
 import hmac
-import json
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 import jwt
 import requests as req_lib
 from flask import Blueprint, request, jsonify, redirect
+from db import get_db, init_db
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # ── Config ────────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
 BASE_URL   = os.getenv('BASE_URL', 'https://app.autoreach.dev')
-_DATA_DIR  = os.getenv('DATA_DIR', '.')
-DB_PATH    = os.getenv('DB_PATH', os.path.join(_DATA_DIR, 'autoreach_users.db'))
 
 GITHUB_CLIENT_ID     = os.getenv('GITHUB_CLIENT_ID', '')
 GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET', '')
@@ -48,37 +45,6 @@ GOOGLE_CLIENT_ID     = os.getenv('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
 
 FLUTTER_SCHEME = 'autoreach://callback'
-
-# ── Database ──────────────────────────────────────────────────────────────────
-def get_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_db():
-    with get_db() as db:
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                provider    TEXT NOT NULL,          -- 'email', 'github', 'discord', 'google'
-                provider_id TEXT NOT NULL,          -- email address OR provider's user ID
-                email       TEXT,
-                name        TEXT,
-                avatar_url  TEXT,
-                password_hash TEXT,                 -- only for provider='email'
-                created_at  TEXT DEFAULT (datetime('now')),
-                UNIQUE(provider, provider_id)
-            )
-        """)
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS oauth_state (
-                state      TEXT PRIMARY KEY,
-                provider   TEXT NOT NULL,
-                created_at TEXT DEFAULT (datetime('now'))
-            )
-        """)
-        db.commit()
 
 # ── JWT helpers ───────────────────────────────────────────────────────────────
 def make_jwt(user_id: int, email: str, name: str) -> str:
@@ -128,41 +94,45 @@ def check_password(password: str, stored: str) -> bool:
 # ── OAuth state helpers ───────────────────────────────────────────────────────
 def new_state(provider: str) -> str:
     state = secrets.token_urlsafe(32)
-    with get_db() as db:
-        # Clean up old states (>10 min) while we're here
-        db.execute("DELETE FROM oauth_state WHERE created_at < datetime('now', '-10 minutes')")
-        db.execute("INSERT INTO oauth_state (state, provider) VALUES (?, ?)", (state, provider))
-        db.commit()
+    db = get_db()
+    db.execute("DELETE FROM oauth_state WHERE created_at < datetime('now', '-10 minutes')")
+    db.execute("INSERT INTO oauth_state (state, provider) VALUES (?, ?)", (state, provider))
+    db.commit()
+    db.close()
     return state
 
 def consume_state(state: str) -> str | None:
     """Returns the provider if state is valid, else None. Deletes it."""
-    with get_db() as db:
-        row = db.execute(
-            "SELECT provider FROM oauth_state WHERE state = ? AND created_at > datetime('now', '-10 minutes')",
-            (state,)
-        ).fetchone()
-        if row:
-            db.execute("DELETE FROM oauth_state WHERE state = ?", (state,))
-            db.commit()
-            return row['provider']
+    db = get_db()
+    row = db.execute(
+        "SELECT provider FROM oauth_state WHERE state = ? AND created_at > datetime('now', '-10 minutes')",
+        (state,)
+    ).fetchone()
+    if row:
+        db.execute("DELETE FROM oauth_state WHERE state = ?", (state,))
+        db.commit()
+        db.close()
+        return row['provider']
+    db.close()
     return None
 
-def upsert_user(provider, provider_id, email=None, name=None, avatar_url=None) -> sqlite3.Row:
-    with get_db() as db:
-        db.execute("""
-            INSERT INTO users (provider, provider_id, email, name, avatar_url)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(provider, provider_id) DO UPDATE SET
-                email      = excluded.email,
-                name       = excluded.name,
-                avatar_url = excluded.avatar_url
-        """, (provider, str(provider_id), email, name, avatar_url))
-        db.commit()
-        return db.execute(
-            "SELECT * FROM users WHERE provider = ? AND provider_id = ?",
-            (provider, str(provider_id))
-        ).fetchone()
+def upsert_user(provider, provider_id, email=None, name=None, avatar_url=None):
+    db = get_db()
+    db.execute("""
+        INSERT INTO users (provider, provider_id, email, name, avatar_url)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(provider, provider_id) DO UPDATE SET
+            email      = excluded.email,
+            name       = excluded.name,
+            avatar_url = excluded.avatar_url
+    """, (provider, str(provider_id), email, name, avatar_url))
+    db.commit()
+    user = db.execute(
+        "SELECT * FROM users WHERE provider = ? AND provider_id = ?",
+        (provider, str(provider_id))
+    ).fetchone()
+    db.close()
+    return user
 
 # ── Email + Password ──────────────────────────────────────────────────────────
 @auth_bp.route('/register', methods=['POST'])
@@ -177,21 +147,23 @@ def register():
     if len(password) < 8:
         return jsonify({'error': 'Password must be at least 8 characters'}), 400
 
-    with get_db() as db:
-        existing = db.execute(
-            "SELECT id FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
-        ).fetchone()
-        if existing:
-            return jsonify({'error': 'Account already exists — please log in'}), 409
+    db = get_db()
+    existing = db.execute(
+        "SELECT id FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
+    ).fetchone()
+    if existing:
+        db.close()
+        return jsonify({'error': 'Account already exists — please log in'}), 409
 
-        db.execute("""
-            INSERT INTO users (provider, provider_id, email, name, password_hash)
-            VALUES ('email', ?, ?, ?, ?)
-        """, (email, email, name, hash_password(password)))
-        db.commit()
-        user = db.execute(
-            "SELECT * FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
-        ).fetchone()
+    db.execute("""
+        INSERT INTO users (provider, provider_id, email, name, password_hash)
+        VALUES ('email', ?, ?, ?, ?)
+    """, (email, email, name, hash_password(password)))
+    db.commit()
+    user = db.execute(
+        "SELECT * FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
+    ).fetchone()
+    db.close()
 
     token = make_jwt(user['id'], user['email'], user['name'])
     return jsonify({'token': token, 'user': {'id': user['id'], 'email': email, 'name': name}}), 201
@@ -206,10 +178,11 @@ def login():
     if not email or not password:
         return jsonify({'error': 'Email and password required'}), 400
 
-    with get_db() as db:
-        user = db.execute(
-            "SELECT * FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
-        ).fetchone()
+    db = get_db()
+    user = db.execute(
+        "SELECT * FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
+    ).fetchone()
+    db.close()
 
     if not user or not check_password(password, user['password_hash'] or ''):
         return jsonify({'error': 'Invalid email or password'}), 401
@@ -390,4 +363,5 @@ def me():
     return jsonify(request.user)
 
 # ── Init DB on import ─────────────────────────────────────────────────────────
-init_db()
+# init_db() is called from app.py on startup via db.init_db()
+# No need to call it again here.

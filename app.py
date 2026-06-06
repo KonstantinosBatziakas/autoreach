@@ -14,12 +14,16 @@ from email_scraper import scrape_emails
 from report_generator import generate_report
 from auth import auth_bp
 from followup import run_followups, get_followup_stats
+from db import get_db, init_db
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
 CORS(app, supports_credentials=False)
 
 app.register_blueprint(auth_bp)
+
+# Ensure all DB tables exist on startup
+init_db()
 
 # ── Web UI auth ───────────────────────────────────────────────
 WEB_PASSWORD = os.getenv('WEB_PASSWORD', '')
@@ -81,12 +85,6 @@ def web_logout():
     session.pop('web_authed', None)
     return redirect(url_for('web_login'))
 
-# On Fly.io, persist data files to the mounted volume at /data
-DATA_DIR = os.getenv('DATA_DIR', '.')
-os.makedirs(DATA_DIR, exist_ok=True)
-BUSINESSES_CSV = os.path.join(DATA_DIR, 'businesses.csv')
-SENT_LOG_CSV   = os.path.join(DATA_DIR, 'sent_log.csv')
-
 PIPELINE_STAGES = ['New', 'Contacted', 'Replied', 'Closed']
 STAGE_COLORS = {
     'New':       '#6a9090',
@@ -95,58 +93,60 @@ STAGE_COLORS = {
     'Closed':    '#7dd87d',
 }
 
+# ── DB-backed data helpers ────────────────────────────────────────────────────
+
 def read_businesses():
-    businesses = []
-    if os.path.exists(BUSINESSES_CSV):
-        with open(BUSINESSES_CSV, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if 'stage' not in row or not row['stage']:
-                    row['stage'] = 'New'
-                businesses.append(row)
-    return businesses
+    db = get_db()
+    rows = db.execute('SELECT * FROM businesses ORDER BY id').fetchall()
+    db.close()
+    result = []
+    for row in rows:
+        d = dict(row)
+        if not d.get('stage'):
+            d['stage'] = 'New'
+        result.append(d)
+    return result
 
 def write_businesses(businesses):
-    if not businesses:
-        return
-    fieldnames = ['name', 'address', 'phone', 'website', 'email', 'stage', 'notes']
-    with open(BUSINESSES_CSV, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
-        writer.writeheader()
-        for b in businesses:
-            if 'stage' not in b or not b['stage']:
-                b['stage'] = 'New'
-            if 'notes' not in b:
-                b['notes'] = ''
-            writer.writerow(b)
+    """Full-replace: delete all rows and re-insert (used for bulk updates)."""
+    db = get_db()
+    db.execute('DELETE FROM businesses')
+    for b in businesses:
+        db.execute(
+            'INSERT INTO businesses (name, address, phone, website, email, stage, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (
+                b.get('name', ''),
+                b.get('address', ''),
+                b.get('phone', ''),
+                b.get('website', ''),
+                b.get('email', ''),
+                b.get('stage', 'New') or 'New',
+                b.get('notes', ''),
+            )
+        )
+    db.commit()
+    db.close()
 
 def read_sent_log():
-    sent_emails = []
-    if os.path.exists(SENT_LOG_CSV):
-        with open(SENT_LOG_CSV, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                sent_emails.append(row)
-    return sent_emails
+    db = get_db()
+    rows = db.execute('SELECT * FROM sent_log ORDER BY id').fetchall()
+    db.close()
+    return [dict(row) for row in rows]
 
 def count_stats():
-    businesses = read_businesses()
-    sent_emails = read_sent_log()
-    from followup import _read_followup_log
-    followup_rows = _read_followup_log()
-    # Leads that stopped sequence = replied
-    replied_emails = set()
-    from collections import Counter
-    step_counter = Counter(r['email'].lower() for r in followup_rows)
-    # A lead "replied" if they were in sent_log but sequence stopped before step 14
-    # Simpler: count leads whose stage is 'Replied'
-    replied_count = sum(1 for b in businesses if b.get('stage') == 'Replied')
+    db = get_db()
+    total_leads      = db.execute('SELECT COUNT(*) FROM businesses').fetchone()[0]
+    emails_sent      = db.execute('SELECT COUNT(*) FROM sent_log').fetchone()[0]
+    leads_with_email = db.execute("SELECT COUNT(*) FROM businesses WHERE email != ''").fetchone()[0]
+    replied_count    = db.execute("SELECT COUNT(*) FROM businesses WHERE stage = 'Replied'").fetchone()[0]
+    followups_sent   = db.execute('SELECT COUNT(*) FROM followup_log').fetchone()[0]
+    db.close()
     return {
-        'total_leads': len(businesses),
-        'emails_sent': len(sent_emails),
-        'leads_with_emails': sum(1 for b in businesses if b.get('email')),
+        'total_leads': total_leads,
+        'emails_sent': emails_sent,
+        'leads_with_emails': leads_with_email,
         'replied': replied_count,
-        'followups_sent': len(followup_rows),
+        'followups_sent': followups_sent,
     }
 
 @app.route('/')
@@ -180,13 +180,10 @@ def update_stage():
     stage = request.form.get('stage', 'New').strip()
     if stage not in PIPELINE_STAGES:
         return jsonify({'error': 'Invalid stage'}), 400
-    businesses = read_businesses()
-    for b in businesses:
-        if b.get('name', '').strip() == name:
-            b['stage'] = stage
-            break
-    write_businesses(businesses)
-    # Support both AJAX and form POST
+    db = get_db()
+    db.execute("UPDATE businesses SET stage = ? WHERE name = ?", (stage, name))
+    db.commit()
+    db.close()
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'ok': True, 'stage': stage})
     return redirect(request.referrer or url_for('leads'))
@@ -206,18 +203,18 @@ def add_lead():
             flash('Business name is required.', 'error')
             return render_template('add_lead.html')
 
-        businesses = read_businesses()
-        businesses.append({
-            'name': name, 'address': address, 'phone': phone,
-            'website': website, 'email': email, 'stage': 'New', 'notes': notes
-        })
-        write_businesses(businesses)
+        db = get_db()
+        db.execute(
+            'INSERT INTO businesses (name, address, phone, website, email, stage, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (name, address, phone, website, email, 'New', notes)
+        )
+        db.commit()
+        db.close()
         flash(f'Successfully added {name} to leads!', 'success')
         return redirect(url_for('leads'))
 
     return render_template('add_lead.html')
 
-TEMPLATE_FILE = os.path.join(DATA_DIR, 'email_template.txt')
 DEFAULT_TEMPLATE = """Hi there,
 
 I came across {name} and wanted to reach out about your online presence.
@@ -230,14 +227,22 @@ Best regards,
 {sender_name}"""
 
 def get_email_template():
-    if os.path.exists(TEMPLATE_FILE):
-        with open(TEMPLATE_FILE, 'r', encoding='utf-8') as f:
-            return f.read()
+    db = get_db()
+    row = db.execute("SELECT value FROM settings WHERE key = 'email_template'").fetchone()
+    db.close()
+    if row:
+        return row[0] or DEFAULT_TEMPLATE
     return DEFAULT_TEMPLATE
 
 def save_email_template(content):
-    with open(TEMPLATE_FILE, 'w', encoding='utf-8') as f:
-        f.write(content)
+    db = get_db()
+    db.execute(
+        "INSERT INTO settings (key, value) VALUES ('email_template', ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (content,)
+    )
+    db.commit()
+    db.close()
 
 @app.route('/email_templates', methods=['GET', 'POST'])
 @web_login_required
@@ -281,25 +286,32 @@ def import_leads():
             content = f.read().decode('utf-8')
             reader = csv.DictReader(io.StringIO(content))
             imported = list(reader)
-            existing = read_businesses()
-            existing_names = {b.get('name','').strip().lower() for b in existing}
+            db = get_db()
+            existing_names = {
+                row[0].lower()
+                for row in db.execute('SELECT name FROM businesses').fetchall()
+            }
             added = 0
             for row in imported:
                 name = (row.get('name') or '').strip()
                 if not name or name.lower() in existing_names:
                     continue
-                existing.append({
-                    'name':    name,
-                    'address': row.get('address', '').strip(),
-                    'phone':   row.get('phone', '').strip(),
-                    'website': row.get('website', '').strip(),
-                    'email':   row.get('email', '').strip(),
-                    'stage':   row.get('stage', 'New').strip() or 'New',
-                    'notes':   row.get('notes', '').strip(),
-                })
+                db.execute(
+                    'INSERT INTO businesses (name, address, phone, website, email, stage, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    (
+                        name,
+                        row.get('address', '').strip(),
+                        row.get('phone', '').strip(),
+                        row.get('website', '').strip(),
+                        row.get('email', '').strip(),
+                        row.get('stage', 'New').strip() or 'New',
+                        row.get('notes', '').strip(),
+                    )
+                )
                 existing_names.add(name.lower())
                 added += 1
-            write_businesses(existing)
+            db.commit()
+            db.close()
             flash(f'Imported {added} new leads ({len(imported) - added} skipped as duplicates).', 'success')
             return redirect(url_for('leads'))
         except Exception as e:
@@ -310,9 +322,10 @@ def import_leads():
 @web_login_required
 def delete_lead():
     name = request.form.get('name', '').strip()
-    businesses = read_businesses()
-    businesses = [b for b in businesses if b.get('name', '').strip() != name]
-    write_businesses(businesses)
+    db = get_db()
+    db.execute('DELETE FROM businesses WHERE name = ?', (name,))
+    db.commit()
+    db.close()
     flash(f'Lead "{name}" deleted.', 'success')
     return redirect(url_for('leads'))
 
@@ -321,12 +334,10 @@ def delete_lead():
 def update_notes():
     name  = request.form.get('name', '').strip()
     notes = request.form.get('notes', '').strip()
-    businesses = read_businesses()
-    for b in businesses:
-        if b.get('name', '').strip() == name:
-            b['notes'] = notes
-            break
-    write_businesses(businesses)
+    db = get_db()
+    db.execute('UPDATE businesses SET notes = ? WHERE name = ?', (notes, name))
+    db.commit()
+    db.close()
     return jsonify({'ok': True})
 
 @app.route('/find_leads', methods=['GET', 'POST'])

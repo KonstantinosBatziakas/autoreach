@@ -3,7 +3,7 @@ from emailer import run_outreach
 from email_scraper import scrape_emails
 from report_generator import generate_report
 from scheduler import setup_scheduler
-import csv
+from db import get_db
 
 def add_manual_lead():
     print("\n--- Add Manual Lead ---")
@@ -12,17 +12,14 @@ def add_manual_lead():
     phone = input("Phone: ")
     website = input("Website: ")
     email = input("Email: ")
-    row = {
-        "name": name,
-        "address": address,
-        "phone": phone,
-        "website": website,
-        "email": email
-    }
-    with open("businesses.csv", "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["name", "address", "phone", "website", "email"])
-        writer.writerow(row)
-    print(f"Added {name} to businesses.csv!")
+    db = get_db()
+    db.execute(
+        'INSERT INTO businesses (name, address, phone, website, email, stage, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        (name, address, phone, website, email, 'New', '')
+    )
+    db.commit()
+    db.close()
+    print(f"Added {name} to database!")
 
 def main():
     while True:

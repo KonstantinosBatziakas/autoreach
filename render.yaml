@@ -19,3 +19,7 @@ services:
         value: your-gmail-app-password
       - key: GOOGLE_MAPS_API_KEY
         value: your-google-maps-api-key
+      - key: TURSO_DB_URL
+        value: your-turso-db-url
+      - key: TURSO_AUTH_TOKEN
+        value: your-turso-auth-token

@@ -1,52 +1,40 @@
 import smtplib
-import csv
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from groq import Groq
 from dotenv import load_dotenv
 from datetime import datetime
+from db import get_db
 
 load_dotenv()
 
 groq_client = None  # initialized lazily on first use
 GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_PASS = os.getenv("GMAIL_APP_PASSWORD")
-SENT_LOG_FILE = "sent_log.csv"
-
-def initialize_sent_log():
-    if not os.path.exists(SENT_LOG_FILE):
-        with open(SENT_LOG_FILE, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=["business_name", "email", "date_sent", "subject", "body"])
-            writer.writeheader()
 
 def get_sent_emails():
-    initialize_sent_log()
-    sent = set()
-    with open(SENT_LOG_FILE, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            sent.add(row["email"].lower())
-    return sent
+    """Returns a set of lowercase email addresses already sent to."""
+    db = get_db()
+    rows = db.execute('SELECT email FROM sent_log').fetchall()
+    db.close()
+    return {row[0].lower() for row in rows}
 
 def log_sent_email(business_name, email, subject, body):
-    initialize_sent_log()
-    with open(SENT_LOG_FILE, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["business_name", "email", "date_sent", "subject", "body"])
-        writer.writerow({
-            "business_name": business_name,
-            "email": email,
-            "date_sent": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "subject": subject,
-            "body": body
-        })
+    db = get_db()
+    db.execute(
+        'INSERT INTO sent_log (business_name, email, date_sent, subject, body) VALUES (?, ?, ?, ?, ?)',
+        (business_name, email, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), subject, body)
+    )
+    db.commit()
+    db.close()
 
 def _load_custom_template():
-    data_dir = os.getenv('DATA_DIR', '/data')
-    template_file = os.path.join(data_dir, 'email_template.txt')
-    if os.path.exists(template_file):
-        with open(template_file, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+    db = get_db()
+    row = db.execute("SELECT value FROM settings WHERE key = 'email_template'").fetchone()
+    db.close()
+    if row and row[0]:
+        return row[0].strip()
     return None
 
 def generate_email(business, language="english"):
@@ -57,7 +45,6 @@ def generate_email(business, language="english"):
     custom_template = _load_custom_template()
 
     if custom_template:
-        # Fill placeholders then ask Groq to lightly personalise
         filled = custom_template.format(
             name=business.get('name', ''),
             address=business.get('address', ''),
@@ -94,44 +81,46 @@ def send_email(to_email, subject, html_body):
         server.sendmail(GMAIL_USER, to_email, msg.as_string())
     print(f"Email sent to {to_email}")
 
-def run_outreach(csv_file="businesses.csv", auto_send=False):
+def run_outreach(auto_send=False):
     sent_emails = get_sent_emails()
-    with open(csv_file, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for business in reader:
-            if not business.get("email"):
-                print(f"Skipping {business['name']} - no email.")
-                continue
+    db = get_db()
+    businesses = [dict(row) for row in db.execute('SELECT * FROM businesses ORDER BY id').fetchall()]
+    db.close()
 
-            if business["email"].lower() in sent_emails:
-                print(f"Skipping {business['name']} - already sent to {business['email']}")
-                continue
+    for business in businesses:
+        if not business.get("email"):
+            print(f"Skipping {business['name']} - no email.")
+            continue
 
-            if not auto_send:
-                lang_choice = input("\nSend in English or Greek? (e/g): ").strip().lower()
-                language = "greek" if lang_choice == "g" else "english"
-            else:
-                language = "english"
+        if business["email"].lower() in sent_emails:
+            print(f"Skipping {business['name']} - already sent to {business['email']}")
+            continue
 
-            body = generate_email(business, language)
-            html = build_html(body)
-            subject = f"Quick question for {business['name']}" if language == "english" else f"Γρήγορη ερώτηση για {business['name']}"
+        if not auto_send:
+            lang_choice = input("\nSend in English or Greek? (e/g): ").strip().lower()
+            language = "greek" if lang_choice == "g" else "english"
+        else:
+            language = "english"
 
-            print(f"\nBusiness: {business['name']}")
-            print(f"Email: {business['email']}")
-            print(f"Language: {language}")
-            print(f"Body:\n{body}")
+        body = generate_email(business, language)
+        html = build_html(body)
+        subject = f"Quick question for {business['name']}" if language == "english" else f"Γρήγορη ερώτηση για {business['name']}"
 
-            if not auto_send:
-                confirm = input("\nSend this email? (y/n): ").strip().lower()
-            else:
-                confirm = "y"
+        print(f"\nBusiness: {business['name']}")
+        print(f"Email: {business['email']}")
+        print(f"Language: {language}")
+        print(f"Body:\n{body}")
 
-            if confirm == "y":
-                send_email(business["email"], subject, html)
-                log_sent_email(business["name"], business["email"], subject, body)
-            else:
-                print("Skipped.")
+        if not auto_send:
+            confirm = input("\nSend this email? (y/n): ").strip().lower()
+        else:
+            confirm = "y"
+
+        if confirm == "y":
+            send_email(business["email"], subject, html)
+            log_sent_email(business["name"], business["email"], subject, body)
+        else:
+            print("Skipped.")
 
 if __name__ == "__main__":
     run_outreach()
