@@ -167,15 +167,18 @@ def init_db():
     conn = get_db()
     stmts = [
         """CREATE TABLE IF NOT EXISTS businesses (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            name     TEXT NOT NULL,
-            address  TEXT DEFAULT '',
-            phone    TEXT DEFAULT '',
-            website  TEXT DEFAULT '',
-            email    TEXT DEFAULT '',
-            stage    TEXT DEFAULT 'New',
-            notes    TEXT DEFAULT ''
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            name         TEXT NOT NULL,
+            address      TEXT DEFAULT '',
+            phone        TEXT DEFAULT '',
+            website      TEXT DEFAULT '',
+            email        TEXT DEFAULT '',
+            stage        TEXT DEFAULT 'New',
+            notes        TEXT DEFAULT '',
+            unsubscribed INTEGER DEFAULT 0
         )""",
+        # Migration: add column if it doesn't exist yet
+        "ALTER TABLE businesses ADD COLUMN unsubscribed INTEGER DEFAULT 0",
         """CREATE TABLE IF NOT EXISTS sent_log (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             business_name TEXT NOT NULL,
@@ -216,6 +219,14 @@ def init_db():
         )""",
     ]
     for stmt in stmts:
-        conn.execute(stmt)
+        try:
+            conn.execute(stmt)
+        except Exception as e:
+            # Ignore "duplicate column" errors from ALTER TABLE migrations
+            msg = str(e).lower()
+            if 'duplicate column' in msg or 'already exists' in msg:
+                pass
+            else:
+                raise
     conn.commit()
     conn.close()

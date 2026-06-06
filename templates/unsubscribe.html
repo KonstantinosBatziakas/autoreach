@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsubscribe — AutoReach</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1a2e2e;
+      color: #cde0de;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 48px 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon { font-size: 48px; margin-bottom: 20px; }
+    h1 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    p  { font-size: 14px; color: #6a9090; line-height: 1.7; }
+    .email { color: #4ecdc4; margin-top: 8px; font-size: 13px; }
+    .back  {
+      display: inline-block;
+      margin-top: 28px;
+      padding: 10px 24px;
+      background: rgba(78,205,196,0.1);
+      border: 1px solid rgba(78,205,196,0.25);
+      border-radius: 6px;
+      color: #4ecdc4;
+      font-size: 13px;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .back:hover { background: rgba(78,205,196,0.18); }
+  </style>
+</head>
+<body>
+<div class="card">
+  {% if status == 'ok' %}
+    <div class="icon">✅</div>
+    <h1>You've been unsubscribed</h1>
+    <p>We've removed you from our mailing list. You won't receive any more emails from us.</p>
+    {% if email %}<div class="email">{{ email }}</div>{% endif %}
+  {% elif status == 'invalid' %}
+    <div class="icon">⚠️</div>
+    <h1>Invalid link</h1>
+    <p>This unsubscribe link appears to be invalid or missing an email address.</p>
+  {% else %}
+    <div class="icon">❌</div>
+    <h1>Something went wrong</h1>
+    <p>We couldn't process your unsubscribe request. Please try again later or reply to any of our emails.</p>
+  {% endif %}
+</div>
+</body>
+</html>

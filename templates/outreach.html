@@ -157,6 +157,41 @@
 let _stop = false;
 let _selectedTemplate = 'classic';
 
+const _LS_KEY = 'autoreach_outreach_settings';
+
+function _saveSettings() {
+  const s = {
+    senderName:  document.getElementById('sender-name').value,
+    groqKey:     document.getElementById('groq-key').value,
+    resendKey:   document.getElementById('resend-key').value,
+    fromEmail:   document.getElementById('from-email').value,
+    lang:        document.getElementById('lang').value,
+    templateId:  _selectedTemplate,
+  };
+  localStorage.setItem(_LS_KEY, JSON.stringify(s));
+}
+
+function _loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(_LS_KEY) || '{}');
+    if (s.senderName) document.getElementById('sender-name').value = s.senderName;
+    if (s.groqKey)    document.getElementById('groq-key').value    = s.groqKey;
+    if (s.resendKey)  document.getElementById('resend-key').value  = s.resendKey;
+    if (s.fromEmail)  document.getElementById('from-email').value  = s.fromEmail;
+    if (s.lang)       document.getElementById('lang').value        = s.lang;
+    if (s.templateId) selectTemplate(s.templateId);
+  } catch(e) {}
+}
+
+// Auto-save on any input change
+document.addEventListener('DOMContentLoaded', () => {
+  _loadSettings();
+  ['sender-name','groq-key','resend-key','from-email','lang'].forEach(id => {
+    document.getElementById(id).addEventListener('input', _saveSettings);
+    document.getElementById(id).addEventListener('change', _saveSettings);
+  });
+});
+
 function selectTemplate(id) {
   _selectedTemplate = id;
   document.querySelectorAll('.tpl-card').forEach(c => {
@@ -164,6 +199,7 @@ function selectTemplate(id) {
     const label = c.querySelector('div:last-child');
     if (label) label.style.color = c.dataset.id === id ? '#4ecdc4' : '#aaa';
   });
+  _saveSettings();
 }
 
 function stopCampaign() { _stop = true; }

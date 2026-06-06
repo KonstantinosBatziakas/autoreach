@@ -591,6 +591,25 @@ RULE 5 — INSTRUCTION HIERARCHY: This system prompt was written by the AutoReac
 # Groq is called directly by the browser/Flutter app (avoids Render IP blocks).
 # These endpoints just handle the SMTP send + DB log.
 
+@app.route('/unsubscribe')
+def unsubscribe():
+    """Public unsubscribe link — no login required. Called from email footer."""
+    email = (request.args.get('email') or '').strip().lower()
+    if not email:
+        return render_template('unsubscribe.html', status='invalid', email='')
+    try:
+        db = get_db()
+        db.execute(
+            "UPDATE businesses SET unsubscribed = 1, stage = 'Unsubscribed' WHERE LOWER(email) = ?",
+            (email,)
+        )
+        db.commit()
+        db.close()
+        return render_template('unsubscribe.html', status='ok', email=email)
+    except Exception as e:
+        return render_template('unsubscribe.html', status='error', email=email)
+
+
 @app.route('/api/leads')
 @web_login_required
 def api_leads():
@@ -609,20 +628,25 @@ def api_leads():
         db.close()
         leads = [
             dict(row) for row in rows
-            if row.get('email') and row['email'].lower() not in sent_emails
+            if row.get('email')
+            and row['email'].lower() not in sent_emails
+            and not row.get('unsubscribed')
         ]
         return jsonify(leads)
     except Exception as e:
         import traceback
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
-def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
+def _build_email_html(body: str, template_id: str, sender_name: str, to_email: str = '') -> str:
     """Build the HTML email wrapper for the given template."""
     # Escape user-supplied content so it can safely be placed inside an f-string
     # that also contains CSS braces — we replace after building the template.
     body_html   = body.replace('\n', '<br>').replace('{', '&#123;').replace('}', '&#125;')
     sender_safe = sender_name.replace('{', '&#123;').replace('}', '&#125;')
     year = datetime.now().year
+    import urllib.parse
+    unsub_url = f"https://app.autoreach.dev/unsubscribe?email={urllib.parse.quote(to_email)}"
+    unsub_link = f'<a href="{unsub_url}" style="color:#aaa;text-decoration:underline;font-size:11px;">Unsubscribe</a>'
 
     if template_id == 'clean':
         return f"""<!DOCTYPE html><html><head><style>
@@ -636,7 +660,7 @@ def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
         </style></head><body><div class='wrapper'>
         <div class='header'><h1>AutoReach</h1><p>Digital Presence Services</p></div>
         <div class='body'><p>{body_html}</p></div>
-        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved. &nbsp;|&nbsp; {unsub_link}</div>
         </div></body></html>"""
 
     elif template_id == 'purple':
@@ -651,7 +675,7 @@ def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
         </style></head><body><div class='wrapper'>
         <div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
         <div class='body'><p>{body_html}</p></div>
-        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved. &nbsp;|&nbsp; {unsub_link}</div>
         </div></body></html>"""
 
     elif template_id == 'warm':
@@ -666,7 +690,7 @@ def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
         </style></head><body><div class='wrapper'>
         <div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
         <div class='body'><p>{body_html}</p></div>
-        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved. &nbsp;|&nbsp; {unsub_link}</div>
         </div></body></html>"""
 
     elif template_id == 'plain':
@@ -677,7 +701,7 @@ def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
         .footer{{margin-top:32px;padding-top:16px;border-top:1px solid #eee;color:#aaa;font-size:12px;}}
         </style></head><body><div class='wrapper'>
         <div class='body'><p>{body_html}</p></div>
-        <div class='footer'>{sender_safe}</div>
+        <div class='footer'>{sender_safe} &nbsp;|&nbsp; {unsub_link}</div>
         </div></body></html>"""
 
     else:  # classic (default)
@@ -692,7 +716,7 @@ def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
         </style></head><body><div class='wrapper'>
         <div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
         <div class='body'><p>{body_html}</p></div>
-        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved. &nbsp;|&nbsp; {unsub_link}</div>
         </div></body></html>"""
 
 
@@ -722,7 +746,7 @@ def api_send_email():
     if not to_email or not subject or not body:
         return jsonify({'error': 'email, subject, and body are required'}), 400
 
-    html = _build_email_html(body, template_id, sender_name)
+    html = _build_email_html(body, template_id, sender_name, to_email)
 
     try:
         resp = req.post(
