@@ -13,8 +13,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; a
 @media (max-width: 640px) { nav { padding: 0 16px; } .content { padding: 90px 16px 60px; } body { overflow-x: hidden; } table { font-size: 11px; } }
 .nav-logo { font-size: 15px; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
 .nav-logo span { color: var(--coral); }
+.nav-right { display: flex; align-items: center; gap: 16px; }
 .back-link { font-size: 12px; color: var(--dim); text-decoration: none; transition: color 0.15s; }
 .back-link:hover { color: var(--teal); }
+.lang-btn { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: var(--font); transition: color 0.15s, border-color 0.15s; }
+.lang-btn:hover { color: var(--teal); border-color: var(--teal); }
 .content { max-width: 760px; margin: 0 auto; padding: 100px 24px 80px; }
 h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
 .meta { font-size: 11px; color: var(--dim); margin-bottom: 48px; }
@@ -36,65 +39,91 @@ footer a:hover { color: var(--teal); }
 <body>
 <nav>
     <a href="index.html" class="nav-logo">AUTO<span>REACH</span></a>
-    <a href="index.html" class="back-link">← Back to home</a>
+    <div class="nav-right">
+        <button class="lang-btn" id="langBtn" onclick="toggleLang()">GR</button>
+        <a href="index.html" class="back-link" data-en="← Back to home" data-gr="← Αρχική">← Back to home</a>
+    </div>
 </nav>
 
 <div class="content">
-    <h1>Cookie Policy</h1>
-    <div class="meta">Last updated: June 2026 · Applies to autoreach.dev and self-hosted AutoReach instances</div>
+    <h1 data-en="Cookie Policy" data-gr="Πολιτική Cookies">Cookie Policy</h1>
+    <div class="meta" data-en="Last updated: June 2026 · Applies to autoreach.dev and self-hosted AutoReach instances" data-gr="Τελευταία ενημέρωση: Ιούνιος 2026 · Ισχύει για το autoreach.dev και αυτο-φιλοξενούμενες εγκαταστάσεις AutoReach">Last updated: June 2026 · Applies to autoreach.dev and self-hosted AutoReach instances</div>
 
-    <h2>This Website (autoreach.dev)</h2>
-    <p>The autoreach.dev landing page is a <strong>static site hosted on GitHub Pages</strong>. It does not use cookies, tracking pixels, or analytics. No personal data is collected when you visit this website.</p>
-    <p>The only external resource loaded is Google Fonts for typography. Google may set cookies as part of this — see <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</p>
+    <h2 data-en="This Website (autoreach.dev)" data-gr="Αυτός ο Ιστότοπος (autoreach.dev)">This Website (autoreach.dev)</h2>
+    <p data-en="The autoreach.dev landing page is a <strong>static site hosted on GitHub Pages</strong>. It does not use cookies, tracking pixels, or analytics. No personal data is collected when you visit this website." data-gr="Η σελίδα autoreach.dev είναι ένας <strong>στατικός ιστότοπος σε GitHub Pages</strong>. Δεν χρησιμοποιεί cookies, pixels ή analytics. Δεν συλλέγονται προσωπικά δεδομένα κατά την επίσκεψή σας.">The autoreach.dev landing page is a <strong>static site hosted on GitHub Pages</strong>. It does not use cookies, tracking pixels, or analytics. No personal data is collected when you visit this website.</p>
+    <p data-en="The only external resource loaded is Google Fonts for typography. Google may set cookies as part of this — see <a href='https://policies.google.com/privacy' target='_blank'>Google's Privacy Policy</a>." data-gr="Ο μόνος εξωτερικός πόρος που φορτώνεται είναι τα Google Fonts. Η Google ενδέχεται να ορίσει cookies — δείτε την <a href='https://policies.google.com/privacy' target='_blank'>Πολιτική Απορρήτου Google</a>.">The only external resource loaded is Google Fonts for typography. Google may set cookies as part of this — see <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</p>
 
-    <h2>The AutoReach Dashboard (Self-Hosted)</h2>
-    <p>When you run your own AutoReach instance, the dashboard uses a single session cookie:</p>
+    <h2 data-en="The AutoReach Dashboard (Self-Hosted)" data-gr="Ο Πίνακας Ελέγχου AutoReach (Αυτο-Φιλοξενούμενος)">The AutoReach Dashboard (Self-Hosted)</h2>
+    <p data-en="When you run your own AutoReach instance, the dashboard uses a single session cookie:" data-gr="Όταν τρέχετε τη δική σας εγκατάσταση AutoReach, ο πίνακας ελέγχου χρησιμοποιεί ένα μόνο cookie συνεδρίας:">When you run your own AutoReach instance, the dashboard uses a single session cookie:</p>
 
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>Cookie</th>
-                    <th>Purpose</th>
-                    <th>Type</th>
-                    <th>Duration</th>
+                    <th data-en="Cookie" data-gr="Cookie">Cookie</th>
+                    <th data-en="Purpose" data-gr="Σκοπός">Purpose</th>
+                    <th data-en="Type" data-gr="Τύπος">Type</th>
+                    <th data-en="Duration" data-gr="Διάρκεια">Duration</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><code>session</code></td>
-                    <td>Keeps you logged into the dashboard</td>
-                    <td>Essential</td>
-                    <td>Browser session</td>
+                    <td data-en="Keeps you logged into the dashboard" data-gr="Διατηρεί τη σύνδεσή σας στον πίνακα ελέγχου">Keeps you logged into the dashboard</td>
+                    <td data-en="Essential" data-gr="Απαραίτητο">Essential</td>
+                    <td data-en="Browser session" data-gr="Συνεδρία προγράμματος">Browser session</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <p>This cookie is strictly necessary for the dashboard to function. It contains only an encrypted session token — no personal data, no tracking information.</p>
+    <p data-en="This cookie is strictly necessary for the dashboard to function. It contains only an encrypted session token — no personal data, no tracking information." data-gr="Αυτό το cookie είναι απολύτως απαραίτητο για τη λειτουργία του πίνακα ελέγχου. Περιέχει μόνο ένα κρυπτογραφημένο token — χωρίς προσωπικά δεδομένα, χωρίς πληροφορίες παρακολούθησης.">This cookie is strictly necessary for the dashboard to function. It contains only an encrypted session token — no personal data, no tracking information.</p>
 
-    <h2>No Analytics or Tracking</h2>
-    <p>AutoReach does not use:</p>
+    <h2 data-en="No Analytics or Tracking" data-gr="Χωρίς Analytics ή Παρακολούθηση">No Analytics or Tracking</h2>
+    <p data-en="AutoReach does not use:" data-gr="Το AutoReach ΔΕΝ χρησιμοποιεί:">AutoReach does not use:</p>
     <ul>
-        <li>Google Analytics or any other analytics service</li>
-        <li>Advertising or retargeting cookies</li>
-        <li>Third-party tracking pixels</li>
-        <li>Social media tracking</li>
+        <li data-en="Google Analytics or any other analytics service" data-gr="Google Analytics ή οποιαδήποτε άλλη υπηρεσία analytics">Google Analytics or any other analytics service</li>
+        <li data-en="Advertising or retargeting cookies" data-gr="Cookies διαφήμισης ή επαναστόχευσης">Advertising or retargeting cookies</li>
+        <li data-en="Third-party tracking pixels" data-gr="Pixels παρακολούθησης τρίτων">Third-party tracking pixels</li>
+        <li data-en="Social media tracking" data-gr="Παρακολούθηση κοινωνικών δικτύων">Social media tracking</li>
     </ul>
 
-    <h2>Your Control</h2>
-    <p>You can clear cookies at any time through your browser settings. Clearing the session cookie will log you out of the AutoReach dashboard. Since we set no tracking cookies, there is no cookie consent banner — there is nothing to consent to.</p>
+    <h2 data-en="Your Control" data-gr="Ο Έλεγχός σας">Your Control</h2>
+    <p data-en="You can clear cookies at any time through your browser settings. Clearing the session cookie will log you out of the AutoReach dashboard. Since we set no tracking cookies, there is no cookie consent banner — there is nothing to consent to." data-gr="Μπορείτε να διαγράψετε cookies ανά πάσα στιγμή μέσω των ρυθμίσεων του προγράμματος περιήγησής σας. Η διαγραφή του session cookie θα σας αποσυνδέσει από τον πίνακα ελέγχου. Καθώς δεν ορίζουμε cookies παρακολούθησης, δεν υπάρχει banner συγκατάθεσης — δεν υπάρχει τίποτα για το οποίο να χρειάζεται συγκατάθεση.">You can clear cookies at any time through your browser settings. Clearing the session cookie will log you out of the AutoReach dashboard. Since we set no tracking cookies, there is no cookie consent banner — there is nothing to consent to.</p>
 
-    <h2>Contact</h2>
-    <p>For questions, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
+    <h2 data-en="Contact" data-gr="Επικοινωνία">Contact</h2>
+    <p data-en="For questions, open an issue on <a href='https://github.com/KonstantinosBatziakas/autoreach' target='_blank'>GitHub</a>." data-gr="Για ερωτήσεις, ανοίξτε ένα issue στο <a href='https://github.com/KonstantinosBatziakas/autoreach' target='_blank'>GitHub</a>.">For questions, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
 </div>
 
 <footer>
-    <a href="index.html">Home</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="terms.html">Terms of Use</a>
-    <a href="cookies.html">Cookie Policy</a>
+    <a href="index.html" data-en="Home" data-gr="Αρχική">Home</a>
+    <a href="privacy.html" data-en="Privacy Policy" data-gr="Πολιτική Απορρήτου">Privacy Policy</a>
+    <a href="terms.html" data-en="Terms of Use" data-gr="Όροι Χρήσης">Terms of Use</a>
+    <a href="cookies.html" data-en="Cookie Policy" data-gr="Πολιτική Cookies">Cookie Policy</a>
     <br><br>© 2026 AutoReach.
 </footer>
+
+<script>
+(function() {
+    var lang = localStorage.getItem('ar_lang') || 'en';
+    if (lang === 'gr') applyLang('gr');
+    document.getElementById('langBtn').textContent = lang === 'en' ? 'GR' : 'EN';
+})();
+
+function toggleLang() {
+    var current = localStorage.getItem('ar_lang') || 'en';
+    var next = current === 'en' ? 'gr' : 'en';
+    localStorage.setItem('ar_lang', next);
+    applyLang(next);
+    document.getElementById('langBtn').textContent = next === 'en' ? 'GR' : 'EN';
+}
+
+function applyLang(lang) {
+    document.querySelectorAll('[data-en]').forEach(function(el) {
+        var val = el.getAttribute('data-' + lang);
+        if (val) el.innerHTML = val;
+    });
+}
+</script>
 </body>
 </html>

@@ -13,8 +13,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; a
 @media (max-width: 640px) { nav { padding: 0 16px; } .content { padding: 90px 16px 60px; } body { overflow-x: hidden; } }
 .nav-logo { font-size: 15px; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
 .nav-logo span { color: var(--coral); }
+.nav-right { display: flex; align-items: center; gap: 16px; }
 .back-link { font-size: 12px; color: var(--dim); text-decoration: none; transition: color 0.15s; }
 .back-link:hover { color: var(--teal); }
+.lang-btn { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: var(--font); transition: color 0.15s, border-color 0.15s; }
+.lang-btn:hover { color: var(--teal); border-color: var(--teal); }
 .content { max-width: 760px; margin: 0 auto; padding: 100px 24px 80px; }
 h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
 .meta { font-size: 11px; color: var(--dim); margin-bottom: 48px; }
@@ -32,61 +35,87 @@ footer a:hover { color: var(--teal); }
 <body>
 <nav>
     <a href="index.html" class="nav-logo">AUTO<span>REACH</span></a>
-    <a href="index.html" class="back-link">← Back to home</a>
+    <div class="nav-right">
+        <button class="lang-btn" id="langBtn" onclick="toggleLang()">GR</button>
+        <a href="index.html" class="back-link" data-en="← Back to home" data-gr="← Αρχική">← Back to home</a>
+    </div>
 </nav>
 
 <div class="content">
-    <h1>Terms of Use</h1>
-    <div class="meta">Last updated: June 2026 · Applies to the AutoReach software and autoreach.dev</div>
+    <h1 data-en="Terms of Use" data-gr="Όροι Χρήσης">Terms of Use</h1>
+    <div class="meta" data-en="Last updated: June 2026 · Applies to the AutoReach software and autoreach.dev" data-gr="Τελευταία ενημέρωση: Ιούνιος 2026 · Ισχύει για το λογισμικό AutoReach και το autoreach.dev">Last updated: June 2026 · Applies to the AutoReach software and autoreach.dev</div>
 
-    <h2>License</h2>
-    <p>AutoReach is free, source-available software owned by <strong>Konstantinos Batziakas</strong>. You are free to use, copy, modify, and self-host it for personal or internal business purposes. Commercial resale, sublicensing, and offering it as a paid service are prohibited without explicit written permission. See the <a href="https://github.com/KonstantinosBatziakas/autoreach/blob/main/LICENSE" target="_blank">full license</a> for details.</p>
+    <h2 data-en="License" data-gr="Άδεια Χρήσης">License</h2>
+    <p data-en="AutoReach is free, source-available software owned by <strong>Konstantinos Batziakas</strong>. You are free to use, copy, modify, and self-host it for personal or internal business purposes. Commercial resale, sublicensing, and offering it as a paid service are prohibited without explicit written permission. See the <a href='https://github.com/KonstantinosBatziakas/autoreach/blob/main/LICENSE' target='_blank'>full license</a> for details." data-gr="Το AutoReach είναι δωρεάν λογισμικό διαθέσιμου κώδικα, ιδιοκτησία του <strong>Κωνσταντίνου Μπατζιακά</strong>. Έχετε το δικαίωμα να το χρησιμοποιείτε, αντιγράφετε, τροποποιείτε και αυτο-φιλοξενείτε για προσωπικούς ή εσωτερικούς επαγγελματικούς σκοπούς. Η εμπορική μεταπώληση, η άδεια χρήσης σε τρίτους και η προσφορά του ως επί πληρωμή υπηρεσία απαγορεύονται χωρίς ρητή γραπτή άδεια. Δείτε την <a href='https://github.com/KonstantinosBatziakas/autoreach/blob/main/LICENSE' target='_blank'>πλήρη άδεια</a> για λεπτομέρειες.">AutoReach is free, source-available software owned by <strong>Konstantinos Batziakas</strong>. You are free to use, copy, modify, and self-host it for personal or internal business purposes. Commercial resale, sublicensing, and offering it as a paid service are prohibited without explicit written permission. See the <a href="https://github.com/KonstantinosBatziakas/autoreach/blob/main/LICENSE" target="_blank">full license</a> for details.</p>
 
-    <h2>Acceptable Use</h2>
-    <p>You agree to use AutoReach only for lawful purposes. You must not use AutoReach to:</p>
+    <h2 data-en="Acceptable Use" data-gr="Αποδεκτή Χρήση">Acceptable Use</h2>
+    <p data-en="You agree to use AutoReach only for lawful purposes. You must not use AutoReach to:" data-gr="Συμφωνείτε να χρησιμοποιείτε το AutoReach μόνο για νόμιμους σκοπούς. Δεν επιτρέπεται να χρησιμοποιείτε το AutoReach για:">You agree to use AutoReach only for lawful purposes. You must not use AutoReach to:</p>
     <ul>
-        <li>Send spam or unsolicited bulk email in violation of applicable law</li>
-        <li>Harass, threaten, or harm any individual or business</li>
-        <li>Violate any applicable anti-spam laws (CAN-SPAM, GDPR, CASL, etc.)</li>
-        <li>Scrape or harvest personal data without a lawful basis</li>
-        <li>Impersonate any person or organisation</li>
-        <li>Engage in any fraudulent or deceptive practices</li>
+        <li data-en="Send spam or unsolicited bulk email in violation of applicable law" data-gr="Αποστολή spam ή μαζικών ανεπιθύμητων email κατά παράβαση του νόμου">Send spam or unsolicited bulk email in violation of applicable law</li>
+        <li data-en="Harass, threaten, or harm any individual or business" data-gr="Παρενόχληση, απειλές ή βλάβη σε άτομα ή επιχειρήσεις">Harass, threaten, or harm any individual or business</li>
+        <li data-en="Violate any applicable anti-spam laws (CAN-SPAM, GDPR, CASL, etc.)" data-gr="Παραβίαση νόμων κατά του spam (CAN-SPAM, GDPR, CASL, κ.λπ.)">Violate any applicable anti-spam laws (CAN-SPAM, GDPR, CASL, etc.)</li>
+        <li data-en="Scrape or harvest personal data without a lawful basis" data-gr="Συλλογή προσωπικών δεδομένων χωρίς νόμιμη βάση">Scrape or harvest personal data without a lawful basis</li>
+        <li data-en="Impersonate any person or organisation" data-gr="Πλαστοπροσωπία ατόμου ή οργανισμού">Impersonate any person or organisation</li>
+        <li data-en="Engage in any fraudulent or deceptive practices" data-gr="Συμμετοχή σε δόλιες ή παραπλανητικές πρακτικές">Engage in any fraudulent or deceptive practices</li>
     </ul>
 
-    <h2>Self-Hosted Software</h2>
-    <p>AutoReach is designed to be self-hosted. When you deploy AutoReach on your own server, you are solely responsible for:</p>
+    <h2 data-en="Self-Hosted Software" data-gr="Αυτο-Φιλοξενούμενο Λογισμικό">Self-Hosted Software</h2>
+    <p data-en="AutoReach is designed to be self-hosted. When you deploy AutoReach on your own server, you are solely responsible for:" data-gr="Το AutoReach είναι σχεδιασμένο για αυτο-φιλοξενία. Όταν αναπτύσσετε το AutoReach στον δικό σας server, είστε αποκλειστικά υπεύθυνοι για:">AutoReach is designed to be self-hosted. When you deploy AutoReach on your own server, you are solely responsible for:</p>
     <ul>
-        <li>The security and configuration of your server</li>
-        <li>All emails sent through your instance</li>
-        <li>Compliance with applicable laws in your jurisdiction</li>
-        <li>The data you store and process</li>
+        <li data-en="The security and configuration of your server" data-gr="Την ασφάλεια και τη διαμόρφωση του server σας">The security and configuration of your server</li>
+        <li data-en="All emails sent through your instance" data-gr="Όλα τα email που αποστέλλονται μέσω της εγκατάστασής σας">All emails sent through your instance</li>
+        <li data-en="Compliance with applicable laws in your jurisdiction" data-gr="Τη συμμόρφωση με τους ισχύοντες νόμους στη δικαιοδοσία σας">Compliance with applicable laws in your jurisdiction</li>
+        <li data-en="The data you store and process" data-gr="Τα δεδομένα που αποθηκεύετε και επεξεργάζεστε">The data you store and process</li>
     </ul>
 
-    <h2>No Warranty</h2>
-    <p>AutoReach is provided "as is", without warranty of any kind, express or implied. The authors make no representations about the suitability of this software for any purpose.</p>
+    <h2 data-en="No Warranty" data-gr="Χωρίς Εγγύηση">No Warranty</h2>
+    <p data-en='AutoReach is provided "as is", without warranty of any kind, express or implied. The authors make no representations about the suitability of this software for any purpose.' data-gr='Το AutoReach παρέχεται "ως έχει", χωρίς καμία εγγύηση, ρητή ή σιωπηρή. Οι συντάκτες δεν κάνουν δηλώσεις σχετικά με την καταλληλότητα αυτού του λογισμικού για οποιονδήποτε σκοπό.'>AutoReach is provided "as is", without warranty of any kind, express or implied. The authors make no representations about the suitability of this software for any purpose.</p>
 
-    <h2>Limitation of Liability</h2>
-    <p>In no event shall the AutoReach contributors be liable for any claim, damages, or other liability arising from the use of this software.</p>
+    <h2 data-en="Limitation of Liability" data-gr="Περιορισμός Ευθύνης">Limitation of Liability</h2>
+    <p data-en="In no event shall the AutoReach contributors be liable for any claim, damages, or other liability arising from the use of this software." data-gr="Σε καμία περίπτωση οι συντελεστές του AutoReach δεν ευθύνονται για οποιαδήποτε αξίωση, ζημία ή άλλη υποχρέωση που προκύπτει από τη χρήση αυτού του λογισμικού.">In no event shall the AutoReach contributors be liable for any claim, damages, or other liability arising from the use of this software.</p>
 
-    <h2>Third-Party Services</h2>
-    <p>AutoReach integrates with third-party APIs (Google Maps, Groq, Gmail). Your use of these services is subject to their own terms of service. AutoReach is not affiliated with or endorsed by Google, Groq, Discord, or GitHub.</p>
+    <h2 data-en="Third-Party Services" data-gr="Υπηρεσίες Τρίτων">Third-Party Services</h2>
+    <p data-en="AutoReach integrates with third-party APIs (Google Maps, Groq, Gmail). Your use of these services is subject to their own terms of service. AutoReach is not affiliated with or endorsed by Google, Groq, Discord, or GitHub." data-gr="Το AutoReach ενσωματώνεται με APIs τρίτων (Google Maps, Groq, Gmail). Η χρήση αυτών των υπηρεσιών υπόκειται στους δικούς τους όρους. Το AutoReach δεν συνδέεται με ούτε υποστηρίζεται από Google, Groq, Discord ή GitHub.">AutoReach integrates with third-party APIs (Google Maps, Groq, Gmail). Your use of these services is subject to their own terms of service. AutoReach is not affiliated with or endorsed by Google, Groq, Discord, or GitHub.</p>
 
-    <h2>Cold Email Responsibility</h2>
-    <p>You are entirely responsible for the emails you send using AutoReach. This includes ensuring you have a lawful basis for contacting recipients, including a clear opt-out mechanism, and honouring unsubscribe requests. The AutoReach project accepts no liability for how you use the software.</p>
+    <h2 data-en="Cold Email Responsibility" data-gr="Ευθύνη Cold Email">Cold Email Responsibility</h2>
+    <p data-en="You are entirely responsible for the emails you send using AutoReach. This includes ensuring you have a lawful basis for contacting recipients, including a clear opt-out mechanism, and honouring unsubscribe requests. The AutoReach project accepts no liability for how you use the software." data-gr="Είστε αποκλειστικά υπεύθυνοι για τα email που στέλνετε με το AutoReach. Αυτό περιλαμβάνει τη διασφάλιση νόμιμης βάσης επικοινωνίας, σαφή μηχανισμό διαγραφής και τήρηση αιτημάτων εξόδου. Το έργο AutoReach δεν αποδέχεται καμία ευθύνη για τον τρόπο χρήσης του λογισμικού.">You are entirely responsible for the emails you send using AutoReach. This includes ensuring you have a lawful basis for contacting recipients, including a clear opt-out mechanism, and honouring unsubscribe requests. The AutoReach project accepts no liability for how you use the software.</p>
 
-    <h2>Changes</h2>
-    <p>These terms may be updated from time to time. Continued use of the software constitutes acceptance of the updated terms.</p>
+    <h2 data-en="Changes" data-gr="Αλλαγές">Changes</h2>
+    <p data-en="These terms may be updated from time to time. Continued use of the software constitutes acceptance of the updated terms." data-gr="Αυτοί οι όροι μπορεί να ενημερωθούν κατά καιρούς. Η συνεχής χρήση του λογισμικού αποτελεί αποδοχή των ενημερωμένων όρων.">These terms may be updated from time to time. Continued use of the software constitutes acceptance of the updated terms.</p>
 
-    <h2>Contact</h2>
-    <p>For questions, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
+    <h2 data-en="Contact" data-gr="Επικοινωνία">Contact</h2>
+    <p data-en="For questions, open an issue on <a href='https://github.com/KonstantinosBatziakas/autoreach' target='_blank'>GitHub</a>." data-gr="Για ερωτήσεις, ανοίξτε ένα issue στο <a href='https://github.com/KonstantinosBatziakas/autoreach' target='_blank'>GitHub</a>.">For questions, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
 </div>
 
 <footer>
-    <a href="index.html">Home</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="terms.html">Terms of Use</a>
-    <a href="cookies.html">Cookie Policy</a>
+    <a href="index.html" data-en="Home" data-gr="Αρχική">Home</a>
+    <a href="privacy.html" data-en="Privacy Policy" data-gr="Πολιτική Απορρήτου">Privacy Policy</a>
+    <a href="terms.html" data-en="Terms of Use" data-gr="Όροι Χρήσης">Terms of Use</a>
+    <a href="cookies.html" data-en="Cookie Policy" data-gr="Πολιτική Cookies">Cookie Policy</a>
     <br><br>© 2026 AutoReach.
 </footer>
+
+<script>
+(function() {
+    var lang = localStorage.getItem('ar_lang') || 'en';
+    if (lang === 'gr') applyLang('gr');
+    document.getElementById('langBtn').textContent = lang === 'en' ? 'GR' : 'EN';
+})();
+
+function toggleLang() {
+    var current = localStorage.getItem('ar_lang') || 'en';
+    var next = current === 'en' ? 'gr' : 'en';
+    localStorage.setItem('ar_lang', next);
+    applyLang(next);
+    document.getElementById('langBtn').textContent = next === 'en' ? 'GR' : 'EN';
+}
+
+function applyLang(lang) {
+    document.querySelectorAll('[data-en]').forEach(function(el) {
+        var val = el.getAttribute('data-' + lang);
+        if (val) el.innerHTML = val;
+    });
+}
+</script>
 </body>
 </html>

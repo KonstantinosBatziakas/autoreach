@@ -13,8 +13,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; a
 @media (max-width: 640px) { nav { padding: 0 16px; } .content { padding: 90px 16px 60px; } body { overflow-x: hidden; } }
 .nav-logo { font-size: 15px; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
 .nav-logo span { color: var(--coral); }
+.nav-right { display: flex; align-items: center; gap: 16px; }
 .back-link { font-size: 12px; color: var(--dim); text-decoration: none; transition: color 0.15s; }
 .back-link:hover { color: var(--teal); }
+.lang-btn { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--dim); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: var(--font); transition: color 0.15s, border-color 0.15s; }
+.lang-btn:hover { color: var(--teal); border-color: var(--teal); }
 .content { max-width: 760px; margin: 0 auto; padding: 100px 24px 80px; }
 h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
 .meta { font-size: 11px; color: var(--dim); margin-bottom: 48px; }
@@ -32,69 +35,95 @@ footer a:hover { color: var(--teal); }
 <body>
 <nav>
     <a href="index.html" class="nav-logo">AUTO<span>REACH</span></a>
-    <a href="index.html" class="back-link">← Back to home</a>
+    <div class="nav-right">
+        <button class="lang-btn" id="langBtn" onclick="toggleLang()">GR</button>
+        <a href="index.html" class="back-link" data-en="← Back to home" data-gr="← Αρχική">← Back to home</a>
+    </div>
 </nav>
 
 <div class="content">
-    <h1>Privacy Policy</h1>
-    <div class="meta">Last updated: June 2026 · Applies to autoreach.dev and the AutoReach software</div>
+    <h1 data-en="Privacy Policy" data-gr="Πολιτική Απορρήτου">Privacy Policy</h1>
+    <div class="meta" data-en="Last updated: June 2026 · Applies to autoreach.dev and the AutoReach software" data-gr="Τελευταία ενημέρωση: Ιούνιος 2026 · Ισχύει για το autoreach.dev και το λογισμικό AutoReach">Last updated: June 2026 · Applies to autoreach.dev and the AutoReach software</div>
 
-    <h2>Overview</h2>
-    <p>AutoReach is open-source software designed to be self-hosted. This means <strong>you run AutoReach on your own server</strong> — your data never passes through any server we control. This privacy policy explains what data the AutoReach software handles and how.</p>
+    <h2 data-en="Overview" data-gr="Επισκόπηση">Overview</h2>
+    <p data-en="AutoReach is open-source software designed to be self-hosted. This means <strong>you run AutoReach on your own server</strong> — your data never passes through any server we control. This privacy policy explains what data the AutoReach software handles and how." data-gr="Το AutoReach είναι λογισμικό ανοιχτού κώδικα σχεδιασμένο για αυτο-φιλοξενία. Αυτό σημαίνει ότι <strong>τρέχετε το AutoReach στον δικό σας server</strong> — τα δεδομένα σας δεν περνούν ποτέ από κάποιον server που ελέγχουμε. Αυτή η πολιτική απορρήτου εξηγεί ποια δεδομένα χειρίζεται το λογισμικό AutoReach και πώς.">AutoReach is open-source software designed to be self-hosted. This means <strong>you run AutoReach on your own server</strong> — your data never passes through any server we control. This privacy policy explains what data the AutoReach software handles and how.</p>
 
-    <h2>Data We Do Not Collect</h2>
-    <p>Because AutoReach is self-hosted, we (the AutoReach project) do not collect, store, or have access to:</p>
+    <h2 data-en="Data We Do Not Collect" data-gr="Δεδομένα που ΔΕΝ Συλλέγουμε">Data We Do Not Collect</h2>
+    <p data-en="Because AutoReach is self-hosted, we (the AutoReach project) do not collect, store, or have access to:" data-gr="Επειδή το AutoReach είναι αυτο-φιλοξενούμενο, εμείς (το έργο AutoReach) δεν συλλέγουμε, αποθηκεύουμε ή έχουμε πρόσβαση σε:">Because AutoReach is self-hosted, we (the AutoReach project) do not collect, store, or have access to:</p>
     <ul>
-        <li>Your leads or business contacts</li>
-        <li>Emails you send or receive</li>
-        <li>Your API keys (Google Maps, Groq, Gmail)</li>
-        <li>Your usage statistics or activity</li>
-        <li>Any personal information you enter into the dashboard</li>
+        <li data-en="Your leads or business contacts" data-gr="Τους leads ή επαγγελματικές επαφές σας">Your leads or business contacts</li>
+        <li data-en="Emails you send or receive" data-gr="Τα email που στέλνετε ή λαμβάνετε">Emails you send or receive</li>
+        <li data-en="Your API keys (Google Maps, Groq, Gmail)" data-gr="Τα API keys σας (Google Maps, Groq, Gmail)">Your API keys (Google Maps, Groq, Gmail)</li>
+        <li data-en="Your usage statistics or activity" data-gr="Τα στατιστικά χρήσης ή τη δραστηριότητά σας">Your usage statistics or activity</li>
+        <li data-en="Any personal information you enter into the dashboard" data-gr="Οποιαδήποτε προσωπικά στοιχεία εισάγετε στον πίνακα ελέγχου">Any personal information you enter into the dashboard</li>
     </ul>
 
-    <h2>Data Stored on Your Server</h2>
-    <p>When you run AutoReach, the following data is stored on your own server or hosting environment:</p>
+    <h2 data-en="Data Stored on Your Server" data-gr="Δεδομένα που Αποθηκεύονται στον Server σας">Data Stored on Your Server</h2>
+    <p data-en="When you run AutoReach, the following data is stored on your own server or hosting environment:" data-gr="Όταν τρέχετε το AutoReach, τα παρακάτω δεδομένα αποθηκεύονται στον δικό σας server:">When you run AutoReach, the following data is stored on your own server or hosting environment:</p>
     <ul>
-        <li><strong>businesses.csv</strong> — your lead database (business names, addresses, emails)</li>
-        <li><strong>sent_log.csv</strong> — log of emails you have sent</li>
-        <li><strong>followup_log.csv</strong> — log of follow-up emails sent</li>
-        <li><strong>autoreach_users.db</strong> — user accounts (email addresses, hashed passwords)</li>
-        <li><strong>Environment variables</strong> — API keys and credentials you configure</li>
+        <li data-en="<strong>businesses.csv</strong> — your lead database (business names, addresses, emails)" data-gr="<strong>businesses.csv</strong> — η βάση δεδομένων leads σας (ονόματα επιχειρήσεων, διευθύνσεις, email)"><strong>businesses.csv</strong> — your lead database (business names, addresses, emails)</li>
+        <li data-en="<strong>sent_log.csv</strong> — log of emails you have sent" data-gr="<strong>sent_log.csv</strong> — αρχείο καταγραφής των email που έχετε στείλει"><strong>sent_log.csv</strong> — log of emails you have sent</li>
+        <li data-en="<strong>followup_log.csv</strong> — log of follow-up emails sent" data-gr="<strong>followup_log.csv</strong> — αρχείο καταγραφής follow-up email"><strong>followup_log.csv</strong> — log of follow-up emails sent</li>
+        <li data-en="<strong>autoreach_users.db</strong> — user accounts (email addresses, hashed passwords)" data-gr="<strong>autoreach_users.db</strong> — λογαριασμοί χρηστών (διευθύνσεις email, κρυπτογραφημένοι κωδικοί)"><strong>autoreach_users.db</strong> — user accounts (email addresses, hashed passwords)</li>
+        <li data-en="<strong>Environment variables</strong> — API keys and credentials you configure" data-gr="<strong>Μεταβλητές περιβάλλοντος</strong> — API keys και διαπιστευτήρια που ρυθμίζετε"><strong>Environment variables</strong> — API keys and credentials you configure</li>
     </ul>
-    <p>You are responsible for securing this data on your own server.</p>
+    <p data-en="You are responsible for securing this data on your own server." data-gr="Είστε υπεύθυνοι για την ασφάλεια αυτών των δεδομένων στον δικό σας server.">You are responsible for securing this data on your own server.</p>
 
-    <h2>Third-Party Services</h2>
-    <p>AutoReach integrates with the following third-party services. Their own privacy policies apply when you use them:</p>
+    <h2 data-en="Third-Party Services" data-gr="Υπηρεσίες Τρίτων">Third-Party Services</h2>
+    <p data-en="AutoReach integrates with the following third-party services. Their own privacy policies apply when you use them:" data-gr="Το AutoReach ενσωματώνεται με τις παρακάτω υπηρεσίες τρίτων. Οι δικές τους πολιτικές απορρήτου ισχύουν όταν τις χρησιμοποιείτε:">AutoReach integrates with the following third-party services. Their own privacy policies apply when you use them:</p>
     <ul>
-        <li><strong>Google Maps Places API</strong> — used to find businesses. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
-        <li><strong>Groq AI</strong> — used to generate email content. <a href="https://groq.com/privacy-policy/" target="_blank">Groq Privacy Policy</a></li>
-        <li><strong>Gmail (SMTP)</strong> — used to send emails. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
-        <li><strong>GitHub, Discord, Google OAuth</strong> — optional login methods for the mobile app. Standard OAuth flows apply.</li>
+        <li data-en="<strong>Google Maps Places API</strong> — used to find businesses. <a href='https://policies.google.com/privacy' target='_blank'>Google Privacy Policy</a>" data-gr="<strong>Google Maps Places API</strong> — χρησιμοποιείται για εύρεση επιχειρήσεων. <a href='https://policies.google.com/privacy' target='_blank'>Πολιτική Απορρήτου Google</a>"><strong>Google Maps Places API</strong> — used to find businesses. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+        <li data-en="<strong>Groq AI</strong> — used to generate email content. <a href='https://groq.com/privacy-policy/' target='_blank'>Groq Privacy Policy</a>" data-gr="<strong>Groq AI</strong> — χρησιμοποιείται για δημιουργία περιεχομένου email. <a href='https://groq.com/privacy-policy/' target='_blank'>Πολιτική Απορρήτου Groq</a>"><strong>Groq AI</strong> — used to generate email content. <a href="https://groq.com/privacy-policy/" target="_blank">Groq Privacy Policy</a></li>
+        <li data-en="<strong>Gmail (SMTP)</strong> — used to send emails. <a href='https://policies.google.com/privacy' target='_blank'>Google Privacy Policy</a>" data-gr="<strong>Gmail (SMTP)</strong> — χρησιμοποιείται για αποστολή email. <a href='https://policies.google.com/privacy' target='_blank'>Πολιτική Απορρήτου Google</a>"><strong>Gmail (SMTP)</strong> — used to send emails. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+        <li data-en="<strong>GitHub, Discord, Google OAuth</strong> — optional login methods for the mobile app. Standard OAuth flows apply." data-gr="<strong>GitHub, Discord, Google OAuth</strong> — προαιρετικές μέθοδοι σύνδεσης για την εφαρμογή. Ισχύουν οι τυπικές ροές OAuth."><strong>GitHub, Discord, Google OAuth</strong> — optional login methods for the mobile app. Standard OAuth flows apply.</li>
     </ul>
 
-    <h2>This Website (autoreach.dev)</h2>
-    <p>The autoreach.dev landing page is a static site hosted on GitHub Pages. It does not set cookies, collect personal data, or use analytics. The only third-party content is Google Fonts (loaded for typography).</p>
+    <h2 data-en="This Website (autoreach.dev)" data-gr="Αυτός ο Ιστότοπος (autoreach.dev)">This Website (autoreach.dev)</h2>
+    <p data-en="The autoreach.dev landing page is a static site hosted on GitHub Pages. It does not set cookies, collect personal data, or use analytics. The only third-party content is Google Fonts (loaded for typography)." data-gr="Η σελίδα προορισμού autoreach.dev είναι ένας στατικός ιστότοπος σε GitHub Pages. Δεν ορίζει cookies, δεν συλλέγει προσωπικά δεδομένα και δεν χρησιμοποιεί analytics. Το μόνο περιεχόμενο τρίτων είναι τα Google Fonts.">The autoreach.dev landing page is a static site hosted on GitHub Pages. It does not set cookies, collect personal data, or use analytics. The only third-party content is Google Fonts (loaded for typography).</p>
 
-    <h2>Cold Email Compliance</h2>
-    <p>AutoReach is a tool for sending cold outreach emails. You are responsible for ensuring your use of AutoReach complies with applicable laws in your jurisdiction, including:</p>
+    <h2 data-en="Cold Email Compliance" data-gr="Συμμόρφωση Cold Email">Cold Email Compliance</h2>
+    <p data-en="AutoReach is a tool for sending cold outreach emails. You are responsible for ensuring your use of AutoReach complies with applicable laws in your jurisdiction, including:" data-gr="Το AutoReach είναι εργαλείο για αποστολή cold email. Είστε υπεύθυνοι για τη συμμόρφωση της χρήσης του με τη νομοθεσία της δικαιοδοσίας σας, συμπεριλαμβανομένων:">AutoReach is a tool for sending cold outreach emails. You are responsible for ensuring your use of AutoReach complies with applicable laws in your jurisdiction, including:</p>
     <ul>
-        <li>GDPR (European Union)</li>
-        <li>CAN-SPAM Act (United States)</li>
-        <li>CASL (Canada)</li>
-        <li>Any other applicable anti-spam or data protection laws</li>
+        <li data-en="GDPR (European Union)" data-gr="GDPR (Ευρωπαϊκή Ένωση)">GDPR (European Union)</li>
+        <li data-en="CAN-SPAM Act (United States)" data-gr="CAN-SPAM Act (Ηνωμένες Πολιτείες)">CAN-SPAM Act (United States)</li>
+        <li data-en="CASL (Canada)" data-gr="CASL (Καναδάς)">CASL (Canada)</li>
+        <li data-en="Any other applicable anti-spam or data protection laws" data-gr="Οποιαδήποτε άλλη εφαρμοστέα νομοθεσία κατά του spam ή προστασίας δεδομένων">Any other applicable anti-spam or data protection laws</li>
     </ul>
-    <p>Only contact businesses that may have a legitimate interest in your services, always include an unsubscribe mechanism, and honour opt-out requests promptly.</p>
+    <p data-en="Only contact businesses that may have a legitimate interest in your services, always include an unsubscribe mechanism, and honour opt-out requests promptly." data-gr="Επικοινωνείτε μόνο με επιχειρήσεις που μπορεί να έχουν έννομο συμφέρον για τις υπηρεσίες σας, συμπεριλαμβάνετε πάντα μηχανισμό διαγραφής και τηρείτε τα αιτήματα εξόδου άμεσα.">Only contact businesses that may have a legitimate interest in your services, always include an unsubscribe mechanism, and honour opt-out requests promptly.</p>
 
-    <h2>Contact</h2>
-    <p>For questions about this privacy policy, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
+    <h2 data-en="Contact" data-gr="Επικοινωνία">Contact</h2>
+    <p data-en="For questions about this privacy policy, open an issue on <a href='https://github.com/KonstantinosBatziakas/autoreach' target='_blank'>GitHub</a>." data-gr="Για ερωτήσεις σχετικά με αυτή την πολιτική, ανοίξτε ένα issue στο <a href='https://github.com/KonstantinosBatziakas/autoreach' target='_blank'>GitHub</a>.">For questions about this privacy policy, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
 </div>
 
 <footer>
-    <a href="index.html">Home</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="terms.html">Terms of Use</a>
-    <a href="cookies.html">Cookie Policy</a>
+    <a href="index.html" data-en="Home" data-gr="Αρχική">Home</a>
+    <a href="privacy.html" data-en="Privacy Policy" data-gr="Πολιτική Απορρήτου">Privacy Policy</a>
+    <a href="terms.html" data-en="Terms of Use" data-gr="Όροι Χρήσης">Terms of Use</a>
+    <a href="cookies.html" data-en="Cookie Policy" data-gr="Πολιτική Cookies">Cookie Policy</a>
     <br><br>© 2026 AutoReach.
 </footer>
+
+<script>
+(function() {
+    var lang = localStorage.getItem('ar_lang') || 'en';
+    if (lang === 'gr') applyLang('gr');
+    document.getElementById('langBtn').textContent = lang === 'en' ? 'GR' : 'EN';
+})();
+
+function toggleLang() {
+    var current = localStorage.getItem('ar_lang') || 'en';
+    var next = current === 'en' ? 'gr' : 'en';
+    localStorage.setItem('ar_lang', next);
+    applyLang(next);
+    document.getElementById('langBtn').textContent = next === 'en' ? 'GR' : 'EN';
+}
+
+function applyLang(lang) {
+    document.querySelectorAll('[data-en]').forEach(function(el) {
+        var val = el.getAttribute('data-' + lang);
+        if (val) el.innerHTML = val;
+    });
+}
+</script>
 </body>
 </html>
