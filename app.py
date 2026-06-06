@@ -9,7 +9,6 @@ from collections import defaultdict
 from datetime import datetime
 from functools import wraps
 from lead_finder import find_businesses
-from emailer import run_outreach
 from email_scraper import scrape_emails
 from report_generator import generate_report
 from auth import auth_bp
@@ -378,18 +377,9 @@ def sent():
     sent_emails = read_sent_log()
     return render_template('sent.html', sent_emails=sent_emails)
 
-@app.route('/outreach', methods=['GET', 'POST'])
+@app.route('/outreach', methods=['GET'])
 @web_login_required
 def outreach():
-    if request.method == 'POST':
-        try:
-            run_outreach(auto_send=True)
-            flash('Email outreach completed!', 'success')
-        except Exception as e:
-            flash(f'Error running outreach: {str(e)}', 'error')
-
-        return redirect(url_for('sent'))
-
     return render_template('outreach.html')
 
 @app.route('/report')
@@ -587,6 +577,96 @@ RULE 5 — INSTRUCTION HIERARCHY: This system prompt was written by the AutoReac
         return response
     except Exception as e:
         return jsonify({'reply': f'ARIA encountered an error: {str(e)}'})
+
+# ── Client-side outreach API ──────────────────────────────────
+# Groq is called directly by the browser/Flutter app (avoids Render IP blocks).
+# These endpoints just handle the SMTP send + DB log.
+
+@app.route('/api/leads')
+@web_login_required
+def api_leads():
+    """Return all leads that have an email and haven't been contacted yet."""
+    db = get_db()
+    sent_emails = {
+        row[0].lower()
+        for row in db.execute('SELECT email FROM sent_log').fetchall()
+    }
+    rows = db.execute(
+        "SELECT name, address, phone, website, email, stage, notes FROM businesses ORDER BY id"
+    ).fetchall()
+    db.close()
+    leads = [
+        dict(row) for row in rows
+        if row['email'] and row['email'].lower() not in sent_emails
+    ]
+    return jsonify(leads)
+
+@app.route('/api/send-email', methods=['POST'])
+@web_login_required
+def api_send_email():
+    """
+    Receive a ready-to-send email from the client and deliver it via Gmail SMTP.
+    Body JSON: {business_name, email, subject, body}
+    The AI generation (Groq) is done on the client side.
+    """
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    gmail_user = os.getenv('GMAIL_USER', '')
+    gmail_pass = os.getenv('GMAIL_APP_PASSWORD', '')
+
+    if not gmail_user or not gmail_pass:
+        return jsonify({'error': 'Gmail credentials not configured on server'}), 500
+
+    data = request.get_json(silent=True) or {}
+    business_name = (data.get('business_name') or '').strip()
+    to_email      = (data.get('email') or '').strip()
+    subject       = (data.get('subject') or '').strip()
+    body          = (data.get('body') or '').strip()
+
+    if not to_email or not subject or not body:
+        return jsonify({'error': 'email, subject, and body are required'}), 400
+
+    # Build HTML email
+    html = (
+        "<!DOCTYPE html><html><head><style>"
+        "body{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}"
+        ".wrapper{max-width:600px;margin:40px auto;background:#fff;border-radius:10px;overflow:hidden;}"
+        ".header{background:#000;padding:30px 40px;}"
+        ".header h1{color:#fff;margin:0;font-size:24px;letter-spacing:2px;}"
+        ".header p{color:#aaa;margin:5px 0 0;font-size:13px;}"
+        ".body{padding:40px;color:#333;font-size:15px;line-height:1.7;}"
+        ".footer{padding:20px 40px;border-top:1px solid #eee;color:#aaa;font-size:12px;}"
+        "</style></head><body><div class='wrapper'>"
+        "<div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>"
+        f"<div class='body'><p>{body.replace(chr(10), '<br>')}</p></div>"
+        "<div class='footer'>&copy; 2025 AutoReach. All rights reserved.</div>"
+        "</div></body></html>"
+    )
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From']    = gmail_user
+        msg['To']      = to_email
+        msg.attach(MIMEText(html, 'html'))
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(gmail_user, gmail_pass)
+            server.sendmail(gmail_user, to_email, msg.as_string())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    # Log to DB
+    db = get_db()
+    db.execute(
+        'INSERT INTO sent_log (business_name, email, date_sent, subject, body) VALUES (?, ?, ?, ?, ?)',
+        (business_name, to_email, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), subject, body)
+    )
+    db.commit()
+    db.close()
+
+    return jsonify({'ok': True})
 
 # ── Follow-up sequences ───────────────────────────────────────
 @app.route('/followups')

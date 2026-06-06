@@ -5,37 +5,182 @@
 {% block page_subtitle %}Send AI-generated cold emails to your leads{% endblock %}
 
 {% block content %}
+<div style="max-width:660px;">
 
-<div style="max-width:600px;">
+  <div class="info-box warning" style="margin-bottom:20px;">
+    <h3>ℹ️ How this works</h3>
+    Your Groq API key is called <strong>directly from your browser</strong> — it never touches the Render server,
+    so there are no IP restrictions. The server only handles the Gmail SMTP send.
+  </div>
 
-    <div class="info-box warning">
-        <h3>⚠️ Before you start</h3>
-        Make sure you have leads with email addresses, your Gmail credentials are set in <code style="background:#1a1a1a; padding:1px 6px; border-radius:4px;">.env</code>, and you've reviewed your email template in <code style="background:#1a1a1a; padding:1px 6px; border-radius:4px;">emailer.py</code>.
+  <!-- Config inputs -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">Campaign Settings</div>
+    <div style="display:flex; flex-direction:column; gap:14px; margin-top:4px;">
+      <label style="font-size:13px; color:#aaa;">
+        Groq API Key (used only in your browser — never sent to the server)
+        <input id="groq-key" type="password" placeholder="gsk_…"
+          style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
+      </label>
+      <label style="font-size:13px; color:#aaa;">
+        Email language
+        <select id="lang" style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
+          <option value="english">English</option>
+          <option value="greek">Greek</option>
+        </select>
+      </label>
     </div>
-
-    <div class="card">
-        <div class="card-title">Campaign Settings</div>
-        <p style="font-size:14px; color:#777; margin-bottom:20px; line-height:1.6;">
-            This will send personalized AI-generated emails (via Groq / Llama 3.1) to every lead that has an email address and has not been contacted yet. Already-contacted leads are automatically skipped.
-        </p>
-
-        <form method="POST">
-            <div class="form-actions">
-                <button type="submit" class="btn btn-success">Start Outreach Campaign</button>
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
+    <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+      <button id="start-btn" onclick="startCampaign()" class="btn btn-success">▶ Start Campaign</button>
+      <button id="stop-btn" onclick="stopCampaign()" class="btn btn-secondary" style="display:none;">⏹ Stop</button>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
     </div>
+  </div>
 
-    <div class="card">
-        <div class="card-title">What happens</div>
-        <ol style="font-size:14px; color:#777; line-height:2; padding-left:18px;">
-            <li>Each lead with an email is loaded from <strong style="color:#aaa;">businesses.csv</strong></li>
-            <li>Groq AI generates a unique cold outreach email per business</li>
-            <li>Email is sent via your Gmail account (SMTP)</li>
-            <li>Sent records are logged in <strong style="color:#aaa;">sent_log.csv</strong></li>
-        </ol>
+  <!-- Progress -->
+  <div id="progress-box" class="card" style="display:none; margin-bottom:20px;">
+    <div class="card-title">Progress</div>
+    <div style="margin:12px 0 8px;">
+      <div style="background:#1a1a1a; border-radius:6px; height:8px; overflow:hidden;">
+        <div id="progress-bar" style="background:#4ecdc4; height:100%; width:0%; transition:width 0.4s;"></div>
+      </div>
     </div>
+    <div id="progress-text" style="font-size:13px; color:#aaa; margin-bottom:12px;">Starting…</div>
+    <div id="log" style="font-size:12px; color:#666; max-height:260px; overflow-y:auto; font-family:monospace; line-height:1.8;"></div>
+  </div>
+
+  <!-- Summary -->
+  <div id="summary-box" class="card" style="display:none;">
+    <div class="card-title">✅ Campaign Complete</div>
+    <div id="summary-text" style="font-size:14px; color:#aaa; margin-top:8px;"></div>
+    <div style="margin-top:16px;">
+      <a href="{{ url_for('sent') }}" class="btn btn-success">View Sent Emails</a>
+    </div>
+  </div>
+
 </div>
 
+<script>
+let _stop = false;
+
+function stopCampaign() { _stop = true; }
+
+function log(msg, color) {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.style.color = color || '#888';
+  line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function callGroq(apiKey, businessName, address, language) {
+  const prompts = {
+    english: `Write a short professional cold outreach email offering web design and digital marketing services to ${businessName} located at ${address}. Under 150 words. Only return the email body.`,
+    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση ${businessName} που βρίσκεται στη διεύθυνση ${address}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
+  };
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompts[language] || prompts.english }],
+      temperature: 0.7,
+      max_tokens: 300,
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Groq ${resp.status}`);
+  }
+  return (await resp.json()).choices[0].message.content.trim();
+}
+
+async function startCampaign() {
+  _stop = false;
+  const apiKey = document.getElementById('groq-key').value.trim();
+  const lang   = document.getElementById('lang').value;
+
+  if (!apiKey) { alert('Please enter your Groq API key.'); return; }
+
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('stop-btn').style.display = 'inline-block';
+  document.getElementById('progress-box').style.display = 'block';
+  document.getElementById('summary-box').style.display = 'none';
+  document.getElementById('log').innerHTML = '';
+
+  // Fetch unsent leads
+  log('Fetching leads…');
+  let leads;
+  try {
+    const r = await fetch('/api/leads');
+    leads = await r.json();
+  } catch(e) {
+    log('Failed to fetch leads: ' + e.message, '#e74c3c');
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('stop-btn').style.display = 'none';
+    return;
+  }
+
+  if (!leads.length) {
+    log('No unsent leads found. Add leads with emails first.', '#e0b84a');
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('stop-btn').style.display = 'none';
+    return;
+  }
+
+  log(`Found ${leads.length} lead(s) to contact.`, '#4ecdc4');
+
+  let sent = 0, errors = 0;
+
+  for (let i = 0; i < leads.length; i++) {
+    if (_stop) { log('⏹ Stopped by user.', '#e0b84a'); break; }
+
+    const lead = leads[i];
+    const pct = Math.round(((i) / leads.length) * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = `${i + 1} / ${leads.length} — ${lead.name}`;
+    log(`Generating email for ${lead.name}…`);
+
+    let body;
+    try {
+      body = await callGroq(apiKey, lead.name, lead.address || '', lang);
+    } catch(e) {
+      log(`  ✗ Groq error for ${lead.name}: ${e.message}`, '#e74c3c');
+      errors++;
+      continue;
+    }
+
+    const subject = lang === 'greek'
+      ? `Γρήγορη ερώτηση για ${lead.name}`
+      : `Quick question for ${lead.name}`;
+
+    try {
+      const r = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ business_name: lead.name, email: lead.email, subject, body }),
+      });
+      const result = await r.json();
+      if (!r.ok) throw new Error(result.error || r.status);
+      log(`  ✓ Sent to ${lead.email}`, '#7dd87d');
+      sent++;
+    } catch(e) {
+      log(`  ✗ Send failed for ${lead.name}: ${e.message}`, '#e74c3c');
+      errors++;
+    }
+
+    // Small delay to respect Gmail rate limits
+    await new Promise(res => setTimeout(res, 1200));
+  }
+
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('progress-text').textContent = 'Done.';
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('summary-box').style.display = 'block';
+  document.getElementById('summary-text').textContent =
+    `Campaign finished — ${sent} email(s) sent, ${errors} error(s).`;
+}
+</script>
 {% endblock %}
