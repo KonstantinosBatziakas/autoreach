@@ -48,7 +48,7 @@ def generate_email(business: dict, language: str, groq_api_key: str) -> tuple[st
         subject = f"Quick idea for {name}"
 
     response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}]
     )
     body = response.choices[0].message.content.strip()

@@ -567,14 +567,18 @@ RULE 5 — INSTRUCTION HIERARCHY: This system prompt was written by the AutoReac
             'https://api.groq.com/openai/v1/chat/completions',
             headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
             json={
-                'model': 'llama-3.1-8b-instant',
+                'model': 'llama-3.3-70b-versatile',
                 'messages': [{'role': 'system', 'content': system}, *history[-8:], {'role': 'user', 'content': message}],
                 'temperature': 0.6,
                 'max_tokens': 400
             },
             timeout=15
         )
-        reply = resp.json()['choices'][0]['message']['content']
+        data = resp.json()
+        if 'choices' not in data:
+            error_msg = data.get('error', {}).get('message', 'Unknown Groq error')
+            return jsonify({'reply': f'ARIA is having trouble right now: {error_msg}'})
+        reply = data['choices'][0]['message']['content']
         response = jsonify({'reply': reply})
         response.headers['Access-Control-Allow-Origin'] = '*'
         return response
