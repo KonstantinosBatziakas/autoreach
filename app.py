@@ -391,6 +391,19 @@ def sent():
     sent_emails = read_sent_log()
     return render_template('sent.html', sent_emails=sent_emails)
 
+@app.route('/delete_sent', methods=['POST'])
+@web_login_required
+def delete_sent():
+    """Remove a lead from the sent log so they can be re-contacted."""
+    entry_id = request.form.get('id', '').strip()
+    if entry_id:
+        db = get_db()
+        db.execute('DELETE FROM sent_log WHERE id = ?', (entry_id,))
+        db.commit()
+        db.close()
+    flash('Lead removed from sent log — they can be contacted again.', 'success')
+    return redirect(url_for('sent'))
+
 @app.route('/outreach', methods=['GET'])
 @web_login_required
 def outreach():

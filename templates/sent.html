@@ -10,6 +10,10 @@
 {% block content %}
 
 {% if sent_emails %}
+<div class="notice notice-info" style="margin-bottom:16px;">
+  <span class="notice-icon">ℹ</span>
+  <div>Hit <strong>↺</strong> on any row to remove them from the sent log — they'll appear again in your next campaign so you can re-contact them.</div>
+</div>
 <div class="table-wrap">
   <table>
     <thead>
@@ -19,6 +23,7 @@
         <th>Email</th>
         <th>Subject</th>
         <th>Sent</th>
+        <th style="width:36px;"></th>
       </tr>
     </thead>
     <tbody>
@@ -29,6 +34,13 @@
         <td><span style="font-family:var(--mono); font-size:12px; color:var(--text-2);">{{ e.email }}</span></td>
         <td style="color:var(--text-2);">{{ e.subject }}</td>
         <td style="font-family:var(--mono); font-size:11px; color:var(--text-3); white-space:nowrap;">{{ e.date_sent }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_sent') }}"
+                onsubmit="return confirm('Remove {{ e.business_name }} from sent log? They can be contacted again.');">
+            <input type="hidden" name="id" value="{{ e.id }}">
+            <button type="submit" class="btn btn-danger btn-sm" title="Re-enable for outreach">↺</button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

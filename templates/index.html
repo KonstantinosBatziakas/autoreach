@@ -47,12 +47,19 @@
   <div class="card-header">
     <div>
       <div class="card-title">Campaign Progress</div>
-      <div class="card-sub">{{ stats.emails_sent }} of {{ stats.leads_with_emails }} contactable leads reached</div>
+      <div class="card-sub">
+        {{ stats.emails_sent }} of {{ stats.leads_with_emails }} leads contacted
+        {% if pct == 100 %}
+          — <span style="color:var(--green);">all done. Add new leads to keep going.</span>
+        {% elif remaining > 0 %}
+          — <a href="{{ url_for('outreach') }}" style="color:var(--teal);">{{ remaining }} left to send →</a>
+        {% endif %}
+      </div>
     </div>
-    <span style="font-size:20px; font-weight:700; color:var(--teal); font-family:var(--mono);">{{ pct }}%</span>
+    <span style="font-size:20px; font-weight:700; color:{% if pct == 100 %}var(--green){% else %}var(--teal){% endif %}; font-family:var(--mono);">{{ pct }}%</span>
   </div>
   <div class="progress-track">
-    <div class="progress-fill" style="width:{{ pct }}%;"></div>
+    <div class="progress-fill" style="width:{{ pct }}%; {% if pct == 100 %}background:var(--green);{% endif %}"></div>
   </div>
 </div>
 
