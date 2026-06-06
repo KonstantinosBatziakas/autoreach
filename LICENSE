@@ -1,0 +1,49 @@
+AutoReach Source Available License
+===================================
+
+Copyright (c) 2026 Konstantinos Batziakas
+All rights reserved.
+
+OWNERSHIP
+---------
+AutoReach and all associated source code, assets, and documentation are the
+exclusive intellectual property of Konstantinos Batziakas. This license does
+not transfer ownership of any kind.
+
+PERMITTED USES
+--------------
+You are free to:
+  - Use AutoReach for personal or internal business purposes
+  - Self-host AutoReach on your own server or infrastructure
+  - View, study, and modify the source code for personal use
+  - Contribute improvements back to the original repository
+  - Fork and modify AutoReach for non-commercial purposes, provided this
+    license and the original copyright notice are retained in all copies
+
+PROHIBITED USES
+---------------
+You may NOT, without explicit written permission from the copyright holder:
+  - Sell, license, or sublicense AutoReach or any modified version of it
+  - Offer AutoReach (or a derivative) as a paid SaaS, hosted service,
+    or commercial product — even if substantially modified or rebranded
+  - Charge money for access to AutoReach or any service built primarily
+    on AutoReach's codebase
+  - Remove or alter this license, the copyright notice, or any attribution
+    to the original author
+
+CONTRIBUTIONS
+-------------
+By submitting a contribution (pull request, patch, or otherwise) to this
+repository, you agree that your contribution becomes the property of
+Konstantinos Batziakas and is licensed under these same terms.
+
+DISCLAIMER
+----------
+This software is provided "as is", without warranty of any kind, express or
+implied. In no event shall the copyright holder be liable for any claim,
+damages, or other liability arising from the use of this software.
+
+CONTACT
+-------
+For commercial licensing inquiries or written permission requests:
+GitHub: https://github.com/KonstantinosBatziakas

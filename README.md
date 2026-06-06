@@ -130,4 +130,4 @@ autoreach/
 
 ## License
 
-MIT — free to use, modify, and self-host.
+Source Available — free to use, modify, and self-host. Commercial resale prohibited. See [LICENSE](LICENSE) for full terms.
