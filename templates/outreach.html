@@ -5,33 +5,43 @@
 {% block page_subtitle %}Send AI-generated cold emails to your leads{% endblock %}
 
 {% block content %}
-<div style="max-width:660px;">
+<div style="max-width:700px;">
 
   <div class="info-box warning" style="margin-bottom:20px;">
     <h3>ℹ️ How this works</h3>
-    Your Groq API key is called <strong>directly from your browser</strong> — it never touches the Render server,
-    so there are no IP restrictions. The server only handles the Gmail SMTP send.
+    Groq AI runs <strong>directly in your browser</strong> — no IP restrictions.
+    Emails are sent via <strong>Resend</strong> (free at resend.com, 3,000/month).
   </div>
 
   <!-- Config inputs -->
   <div class="card" style="margin-bottom:20px;">
     <div class="card-title">Campaign Settings</div>
     <div style="display:flex; flex-direction:column; gap:14px; margin-top:4px;">
+
+      <label style="font-size:13px; color:#aaa;">
+        Your Name / Company Name <span style="color:#555;">(used in email sign-off)</span>
+        <input id="sender-name" type="text" placeholder="e.g. Alex from AutoReach"
+          style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
+      </label>
+
       <label style="font-size:13px; color:#aaa;">
         Groq API Key <span style="color:#555;">(stays in your browser only)</span>
         <input id="groq-key" type="password" placeholder="gsk_…"
           style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
       </label>
+
       <label style="font-size:13px; color:#aaa;">
-        Resend API Key <span style="color:#555;">(free at <a href="https://resend.com" target="_blank" style="color:#4ecdc4;">resend.com</a> — 3,000 emails/month free)</span>
+        Resend API Key <span style="color:#555;">(free at <a href="https://resend.com" target="_blank" style="color:#4ecdc4;">resend.com</a>)</span>
         <input id="resend-key" type="password" placeholder="re_…"
           style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
       </label>
+
       <label style="font-size:13px; color:#aaa;">
-        From Email <span style="color:#555;">(must be verified in Resend — use onboarding@resend.dev to test)</span>
-        <input id="from-email" type="email" placeholder="you@yourdomain.com"
+        From Email <span style="color:#555;">(verified domain in Resend, e.g. <code style="color:#aaa;">AutoReach &lt;hello@mail.autoreach.dev&gt;</code>)</span>
+        <input id="from-email" type="text" placeholder="AutoReach <hello@mail.autoreach.dev>"
           style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
       </label>
+
       <label style="font-size:13px; color:#aaa;">
         Email language
         <select id="lang" style="width:100%; margin-top:6px; background:#111; border:1px solid #333; color:#fff; padding:8px 12px; border-radius:8px; font-size:13px; box-sizing:border-box;">
@@ -40,11 +50,84 @@
         </select>
       </label>
     </div>
-    <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
-      <button id="start-btn" onclick="startCampaign()" class="btn btn-success">▶ Start Campaign</button>
-      <button id="stop-btn" onclick="stopCampaign()" class="btn btn-secondary" style="display:none;">⏹ Stop</button>
-      <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+
+  <!-- Template picker -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">Email Template</div>
+    <p style="font-size:13px; color:#666; margin:4px 0 16px;">Choose the visual style for your emails.</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px;" id="template-grid">
+
+      <div class="tpl-card" data-id="classic" onclick="selectTemplate('classic')"
+        style="border:2px solid #4ecdc4; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
+        <div style="background:#000; padding:10px 12px;">
+          <div style="color:#fff; font-size:10px; font-weight:bold; letter-spacing:1px;">AUTOREACH</div>
+          <div style="color:#aaa; font-size:8px;">Digital Presence</div>
+        </div>
+        <div style="padding:8px 12px; background:#fff;">
+          <div style="color:#333; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        </div>
+        <div style="padding:4px 12px; background:#f4f4f4; color:#aaa; font-size:8px;">© AutoReach</div>
+        <div style="padding:6px; text-align:center; background:#111; color:#4ecdc4; font-size:11px; font-weight:bold;">✓ Classic Black</div>
+      </div>
+
+      <div class="tpl-card" data-id="clean" onclick="selectTemplate('clean')"
+        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
+        <div style="background:#fff; padding:10px 12px; border-bottom:3px solid #3B82F6;">
+          <div style="color:#1a1a1a; font-size:10px; font-weight:bold;">AutoReach</div>
+          <div style="color:#6B7280; font-size:8px;">Digital Presence</div>
+        </div>
+        <div style="padding:8px 12px; background:#fff;">
+          <div style="color:#374151; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        </div>
+        <div style="padding:4px 12px; background:#F9FAFB; color:#9CA3AF; font-size:8px;">© AutoReach</div>
+        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Clean White</div>
+      </div>
+
+      <div class="tpl-card" data-id="purple" onclick="selectTemplate('purple')"
+        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
+        <div style="background:linear-gradient(135deg,#6C63FF,#9B59B6); padding:10px 12px;">
+          <div style="color:#fff; font-size:10px; font-weight:bold; letter-spacing:1px;">AUTOREACH</div>
+          <div style="color:rgba(255,255,255,0.7); font-size:8px;">Digital Presence</div>
+        </div>
+        <div style="padding:8px 12px; background:#fff;">
+          <div style="color:#2D2D2D; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        </div>
+        <div style="padding:4px 12px; background:#fff; color:#A78BFA; font-size:8px;">© AutoReach</div>
+        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Bold Purple</div>
+      </div>
+
+      <div class="tpl-card" data-id="warm" onclick="selectTemplate('warm')"
+        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
+        <div style="background:linear-gradient(135deg,#F97316,#EF4444); padding:10px 12px;">
+          <div style="color:#fff; font-size:10px; font-weight:bold; letter-spacing:1px;">AUTOREACH</div>
+          <div style="color:rgba(255,255,255,0.8); font-size:8px;">Digital Presence</div>
+        </div>
+        <div style="padding:8px 12px; background:#fff;">
+          <div style="color:#431407; font-size:8px; line-height:1.5;">Dear Team,<br>I hope this finds…</div>
+        </div>
+        <div style="padding:4px 12px; background:#FFF7ED; color:#FB923C; font-size:8px;">© AutoReach</div>
+        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Warm Orange</div>
+      </div>
+
+      <div class="tpl-card" data-id="plain" onclick="selectTemplate('plain')"
+        style="border:2px solid #333; border-radius:10px; overflow:hidden; cursor:pointer; transition:all 0.2s;">
+        <div style="padding:10px 12px; background:#fff;">
+          <div style="color:#222; font-size:8px; line-height:1.6;">Dear Team,<br>I hope this finds you well…<br><br>Best regards,<br>AutoReach</div>
+        </div>
+        <div style="padding:4px 12px; background:#fff; color:#aaa; font-size:8px; border-top:1px solid #eee;">AutoReach Team</div>
+        <div style="padding:6px; text-align:center; background:#111; color:#aaa; font-size:11px;">Plain Text</div>
+      </div>
+
     </div>
+    <p style="font-size:11px; color:#555; margin-top:12px;">💡 Plain Text has the highest deliverability — looks like a real personal email.</p>
+  </div>
+
+  <!-- Action buttons -->
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+    <button id="start-btn" onclick="startCampaign()" class="btn btn-success">▶ Start Campaign</button>
+    <button id="stop-btn" onclick="stopCampaign()" class="btn btn-secondary" style="display:none;">⏹ Stop</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
   </div>
 
   <!-- Progress -->
@@ -72,6 +155,16 @@
 
 <script>
 let _stop = false;
+let _selectedTemplate = 'classic';
+
+function selectTemplate(id) {
+  _selectedTemplate = id;
+  document.querySelectorAll('.tpl-card').forEach(c => {
+    c.style.borderColor = c.dataset.id === id ? '#4ecdc4' : '#333';
+    const label = c.querySelector('div:last-child');
+    if (label) label.style.color = c.dataset.id === id ? '#4ecdc4' : '#aaa';
+  });
+}
 
 function stopCampaign() { _stop = true; }
 
@@ -84,10 +177,18 @@ function log(msg, color) {
   el.scrollTop = el.scrollHeight;
 }
 
-async function callGroq(apiKey, businessName, address, language) {
+function extractFirstName(email) {
+  // Try to get a name from the local part: john.smith@ → John
+  const local = email.split('@')[0];
+  const part = local.split(/[._\-+]/)[0];
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+
+async function callGroq(apiKey, businessName, address, language, senderName) {
+  const recipientHint = `Sign the email as: ${senderName || 'AutoReach Team'}`;
   const prompts = {
-    english: `Write a short professional cold outreach email offering web design and digital marketing services to ${businessName} located at ${address}. Under 150 words. Only return the email body.`,
-    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση ${businessName} που βρίσκεται στη διεύθυνση ${address}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
+    english: `Write a short professional cold outreach email offering web design and digital marketing services to the business "${businessName}" located at "${address}". Under 150 words. ${recipientHint}. Only return the email body, no subject line.`,
+    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση "${businessName}" που βρίσκεται στη διεύθυνση "${address}". Υπόγραψε ως: ${senderName || 'AutoReach Team'}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
   };
   const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -108,10 +209,11 @@ async function callGroq(apiKey, businessName, address, language) {
 
 async function startCampaign() {
   _stop = false;
-  const apiKey    = document.getElementById('groq-key').value.trim();
-  const resendKey = document.getElementById('resend-key').value.trim();
-  const fromEmail = document.getElementById('from-email').value.trim() || 'onboarding@resend.dev';
-  const lang      = document.getElementById('lang').value;
+  const senderName = document.getElementById('sender-name').value.trim() || 'AutoReach Team';
+  const apiKey     = document.getElementById('groq-key').value.trim();
+  const resendKey  = document.getElementById('resend-key').value.trim();
+  const fromEmail  = document.getElementById('from-email').value.trim() || 'onboarding@resend.dev';
+  const lang       = document.getElementById('lang').value;
 
   if (!apiKey)    { alert('Please enter your Groq API key.'); return; }
   if (!resendKey) { alert('Please enter your Resend API key. Get one free at resend.com.'); return; }
@@ -122,7 +224,6 @@ async function startCampaign() {
   document.getElementById('summary-box').style.display = 'none';
   document.getElementById('log').innerHTML = '';
 
-  // Fetch unsent leads
   log('Fetching leads…');
   let leads;
   try {
@@ -143,21 +244,19 @@ async function startCampaign() {
   }
 
   log(`Found ${leads.length} lead(s) to contact.`, '#4ecdc4');
-
   let sent = 0, errors = 0;
 
   for (let i = 0; i < leads.length; i++) {
     if (_stop) { log('⏹ Stopped by user.', '#e0b84a'); break; }
 
     const lead = leads[i];
-    const pct = Math.round(((i) / leads.length) * 100);
-    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-bar').style.width = Math.round((i / leads.length) * 100) + '%';
     document.getElementById('progress-text').textContent = `${i + 1} / ${leads.length} — ${lead.name}`;
     log(`Generating email for ${lead.name}…`);
 
     let body;
     try {
-      body = await callGroq(apiKey, lead.name, lead.address || '', lang);
+      body = await callGroq(apiKey, lead.name, lead.address || '', lang, senderName);
     } catch(e) {
       log(`  ✗ Groq error for ${lead.name}: ${e.message}`, '#e74c3c');
       errors++;
@@ -172,7 +271,16 @@ async function startCampaign() {
       const r = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ business_name: lead.name, email: lead.email, subject, body, resend_api_key: resendKey, from_email: fromEmail }),
+        body: JSON.stringify({
+          business_name: lead.name,
+          email: lead.email,
+          subject,
+          body,
+          resend_api_key: resendKey,
+          from_email: fromEmail,
+          template_id: _selectedTemplate,
+          sender_name: senderName,
+        }),
       });
       const result = await r.json();
       if (!r.ok) throw new Error(result.error || r.status);
@@ -183,7 +291,6 @@ async function startCampaign() {
       errors++;
     }
 
-    // Small delay to respect Gmail rate limits
     await new Promise(res => setTimeout(res, 1200));
   }
 

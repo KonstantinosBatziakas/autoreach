@@ -21,6 +21,7 @@ class _OutreachScreenState extends State<OutreachScreen> {
   final List<_LogEntry> _log = [];
   bool _done = false;
   String _lang = 'english';
+  String _templateId = 'classic';
 
   void _addLog(String msg, {Color color = const Color(0xFF888AAA)}) {
     setState(() => _log.add(_LogEntry(msg, color)));
@@ -42,13 +43,14 @@ class _OutreachScreenState extends State<OutreachScreen> {
     return list.cast<Map<String, dynamic>>();
   }
 
-  Future<String> _generateEmail(String apiKey, String name, String address) async {
+  Future<String> _generateEmail(String apiKey, String name, String address, String senderName) async {
+    final sign = 'Sign the email as: $senderName';
     final prompt = _lang == 'greek'
         ? 'Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες '
           'σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση $name που βρίσκεται '
-          'στη διεύθυνση $address. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.'
+          'στη διεύθυνση $address. Υπόγραψε ως: $senderName. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.'
         : 'Write a short professional cold outreach email offering web design and digital marketing '
-          'services to $name located at $address. Under 150 words. Only return the email body.';
+          'services to $name located at $address. Under 150 words. $sign. Only return the email body.';
 
     final resp = await http.post(
       Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
@@ -71,7 +73,7 @@ class _OutreachScreenState extends State<OutreachScreen> {
     return (jsonDecode(resp.body)['choices'][0]['message']['content'] as String).trim();
   }
 
-  Future<void> _sendEmail(String businessName, String email, String subject, String body) async {
+  Future<void> _sendEmail(String businessName, String email, String subject, String body, String senderName) async {
     final token      = await AuthService.getToken();
     final resendKey  = await SettingsService.getResendApiKey();
     final fromEmail  = await SettingsService.getFromEmail();
@@ -88,6 +90,8 @@ class _OutreachScreenState extends State<OutreachScreen> {
         'body': body,
         'resend_api_key': resendKey,
         'from_email': fromEmail.isNotEmpty ? fromEmail : 'onboarding@resend.dev',
+        'template_id': _templateId,
+        'sender_name': senderName,
       }),
     ).timeout(const Duration(seconds: 20));
 
@@ -98,8 +102,9 @@ class _OutreachScreenState extends State<OutreachScreen> {
   }
 
   Future<void> _runCampaign() async {
-    final groqKey   = await SettingsService.getGroqApiKey();
-    final resendKey = await SettingsService.getResendApiKey();
+    final groqKey    = await SettingsService.getGroqApiKey();
+    final resendKey  = await SettingsService.getResendApiKey();
+    final senderName = await SettingsService.getSenderName();
 
     if (groqKey.isEmpty) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -158,7 +163,7 @@ class _OutreachScreenState extends State<OutreachScreen> {
 
       String body;
       try {
-        body = await _generateEmail(groqKey, name, address);
+        body = await _generateEmail(groqKey, name, address, senderName);
       } catch (e) {
         _addLog('  ✗ Groq error: $e', color: const Color(0xFFE74C3C));
         setState(() => _errors++);
@@ -170,7 +175,7 @@ class _OutreachScreenState extends State<OutreachScreen> {
           : 'Quick question for $name';
 
       try {
-        await _sendEmail(name, email, subject, body);
+        await _sendEmail(name, email, subject, body, senderName);
         _addLog('  ✓ Sent to $email', color: const Color(0xFF7DD87D));
         setState(() => _sent++);
       } catch (e) {
@@ -235,6 +240,50 @@ class _OutreachScreenState extends State<OutreachScreen> {
                     DropdownMenuItem(value: 'greek',   child: Text('Greek')),
                   ],
                 ),
+              ]),
+            )),
+            const SizedBox(height: 16),
+          ],
+
+          // Template picker
+          if (!_running) ...[
+            Card(child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Email Template', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                const Text('Choose a visual style for your emails', style: TextStyle(color: Color(0xFF666888), fontSize: 12)),
+                const SizedBox(height: 12),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  for (final t in [
+                    ('classic', 'Classic Black'),
+                    ('clean',   'Clean White'),
+                    ('purple',  'Bold Purple'),
+                    ('warm',    'Warm Orange'),
+                    ('plain',   'Plain Text'),
+                  ])
+                    GestureDetector(
+                      onTap: () => setState(() => _templateId = t.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _templateId == t.$1 ? const Color(0xFF4ECDC4) : const Color(0xFF333355),
+                            width: 2,
+                          ),
+                          color: _templateId == t.$1 ? const Color(0xFF4ECDC4).withOpacity(0.12) : Colors.transparent,
+                        ),
+                        child: Text(t.$2, style: TextStyle(
+                          color: _templateId == t.$1 ? const Color(0xFF4ECDC4) : const Color(0xFF888AAA),
+                          fontSize: 12,
+                          fontWeight: _templateId == t.$1 ? FontWeight.bold : FontWeight.normal,
+                        )),
+                      ),
+                    ),
+                ]),
+                const SizedBox(height: 8),
+                const Text('💡 Plain Text has highest deliverability', style: TextStyle(color: Color(0xFF555577), fontSize: 11)),
               ]),
             )),
             const SizedBox(height: 16),
