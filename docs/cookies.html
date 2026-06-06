@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookie Policy — AutoReach</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #111c1c; --teal: #4ecdc4; --coral: #e8806a; --text: #cde0de; --dim: #6a9090; --border: rgba(255,255,255,0.07); --font: 'JetBrains Mono', monospace; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.8; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; height: 58px; background: rgba(8,18,18,0.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(18px); }
+.nav-logo { font-size: 15px; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
+.nav-logo span { color: var(--coral); }
+.back-link { font-size: 12px; color: var(--dim); text-decoration: none; transition: color 0.15s; }
+.back-link:hover { color: var(--teal); }
+.content { max-width: 760px; margin: 0 auto; padding: 100px 24px 80px; }
+h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.meta { font-size: 11px; color: var(--dim); margin-bottom: 48px; }
+h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--teal); margin: 36px 0 14px; }
+p { font-size: 13px; color: #aac8c6; margin-bottom: 14px; }
+ul { margin: 0 0 14px 20px; }
+li { font-size: 13px; color: #aac8c6; margin-bottom: 6px; }
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.table-wrap { overflow-x: auto; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { padding: 10px 14px; text-align: left; color: var(--dim); border-bottom: 1px solid var(--border); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+td { padding: 10px 14px; color: #aac8c6; border-bottom: 1px solid rgba(255,255,255,0.04); }
+footer { text-align: center; padding: 32px; font-size: 11px; color: #3a5050; border-top: 1px solid var(--border); margin-top: 60px; }
+footer a { color: var(--dim); text-decoration: none; margin: 0 10px; }
+footer a:hover { color: var(--teal); }
+</style>
+</head>
+<body>
+<nav>
+    <a href="index.html" class="nav-logo">AUTO<span>REACH</span></a>
+    <a href="index.html" class="back-link">← Back to home</a>
+</nav>
+
+<div class="content">
+    <h1>Cookie Policy</h1>
+    <div class="meta">Last updated: June 2025 · Applies to autoreach.dev and self-hosted AutoReach instances</div>
+
+    <h2>This Website (autoreach.dev)</h2>
+    <p>The autoreach.dev landing page is a <strong>static site hosted on GitHub Pages</strong>. It does not use cookies, tracking pixels, or analytics. No personal data is collected when you visit this website.</p>
+    <p>The only external resource loaded is Google Fonts for typography. Google may set cookies as part of this — see <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</p>
+
+    <h2>The AutoReach Dashboard (Self-Hosted)</h2>
+    <p>When you run your own AutoReach instance, the dashboard uses a single session cookie:</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Cookie</th>
+                    <th>Purpose</th>
+                    <th>Type</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>session</code></td>
+                    <td>Keeps you logged into the dashboard</td>
+                    <td>Essential</td>
+                    <td>Browser session</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>This cookie is strictly necessary for the dashboard to function. It contains only an encrypted session token — no personal data, no tracking information.</p>
+
+    <h2>No Analytics or Tracking</h2>
+    <p>AutoReach does not use:</p>
+    <ul>
+        <li>Google Analytics or any other analytics service</li>
+        <li>Advertising or retargeting cookies</li>
+        <li>Third-party tracking pixels</li>
+        <li>Social media tracking</li>
+    </ul>
+
+    <h2>Your Control</h2>
+    <p>You can clear cookies at any time through your browser settings. Clearing the session cookie will log you out of the AutoReach dashboard. Since we set no tracking cookies, there is no cookie consent banner — there is nothing to consent to.</p>
+
+    <h2>Contact</h2>
+    <p>For questions, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
+</div>
+
+<footer>
+    <a href="index.html">Home</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms of Use</a>
+    <a href="cookies.html">Cookie Policy</a>
+    <br><br>© 2025 AutoReach. MIT License.
+</footer>
+</body>
+</html>

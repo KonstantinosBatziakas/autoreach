@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoReach Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #1a2e2e;
+            color: #cde0de;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 40px;
+            width: 100%;
+            max-width: 560px;
+        }
+        .header { text-align: center; margin-bottom: 36px; }
+        .header h1 { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: 2px; }
+        .header p { font-size: 12px; color: #6a9090; margin-top: 8px; line-height: 1.6; }
+        .step {
+            background: rgba(78,205,196,0.05);
+            border: 1px solid rgba(78,205,196,0.15);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .step-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #4ecdc4;
+            margin-bottom: 14px;
+        }
+        .form-group { margin-bottom: 14px; }
+        label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6a9090;
+            margin-bottom: 6px;
+        }
+        .label-hint { font-size: 10px; color: #4a7070; margin-top: 4px; }
+        .label-hint a { color: #4ecdc4; text-decoration: none; }
+        input[type=text], input[type=password], input[type=email] {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            color: #cde0de;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: #4ecdc4; }
+        .btn {
+            width: 100%;
+            padding: 13px;
+            background: #e8806a;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.15s;
+        }
+        .btn:hover { background: #c4614a; }
+        .error {
+            background: rgba(232,80,80,0.12);
+            border: 1px solid rgba(232,80,80,0.3);
+            color: #f07070;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .success {
+            background: rgba(78,180,78,0.12);
+            border: 1px solid rgba(78,180,78,0.3);
+            color: #7dd87d;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .optional { opacity: 0.6; font-size: 10px; margin-left: 6px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h1>AUTOREACH SETUP</h1>
+            <p>Welcome! Configure your AutoReach instance below.<br>
+            These settings will be saved as environment variables.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="{{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="step">
+                <div class="step-title">1 — Dashboard Security</div>
+                <div class="form-group">
+                    <label>Dashboard Password</label>
+                    <input type="password" name="web_password" placeholder="Choose a strong password" required>
+                    <div class="label-hint">Used to log into this web dashboard.</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">2 — Email Sending</div>
+                <div class="form-group">
+                    <label>Gmail Address</label>
+                    <input type="email" name="gmail_user" placeholder="you@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>Gmail App Password</label>
+                    <input type="password" name="gmail_pass" placeholder="16-character app password">
+                    <div class="label-hint">
+                        Not your Gmail password. Generate one at
+                        <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">3 — AI Email Generation</div>
+                <div class="form-group">
+                    <label>Groq API Key</label>
+                    <input type="text" name="groq_key" placeholder="gsk_...">
+                    <div class="label-hint">
+                        Free at <a href="https://console.groq.com" target="_blank">console.groq.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">4 — Lead Discovery</div>
+                <div class="form-group">
+                    <label>Google Maps API Key</label>
+                    <input type="text" name="google_maps_key" placeholder="AIza...">
+                    <div class="label-hint">
+                        Enable Places API at <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Complete Setup →</button>
+        </form>
+    </div>
+</body>
+</html>

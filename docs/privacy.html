@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — AutoReach</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #111c1c; --teal: #4ecdc4; --coral: #e8806a; --text: #cde0de; --dim: #6a9090; --border: rgba(255,255,255,0.07); --font: 'JetBrains Mono', monospace; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.8; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; height: 58px; background: rgba(8,18,18,0.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(18px); }
+.nav-logo { font-size: 15px; font-weight: 800; letter-spacing: 2px; color: #fff; text-decoration: none; }
+.nav-logo span { color: var(--coral); }
+.back-link { font-size: 12px; color: var(--dim); text-decoration: none; transition: color 0.15s; }
+.back-link:hover { color: var(--teal); }
+.content { max-width: 760px; margin: 0 auto; padding: 100px 24px 80px; }
+h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.meta { font-size: 11px; color: var(--dim); margin-bottom: 48px; }
+h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--teal); margin: 36px 0 14px; }
+p { font-size: 13px; color: #aac8c6; margin-bottom: 14px; }
+ul { margin: 0 0 14px 20px; }
+li { font-size: 13px; color: #aac8c6; margin-bottom: 6px; }
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+footer { text-align: center; padding: 32px; font-size: 11px; color: #3a5050; border-top: 1px solid var(--border); margin-top: 60px; }
+footer a { color: var(--dim); text-decoration: none; margin: 0 10px; }
+footer a:hover { color: var(--teal); }
+</style>
+</head>
+<body>
+<nav>
+    <a href="index.html" class="nav-logo">AUTO<span>REACH</span></a>
+    <a href="index.html" class="back-link">← Back to home</a>
+</nav>
+
+<div class="content">
+    <h1>Privacy Policy</h1>
+    <div class="meta">Last updated: June 2025 · Applies to autoreach.dev and the AutoReach software</div>
+
+    <h2>Overview</h2>
+    <p>AutoReach is open-source software designed to be self-hosted. This means <strong>you run AutoReach on your own server</strong> — your data never passes through any server we control. This privacy policy explains what data the AutoReach software handles and how.</p>
+
+    <h2>Data We Do Not Collect</h2>
+    <p>Because AutoReach is self-hosted, we (the AutoReach project) do not collect, store, or have access to:</p>
+    <ul>
+        <li>Your leads or business contacts</li>
+        <li>Emails you send or receive</li>
+        <li>Your API keys (Google Maps, Groq, Gmail)</li>
+        <li>Your usage statistics or activity</li>
+        <li>Any personal information you enter into the dashboard</li>
+    </ul>
+
+    <h2>Data Stored on Your Server</h2>
+    <p>When you run AutoReach, the following data is stored on your own server or hosting environment:</p>
+    <ul>
+        <li><strong>businesses.csv</strong> — your lead database (business names, addresses, emails)</li>
+        <li><strong>sent_log.csv</strong> — log of emails you have sent</li>
+        <li><strong>followup_log.csv</strong> — log of follow-up emails sent</li>
+        <li><strong>autoreach_users.db</strong> — user accounts (email addresses, hashed passwords)</li>
+        <li><strong>Environment variables</strong> — API keys and credentials you configure</li>
+    </ul>
+    <p>You are responsible for securing this data on your own server.</p>
+
+    <h2>Third-Party Services</h2>
+    <p>AutoReach integrates with the following third-party services. Their own privacy policies apply when you use them:</p>
+    <ul>
+        <li><strong>Google Maps Places API</strong> — used to find businesses. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+        <li><strong>Groq AI</strong> — used to generate email content. <a href="https://groq.com/privacy-policy/" target="_blank">Groq Privacy Policy</a></li>
+        <li><strong>Gmail (SMTP)</strong> — used to send emails. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+        <li><strong>GitHub, Discord, Google OAuth</strong> — optional login methods for the mobile app. Standard OAuth flows apply.</li>
+    </ul>
+
+    <h2>This Website (autoreach.dev)</h2>
+    <p>The autoreach.dev landing page is a static site hosted on GitHub Pages. It does not set cookies, collect personal data, or use analytics. The only third-party content is Google Fonts (loaded for typography).</p>
+
+    <h2>Cold Email Compliance</h2>
+    <p>AutoReach is a tool for sending cold outreach emails. You are responsible for ensuring your use of AutoReach complies with applicable laws in your jurisdiction, including:</p>
+    <ul>
+        <li>GDPR (European Union)</li>
+        <li>CAN-SPAM Act (United States)</li>
+        <li>CASL (Canada)</li>
+        <li>Any other applicable anti-spam or data protection laws</li>
+    </ul>
+    <p>Only contact businesses that may have a legitimate interest in your services, always include an unsubscribe mechanism, and honour opt-out requests promptly.</p>
+
+    <h2>Contact</h2>
+    <p>For questions about this privacy policy, open an issue on <a href="https://github.com/KonstantinosBatziakas/autoreach" target="_blank">GitHub</a>.</p>
+</div>
+
+<footer>
+    <a href="index.html">Home</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms of Use</a>
+    <a href="cookies.html">Cookie Policy</a>
+    <br><br>© 2025 AutoReach. MIT License.
+</footer>
+</body>
+</html>

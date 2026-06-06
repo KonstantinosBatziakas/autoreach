@@ -32,6 +32,41 @@ def web_login_required(f):
         return f(*args, **kwargs)
     return decorated
 
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    """First-launch setup wizard — only accessible when WEB_PASSWORD is not set."""
+    if WEB_PASSWORD:
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        web_password   = request.form.get('web_password', '').strip()
+        gmail_user     = request.form.get('gmail_user', '').strip()
+        gmail_pass     = request.form.get('gmail_pass', '').strip()
+        groq_key       = request.form.get('groq_key', '').strip()
+        google_maps_key = request.form.get('google_maps_key', '').strip()
+
+        if not web_password:
+            flash('Dashboard password is required.', 'error')
+            return render_template('setup.html')
+
+        # Write a .env file with the provided values
+        env_path = os.path.join(os.path.dirname(__file__), '.env')
+        lines = [
+            f'WEB_PASSWORD={web_password}',
+            f'SECRET_KEY={os.urandom(32).hex()}',
+            f'GMAIL_USER={gmail_user}',
+            f'GMAIL_APP_PASSWORD={gmail_pass}',
+            f'GROQ_API_KEY={groq_key}',
+            f'GOOGLE_MAPS_API_KEY={google_maps_key}',
+            f'BASE_URL={request.host_url.rstrip("/")}',
+        ]
+        with open(env_path, 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+
+        flash('Setup complete! Please restart the server for changes to take effect.', 'success')
+        return render_template('setup.html')
+
+    return render_template('setup.html')
+
 @app.route('/web-login', methods=['GET', 'POST'])
 def web_login():
     if request.method == 'POST':
@@ -117,6 +152,8 @@ def count_stats():
 @app.route('/')
 @web_login_required
 def index():
+    if not WEB_PASSWORD:
+        return redirect(url_for('setup'))
     stats = count_stats()
     return render_template('index.html', stats=stats)
 

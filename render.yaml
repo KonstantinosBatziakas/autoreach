@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: autoreach
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_PASSWORD
+        value: changeme
+      - key: BASE_URL
+        value: https://autoreach.onrender.com
+      - key: GROQ_API_KEY
+        value: your-groq-api-key
+      - key: GMAIL_USER
+        value: your@gmail.com
+      - key: GMAIL_APP_PASSWORD
+        value: your-gmail-app-password
+      - key: GOOGLE_MAPS_API_KEY
+        value: your-google-maps-api-key
