@@ -6,7 +6,7 @@
 
 {% block topbar_actions %}
 <form method="POST" action="{{ url_for('run_followups_route') }}" style="display:inline;">
-    <button type="submit" class="btn btn-primary">▶ Run Follow-ups Now</button>
+    <button type="submit" class="btn btn-primary">Run Follow-ups Now</button>
 </form>
 {% endblock %}
 
@@ -77,7 +77,7 @@
     </div>
     {% else %}
     <div class="empty-state">
-        <div class="empty-icon">📬</div>
+        <div class="empty-icon">◷</div>
         <p>No follow-ups sent yet.</p>
         <p style="font-size:12px;">Follow-ups will be sent automatically once initial emails are 3+ days old.</p>
     </div>

@@ -50,12 +50,12 @@
 <div class="card">
     <div class="card-title">Quick Actions</div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="{{ url_for('find_leads') }}" class="btn btn-primary">🔍 Find New Leads</a>
-        <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">➕ Add Manually</a>
+        <a href="{{ url_for('find_leads') }}" class="btn btn-primary">Find New Leads</a>
+        <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">Add Manually</a>
         <form method="POST" action="{{ url_for('scrape_emails_route') }}" style="display:inline;">
-            <button type="submit" class="btn btn-secondary">🕸️ Scrape Emails</button>
+            <button type="submit" class="btn btn-secondary">Scrape Emails</button>
         </form>
-        <a href="{{ url_for('outreach') }}" class="btn btn-success">📤 Run Outreach</a>
+        <a href="{{ url_for('outreach') }}" class="btn btn-success">Run Outreach</a>
     </div>
 </div>
 

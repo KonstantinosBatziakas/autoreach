@@ -6,12 +6,12 @@
 
 {% block topbar_actions %}
 <div style="display:flex; gap:10px;">
-    <a href="{{ url_for('pipeline') }}" class="btn btn-secondary">🗂 Pipeline View</a>
-    <a href="{{ url_for('export_leads') }}" class="btn btn-secondary">⬇ Export CSV</a>
+    <a href="{{ url_for('pipeline') }}" class="btn btn-secondary">Pipeline View</a>
+    <a href="{{ url_for('export_leads') }}" class="btn btn-secondary">Export CSV</a>
     <form method="POST" action="{{ url_for('scrape_emails_route') }}" style="display:inline;">
-        <button type="submit" class="btn btn-secondary">🕸️ Scrape Emails</button>
+        <button type="submit" class="btn btn-secondary">Scrape Emails</button>
     </form>
-    <a href="{{ url_for('add_lead') }}" class="btn btn-primary">➕ Add Lead</a>
+    <a href="{{ url_for('add_lead') }}" class="btn btn-primary">Add Lead</a>
 </div>
 {% endblock %}
 
@@ -19,8 +19,8 @@
 
 <div class="action-bar">
     <div class="action-bar-left">
-        <a href="{{ url_for('find_leads') }}" class="btn btn-secondary">🔍 Find from Google Maps</a>
-        <a href="{{ url_for('import_leads') }}" class="btn btn-secondary">⬆ Import CSV</a>
+        <a href="{{ url_for('find_leads') }}" class="btn btn-secondary">Find from Google Maps</a>
+        <a href="{{ url_for('import_leads') }}" class="btn btn-secondary">Import CSV</a>
     </div>
     <span style="font-size:13px; color:#555;">
         {{ businesses | selectattr('email') | list | length }} with email &nbsp;·&nbsp;
@@ -105,11 +105,11 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <div class="empty-icon">🏢</div>
+    <div class="empty-icon">◈</div>
     <p>No leads yet. Add some to get started.</p>
     <div style="display:flex; gap:10px; justify-content:center;">
-        <a href="{{ url_for('find_leads') }}" class="btn btn-primary">🔍 Find via Google Maps</a>
-        <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">➕ Add Manually</a>
+        <a href="{{ url_for('find_leads') }}" class="btn btn-primary">Find via Google Maps</a>
+        <a href="{{ url_for('add_lead') }}" class="btn btn-secondary">Add Manually</a>
     </div>
 </div>
 {% endif %}
