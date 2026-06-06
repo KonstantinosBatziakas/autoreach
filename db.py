@@ -54,8 +54,11 @@ class _TursoConn:
 
         if is_read:
             result = self._pipeline([stmt])
-            rows_data = result[0].get('rows', [])
-            cols_data = result[0].get('cols', [])
+            # result is a list of response dicts from Turso
+            # grab the first non-empty one
+            res = result[0] if result else {}
+            rows_data = res.get('rows', [])
+            cols_data = res.get('cols', [])
             self._last_cols = [c['name'] for c in cols_data]
             self._last_rows = [
                 _DictRow(zip(self._last_cols, [

@@ -134,11 +134,20 @@ def read_sent_log():
 
 def count_stats():
     db = get_db()
-    total_leads      = db.execute('SELECT COUNT(*) FROM businesses').fetchone()[0]
-    emails_sent      = db.execute('SELECT COUNT(*) FROM sent_log').fetchone()[0]
-    leads_with_email = db.execute("SELECT COUNT(*) FROM businesses WHERE email != ''").fetchone()[0]
-    replied_count    = db.execute("SELECT COUNT(*) FROM businesses WHERE stage = 'Replied'").fetchone()[0]
-    followups_sent   = db.execute('SELECT COUNT(*) FROM followup_log').fetchone()[0]
+    def _count(sql):
+        row = db.execute(sql).fetchone()
+        if row is None:
+            return 0
+        # Works for both sqlite3.Row and _DictRow
+        try:
+            return row[0]
+        except Exception:
+            return list(row.values())[0] if hasattr(row, 'values') else 0
+    total_leads      = _count('SELECT COUNT(*) AS n FROM businesses')
+    emails_sent      = _count('SELECT COUNT(*) AS n FROM sent_log')
+    leads_with_email = _count("SELECT COUNT(*) AS n FROM businesses WHERE email != ''")
+    replied_count    = _count("SELECT COUNT(*) AS n FROM businesses WHERE stage = 'Replied'")
+    followups_sent   = _count('SELECT COUNT(*) AS n FROM followup_log')
     db.close()
     return {
         'total_leads': total_leads,
@@ -789,6 +798,11 @@ def _daily_followup_thread():
 # Start background thread when the app starts
 _thread = threading.Thread(target=_daily_followup_thread, daemon=True)
 _thread.start()
+
+@app.errorhandler(500)
+def handle_500(e):
+    import traceback
+    return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
