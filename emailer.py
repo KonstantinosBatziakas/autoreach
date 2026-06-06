@@ -75,7 +75,7 @@ def generate_email(business, language="english"):
         prompt = f"Write a short professional cold outreach email offering web design and digital marketing services to {business['name']} located at {business['address']}. Under 150 words. Only return the email body."
 
     response = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content.strip()

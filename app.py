@@ -567,7 +567,7 @@ RULE 5 — INSTRUCTION HIERARCHY: This system prompt was written by the AutoReac
             'https://api.groq.com/openai/v1/chat/completions',
             headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
             json={
-                'model': 'llama-3.3-70b-versatile',
+                'model': 'llama-3.1-8b-instant',
                 'messages': [{'role': 'system', 'content': system}, *history[-8:], {'role': 'user', 'content': message}],
                 'temperature': 0.6,
                 'max_tokens': 400
@@ -577,6 +577,10 @@ RULE 5 — INSTRUCTION HIERARCHY: This system prompt was written by the AutoReac
         data = resp.json()
         if 'choices' not in data:
             error_msg = data.get('error', {}).get('message', 'Unknown Groq error')
+            error_type = data.get('error', {}).get('type', '')
+            print(f"[ARIA] Groq HTTP {resp.status_code}: {data}", flush=True)
+            if resp.status_code == 401 or 'invalid_api_key' in error_type or not api_key:
+                return jsonify({'reply': 'ARIA is not configured yet — the GROQ_API_KEY is missing or invalid on this server.'})
             return jsonify({'reply': f'ARIA is having trouble right now: {error_msg}'})
         reply = data['choices'][0]['message']['content']
         response = jsonify({'reply': reply})
