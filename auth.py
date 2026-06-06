@@ -16,7 +16,7 @@ Required environment variables (set in Railway):
   DISCORD_CLIENT_SECRET
   GOOGLE_CLIENT_ID
   GOOGLE_CLIENT_SECRET
-  BASE_URL            – your Railway public URL, e.g. https://autoreach-xoge.onrender.com
+  BASE_URL            – your Railway public URL, e.g. https://app.autoreach.dev
 """
 
 import os
@@ -36,7 +36,7 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # ── Config ────────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
-BASE_URL   = os.getenv('BASE_URL', 'https://autoreach-xoge.onrender.com')
+BASE_URL   = os.getenv('BASE_URL', 'https://app.autoreach.dev')
 _DATA_DIR  = os.getenv('DATA_DIR', '.')
 DB_PATH    = os.getenv('DB_PATH', os.path.join(_DATA_DIR, 'autoreach_users.db'))
 
