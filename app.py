@@ -47,7 +47,7 @@ def web_logout():
     return redirect(url_for('web_login'))
 
 # On Fly.io, persist data files to the mounted volume at /data
-DATA_DIR = os.getenv('DATA_DIR', '/data')
+DATA_DIR = os.getenv('DATA_DIR', '.')
 os.makedirs(DATA_DIR, exist_ok=True)
 BUSINESSES_CSV = os.path.join(DATA_DIR, 'businesses.csv')
 SENT_LOG_CSV   = os.path.join(DATA_DIR, 'sent_log.csv')

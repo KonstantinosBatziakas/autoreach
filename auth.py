@@ -37,7 +37,7 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 # ── Config ────────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
 BASE_URL   = os.getenv('BASE_URL', 'https://web-production-1c4ae.up.railway.app')
-_DATA_DIR  = os.getenv('DATA_DIR', '/data')
+_DATA_DIR  = os.getenv('DATA_DIR', '.')
 DB_PATH    = os.getenv('DB_PATH', os.path.join(_DATA_DIR, 'autoreach_users.db'))
 
 GITHUB_CLIENT_ID     = os.getenv('GITHUB_CLIENT_ID', '')
@@ -51,6 +51,7 @@ FLUTTER_SCHEME = 'autoreach://callback'
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn

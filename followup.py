@@ -24,7 +24,7 @@ from email.mime.text import MIMEText
 from groq import Groq
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DATA_DIR         = os.getenv('DATA_DIR', '/data')
+DATA_DIR         = os.getenv('DATA_DIR', '.')
 SENT_LOG_FILE    = os.path.join(DATA_DIR, 'sent_log.csv')
 FOLLOWUP_LOG     = os.path.join(DATA_DIR, 'followup_log.csv')
 
