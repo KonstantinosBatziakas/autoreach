@@ -601,6 +601,86 @@ def api_leads():
     ]
     return jsonify(leads)
 
+def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
+    """Build the HTML email wrapper for the given template."""
+    # Escape user-supplied content so it can safely be placed inside an f-string
+    # that also contains CSS braces — we replace after building the template.
+    body_html   = body.replace('\n', '<br>').replace('{', '&#123;').replace('}', '&#125;')
+    sender_safe = sender_name.replace('{', '&#123;').replace('}', '&#125;')
+    year = datetime.now().year
+
+    if template_id == 'clean':
+        return f"""<!DOCTYPE html><html><head><style>
+        body{{margin:0;padding:0;background:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;}}
+        .wrapper{{max-width:580px;margin:40px auto;background:#fff;border:1px solid #e8e8e8;border-radius:8px;overflow:hidden;}}
+        .header{{padding:32px 40px 24px;border-bottom:3px solid #3B82F6;}}
+        .header h1{{color:#1a1a1a;margin:0;font-size:22px;font-weight:700;letter-spacing:1px;}}
+        .header p{{color:#6B7280;margin:4px 0 0;font-size:13px;}}
+        .body{{padding:36px 40px;color:#374151;font-size:15px;line-height:1.8;}}
+        .footer{{padding:20px 40px;background:#F9FAFB;color:#9CA3AF;font-size:12px;border-top:1px solid #E5E7EB;}}
+        </style></head><body><div class='wrapper'>
+        <div class='header'><h1>AutoReach</h1><p>Digital Presence Services</p></div>
+        <div class='body'><p>{body_html}</p></div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        </div></body></html>"""
+
+    elif template_id == 'purple':
+        return f"""<!DOCTYPE html><html><head><style>
+        body{{margin:0;padding:0;background:#F5F3FF;font-family:'Helvetica Neue',Arial,sans-serif;}}
+        .wrapper{{max-width:580px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(109,99,255,0.10);}}
+        .header{{background:linear-gradient(135deg,#6C63FF 0%,#9B59B6 100%);padding:36px 40px;}}
+        .header h1{{color:#fff;margin:0;font-size:24px;font-weight:800;letter-spacing:2px;}}
+        .header p{{color:rgba(255,255,255,0.75);margin:6px 0 0;font-size:13px;}}
+        .body{{padding:40px;color:#2D2D2D;font-size:15px;line-height:1.8;}}
+        .footer{{padding:20px 40px;border-top:1px solid #EDE9FE;color:#A78BFA;font-size:12px;}}
+        </style></head><body><div class='wrapper'>
+        <div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
+        <div class='body'><p>{body_html}</p></div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        </div></body></html>"""
+
+    elif template_id == 'warm':
+        return f"""<!DOCTYPE html><html><head><style>
+        body{{margin:0;padding:0;background:#FFF7ED;font-family:Georgia,serif;}}
+        .wrapper{{max-width:580px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #FED7AA;}}
+        .header{{background:linear-gradient(135deg,#F97316 0%,#EF4444 100%);padding:32px 40px;}}
+        .header h1{{color:#fff;margin:0;font-size:24px;font-weight:700;letter-spacing:1px;}}
+        .header p{{color:rgba(255,255,255,0.8);margin:5px 0 0;font-size:13px;}}
+        .body{{padding:40px;color:#431407;font-size:15px;line-height:1.9;}}
+        .footer{{padding:20px 40px;border-top:1px solid #FED7AA;color:#FB923C;font-size:12px;background:#FFF7ED;}}
+        </style></head><body><div class='wrapper'>
+        <div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
+        <div class='body'><p>{body_html}</p></div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        </div></body></html>"""
+
+    elif template_id == 'plain':
+        return f"""<!DOCTYPE html><html><head><style>
+        body{{margin:0;padding:0;background:#ffffff;font-family:Arial,sans-serif;}}
+        .wrapper{{max-width:580px;margin:40px auto;padding:0 20px;}}
+        .body{{color:#222;font-size:15px;line-height:1.8;}}
+        .footer{{margin-top:32px;padding-top:16px;border-top:1px solid #eee;color:#aaa;font-size:12px;}}
+        </style></head><body><div class='wrapper'>
+        <div class='body'><p>{body_html}</p></div>
+        <div class='footer'>{sender_safe}</div>
+        </div></body></html>"""
+
+    else:  # classic (default)
+        return f"""<!DOCTYPE html><html><head><style>
+        body{{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}}
+        .wrapper{{max-width:600px;margin:40px auto;background:#fff;border-radius:10px;overflow:hidden;}}
+        .header{{background:#000;padding:30px 40px;}}
+        .header h1{{color:#fff;margin:0;font-size:24px;letter-spacing:2px;}}
+        .header p{{color:#aaa;margin:5px 0 0;font-size:13px;}}
+        .body{{padding:40px;color:#333;font-size:15px;line-height:1.7;}}
+        .footer{{padding:20px 40px;border-top:1px solid #eee;color:#aaa;font-size:12px;}}
+        </style></head><body><div class='wrapper'>
+        <div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>
+        <div class='body'><p>{body_html}</p></div>
+        <div class='footer'>&copy; {year} {sender_safe}. All rights reserved.</div>
+        </div></body></html>"""
+
+
 @app.route('/api/send-email', methods=['POST'])
 @web_login_required
 def api_send_email():
@@ -619,27 +699,15 @@ def api_send_email():
     body           = (data.get('body') or '').strip()
     resend_api_key = (data.get('resend_api_key') or '').strip()
     from_email     = (data.get('from_email') or 'onboarding@resend.dev').strip()
+    template_id    = (data.get('template_id') or 'classic').strip()
+    sender_name    = (data.get('sender_name') or 'AutoReach Team').strip()
 
     if not resend_api_key:
         return jsonify({'error': 'Resend API key not provided. Get a free key at resend.com.'}), 400
     if not to_email or not subject or not body:
         return jsonify({'error': 'email, subject, and body are required'}), 400
 
-    html = (
-        "<!DOCTYPE html><html><head><style>"
-        "body{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}"
-        ".wrapper{max-width:600px;margin:40px auto;background:#fff;border-radius:10px;overflow:hidden;}"
-        ".header{background:#000;padding:30px 40px;}"
-        ".header h1{color:#fff;margin:0;font-size:24px;letter-spacing:2px;}"
-        ".header p{color:#aaa;margin:5px 0 0;font-size:13px;}"
-        ".body{padding:40px;color:#333;font-size:15px;line-height:1.7;}"
-        ".footer{padding:20px 40px;border-top:1px solid #eee;color:#aaa;font-size:12px;}"
-        "</style></head><body><div class='wrapper'>"
-        "<div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>"
-        f"<div class='body'><p>{body.replace(chr(10), '<br>')}</p></div>"
-        "<div class='footer'>&copy; 2025 AutoReach. All rights reserved.</div>"
-        "</div></body></html>"
-    )
+    html = _build_email_html(body, template_id, sender_name)
 
     try:
         resp = req.post(
