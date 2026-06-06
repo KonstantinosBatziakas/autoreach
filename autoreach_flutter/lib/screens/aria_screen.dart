@@ -17,7 +17,7 @@ class _AriaScreenState extends State<AriaScreen> {
   ];
   bool _loading = false;
 
-  static const _railwayUrl = 'https://web-production-1c4ae.up.railway.app/aria/chat';
+  static const _railwayUrl = 'https://autoreach-xoge.onrender.com/aria/chat';
   static const _suggestions = [
     'How do I install AutoReach?',
     'How do I get a Google Maps API key?',

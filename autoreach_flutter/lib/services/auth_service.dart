@@ -7,7 +7,7 @@ const _storage = FlutterSecureStorage(
 );
 
 const _tokenKey = 'auth_token';
-const _baseUrl = 'https://web-production-1c4ae.up.railway.app';
+const _baseUrl = 'https://autoreach-xoge.onrender.com';
 
 class AuthUser {
   final int id;
