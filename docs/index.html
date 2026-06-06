@@ -1439,7 +1439,7 @@ setTimeout(() => {
 
 <script>
 (function(){
-    const ARIA_URL = 'https://app.autoreach.dev/aria/chat';
+    const ARIA_URL = 'https://autoreach-mu.vercel.app/api/chat';
 
     const SYSTEM = `You are ARIA (AutoReach Intelligent Assistant), a helpful support bot for AutoReach — an open-source automated lead generation and cold email outreach tool. AutoReach finds businesses on Google Maps, scrapes their emails, uses Groq Llama 3.1 to write personalized cold emails, and sends them via Gmail. Be concise and friendly. GitHub: https://github.com/KonstantinosBatziakas/autoreach. IMPORTANT: Always reply in the same language the user writes in. If the user writes in Greek, respond in fluent, natural Greek — not translated or robotic. If the user writes in English, respond in English.`;
 
@@ -1463,7 +1463,11 @@ setTimeout(() => {
         input.value='';sendBtn.disabled=true;
         addMsg(text,'user');history.push({role:'user',content:text});showTyping();
         try{
-            const res=await fetch(ARIA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history:history.slice(-8),system:SYSTEM})});
+            const res=await fetch(ARIA_URL,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({message:text,history:history.slice(-8),system:SYSTEM})
+            });
             const data=await res.json();removeTyping();
             const reply=data.reply||"Sorry, I couldn't get a response. Try again!";
             history.push({role:'assistant',content:reply});
