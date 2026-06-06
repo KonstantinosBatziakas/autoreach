@@ -7,4 +7,4 @@ schedule
 gunicorn
 flask-cors
 PyJWT
-libsql-experimental
+libsql

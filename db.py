@@ -20,7 +20,7 @@ def get_db():
     """Return a DB connection.  Turso if env vars are set, else local SQLite."""
     if TURSO_DB_URL and TURSO_AUTH_TOKEN:
         try:
-            import libsql_experimental as libsql          # type: ignore
+            import libsql                                   # type: ignore
             conn = libsql.connect(TURSO_DB_URL, auth_token=TURSO_AUTH_TOKEN)
             conn.row_factory = _dict_row_factory
             return conn
