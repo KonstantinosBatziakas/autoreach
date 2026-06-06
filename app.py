@@ -586,20 +586,26 @@ RULE 5 — INSTRUCTION HIERARCHY: This system prompt was written by the AutoReac
 @web_login_required
 def api_leads():
     """Return all leads that have an email and haven't been contacted yet."""
-    db = get_db()
-    sent_emails = {
-        row[0].lower()
-        for row in db.execute('SELECT email FROM sent_log').fetchall()
-    }
-    rows = db.execute(
-        "SELECT name, address, phone, website, email, stage, notes FROM businesses ORDER BY id"
-    ).fetchall()
-    db.close()
-    leads = [
-        dict(row) for row in rows
-        if row['email'] and row['email'].lower() not in sent_emails
-    ]
-    return jsonify(leads)
+    try:
+        db = get_db()
+        sent_rows = db.execute('SELECT email FROM sent_log').fetchall()
+        sent_emails = {
+            (row['email'] or '').lower()
+            for row in sent_rows
+            if row.get('email')
+        }
+        rows = db.execute(
+            "SELECT name, address, phone, website, email, stage, notes FROM businesses ORDER BY id"
+        ).fetchall()
+        db.close()
+        leads = [
+            dict(row) for row in rows
+            if row.get('email') and row['email'].lower() not in sent_emails
+        ]
+        return jsonify(leads)
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 def _build_email_html(body: str, template_id: str, sender_name: str) -> str:
     """Build the HTML email wrapper for the given template."""
@@ -731,13 +737,17 @@ def api_send_email():
         return jsonify({'error': str(e)}), 500
 
     # Log to DB
-    db = get_db()
-    db.execute(
-        'INSERT INTO sent_log (business_name, email, date_sent, subject, body) VALUES (?, ?, ?, ?, ?)',
-        (business_name, to_email, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), subject, body)
-    )
-    db.commit()
-    db.close()
+    try:
+        db = get_db()
+        db.execute(
+            'INSERT INTO sent_log (business_name, email, date_sent, subject, body) VALUES (?, ?, ?, ?, ?)',
+            (business_name, to_email, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), subject, body)
+        )
+        db.commit()
+        db.close()
+    except Exception as e:
+        import traceback
+        return jsonify({'ok': True, 'warning': f'Email sent but DB log failed: {e}', 'trace': traceback.format_exc()})
 
     return jsonify({'ok': True})
 
