@@ -359,11 +359,14 @@ def find_leads():
             flash('City and business type are required.', 'error')
             return redirect(url_for('find_leads'))
 
+        if not os.getenv('GOOGLE_MAPS_API_KEY'):
+            flash('Google Maps API key not set. Add GOOGLE_MAPS_API_KEY in Render → Environment.', 'error')
+            return redirect(url_for('find_leads'))
         try:
-            find_businesses(city, business_type)
-            flash(f'Successfully searched for {business_type} in {city}!', 'success')
+            results = find_businesses(city, business_type)
+            flash(f'Found {len(results)} businesses for "{business_type}" in {city}.', 'success')
         except Exception as e:
-            flash(f'Error finding leads: {str(e)}', 'error')
+            flash(f'Lead finder error: {str(e)}', 'error')
 
         return redirect(url_for('leads'))
 
@@ -374,9 +377,11 @@ def find_leads():
 def scrape_emails_route():
     try:
         scrape_emails()
-        flash('Email scraping completed!', 'success')
+        flash('Email scraping complete — check leads for newly found emails.', 'success')
     except Exception as e:
-        flash(f'Error scraping emails: {str(e)}', 'error')
+        import traceback
+        flash(f'Scraping error: {str(e)}', 'error')
+        app.logger.error(traceback.format_exc())
 
     return redirect(url_for('leads'))
 

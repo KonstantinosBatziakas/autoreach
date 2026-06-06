@@ -42,19 +42,18 @@ def scrape_emails():
 
     for i, business in enumerate(rows):
         if business.get("email"):
-            print(f"[{i+1}] {business['name']} - already has email, skipping")
             continue
         print(f"[{i+1}] Checking {business['name']}...")
         email = find_email_for_business(business.get("website", ""))
         if email:
             print(f"     Found: {email}")
             db2 = get_db()
-            db2.execute('UPDATE businesses SET email = ? WHERE id = ?', (email, business['id']))
+            db2.execute('UPDATE businesses SET email = ? WHERE name = ?', (email, business['name']))
             db2.commit()
             db2.close()
         else:
             print(f"     No email found")
-        time.sleep(2)
+        time.sleep(1)
 
     print("\nDone! Business emails updated in database.")
 

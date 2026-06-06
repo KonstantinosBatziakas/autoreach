@@ -1,34 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 120" fill="none">
-  <!-- AR letterform made of connected dots and lines -->
-  <!-- Left leg of A -->
-  <line x1="10" y1="90" x2="45" y2="20" stroke="url(#grad)" stroke-width="4" stroke-linecap="round"/>
-  <!-- Right leg of A (connects to R) -->
-  <line x1="45" y1="20" x2="80" y2="90" stroke="url(#grad)" stroke-width="4" stroke-linecap="round"/>
-  <!-- Crossbar of A -->
-  <line x1="22" y1="60" x2="68" y2="60" stroke="url(#grad)" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- R vertical -->
-  <line x1="80" y1="20" x2="80" y2="90" stroke="url(#grad)" stroke-width="4" stroke-linecap="round"/>
-  <!-- R curve top -->
-  <path d="M80 20 Q120 20 120 45 Q120 70 80 70" stroke="url(#grad)" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <!-- R leg -->
-  <line x1="80" y1="70" x2="120" y2="90" stroke="url(#grad)" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- Nodes (dots) at key points -->
-  <circle cx="45" cy="20" r="7" fill="#5BC8F5"/>
-  <circle cx="10" cy="90" r="7" fill="#4AABF0"/>
-  <circle cx="80" cy="90" r="7" fill="#4AABF0"/>
-  <circle cx="120" cy="45" r="7" fill="#5BC8F5"/>
-  <circle cx="80" cy="70" r="7" fill="#4AABF0"/>
-  <circle cx="120" cy="90" r="7" fill="#5BC8F5"/>
-
-  <!-- "AUTOREACH" text -->
-  <text x="145" y="65" font-family="'JetBrains Mono', 'Courier New', monospace" font-size="28" font-weight="800" fill="white" letter-spacing="2">AutoReach</text>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" fill="none">
+  <!-- AR mark, scaled down to fit 60px height -->
+  <line x1="4" y1="48" x2="22" y2="10" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="10" x2="40" y2="48" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="11" y1="33" x2="33" y2="33" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="40" y1="10" x2="40" y2="48" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M40 10 Q60 10 60 24 Q60 38 40 38" stroke="url(#g)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <line x1="40" y1="38" x2="60" y2="48" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="22" cy="10" r="4" fill="#5eead4"/>
+  <circle cx="4"  cy="48" r="4" fill="#5eead4"/>
+  <circle cx="40" cy="48" r="4" fill="#5eead4"/>
+  <circle cx="60" cy="24" r="4" fill="#5eead4"/>
+  <circle cx="40" cy="38" r="4" fill="#5eead4"/>
+  <circle cx="60" cy="48" r="4" fill="#5eead4"/>
+  <!-- AutoReach wordmark -->
+  <text x="72" y="36" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" fill="white" letter-spacing="-0.3">AutoReach</text>
   <defs>
-    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#4AABF0"/>
-      <stop offset="100%" stop-color="#5BC8F5"/>
+      <stop offset="100%" stop-color="#5eead4"/>
     </linearGradient>
   </defs>
 </svg>

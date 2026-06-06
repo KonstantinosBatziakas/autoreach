@@ -4,63 +4,78 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unsubscribe — AutoReach</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'JetBrains Mono', monospace;
-      background: #1a2e2e;
-      color: #cde0de;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0a0f;
+      color: #e2e8f0;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
     .card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 48px 40px;
-      max-width: 480px;
+      background: #111118;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      padding: 40px 36px;
+      max-width: 420px;
       width: 100%;
-      text-align: center;
     }
-    .icon { font-size: 48px; margin-bottom: 20px; }
-    h1 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px; }
-    p  { font-size: 14px; color: #6a9090; line-height: 1.7; }
-    .email { color: #4ecdc4; margin-top: 8px; font-size: 13px; }
-    .back  {
+    .status-line {
       display: inline-block;
-      margin-top: 28px;
-      padding: 10px 24px;
-      background: rgba(78,205,196,0.1);
-      border: 1px solid rgba(78,205,196,0.25);
-      border-radius: 6px;
-      color: #4ecdc4;
-      font-size: 13px;
-      text-decoration: none;
-      font-family: inherit;
+      width: 32px;
+      height: 2px;
+      background: #5eead4;
+      margin-bottom: 20px;
+      border-radius: 2px;
     }
-    .back:hover { background: rgba(78,205,196,0.18); }
+    .status-line.error { background: #fb7185; }
+    h1 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -.01em;
+    }
+    p { font-size: 13px; color: #475569; line-height: 1.7; }
+    .email {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #94a3b8;
+      background: #16161f;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #1e1e2e;
+    }
+    .divider { border: none; border-top: 1px solid #1e1e2e; margin: 24px 0; }
+    .footer { font-size: 11px; color: #334155; }
   </style>
 </head>
 <body>
-<div class="card">
-  {% if status == 'ok' %}
-    <div class="icon">✅</div>
-    <h1>You've been unsubscribed</h1>
-    <p>We've removed you from our mailing list. You won't receive any more emails from us.</p>
-    {% if email %}<div class="email">{{ email }}</div>{% endif %}
-  {% elif status == 'invalid' %}
-    <div class="icon">⚠️</div>
-    <h1>Invalid link</h1>
-    <p>This unsubscribe link appears to be invalid or missing an email address.</p>
-  {% else %}
-    <div class="icon">❌</div>
-    <h1>Something went wrong</h1>
-    <p>We couldn't process your unsubscribe request. Please try again later or reply to any of our emails.</p>
-  {% endif %}
-</div>
+  <div class="card">
+    {% if status == 'ok' %}
+      <div class="status-line"></div>
+      <h1>You've been unsubscribed</h1>
+      <p>You won't receive any further emails from us.</p>
+      {% if email %}<div class="email">{{ email }}</div>{% endif %}
+    {% elif status == 'invalid' %}
+      <div class="status-line error"></div>
+      <h1>Invalid link</h1>
+      <p>This unsubscribe link is missing or malformed. Please reply directly to any of our emails to opt out.</p>
+    {% else %}
+      <div class="status-line error"></div>
+      <h1>Something went wrong</h1>
+      <p>We couldn't process your request. Please reply directly to any of our emails to opt out.</p>
+    {% endif %}
+    <hr class="divider">
+    <p class="footer">Sent via AutoReach — open source outreach tool</p>
+  </div>
 </body>
 </html>
