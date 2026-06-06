@@ -138,11 +138,11 @@ def count_stats():
         row = db.execute(sql).fetchone()
         if row is None:
             return 0
-        # Works for both sqlite3.Row and _DictRow
         try:
-            return row[0]
+            return int(row[0])
         except Exception:
-            return list(row.values())[0] if hasattr(row, 'values') else 0
+            v = list(row.values())[0] if hasattr(row, 'values') else 0
+            return int(v) if v is not None else 0
     total_leads      = _count('SELECT COUNT(*) AS n FROM businesses')
     emails_sent      = _count('SELECT COUNT(*) AS n FROM sent_log')
     leads_with_email = _count("SELECT COUNT(*) AS n FROM businesses WHERE email != ''")

@@ -60,11 +60,23 @@ class _TursoConn:
             rows_data = res.get('rows', [])
             cols_data = res.get('cols', [])
             self._last_cols = [c['name'] for c in cols_data]
+            def _unwrap(cell):
+                if not isinstance(cell, dict):
+                    return cell
+                t = cell.get('type', 'text')
+                v = cell.get('value')
+                if v is None:
+                    return None
+                if t == 'integer':
+                    try: return int(v)
+                    except (ValueError, TypeError): return v
+                if t == 'float':
+                    try: return float(v)
+                    except (ValueError, TypeError): return v
+                return v  # text / blob — keep as string
+
             self._last_rows = [
-                _DictRow(zip(self._last_cols, [
-                    cell.get('value') if isinstance(cell, dict) else cell
-                    for cell in r
-                ]))
+                _DictRow(zip(self._last_cols, [_unwrap(cell) for cell in r]))
                 for r in rows_data
             ]
         else:
