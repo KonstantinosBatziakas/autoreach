@@ -221,12 +221,13 @@ def init_db():
     for stmt in stmts:
         try:
             conn.execute(stmt)
+            conn.commit()
         except Exception as e:
-            # Ignore "duplicate column" errors from ALTER TABLE migrations
+            # Ignore "duplicate column" / "already exists" from migrations
             msg = str(e).lower()
             if 'duplicate column' in msg or 'already exists' in msg:
-                pass
+                if hasattr(conn, '_pending'):
+                    conn._pending.clear()   # discard queued Turso stmt
             else:
                 raise
-    conn.commit()
     conn.close()
