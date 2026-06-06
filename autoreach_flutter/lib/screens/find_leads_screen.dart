@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/maps_service.dart';
-import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../models/lead.dart';
 import '../widgets/app_drawer.dart';
 
@@ -23,9 +23,9 @@ class _FindLeadsScreenState extends State<FindLeadsScreen> {
     setState(() { _loading = true; _results = null; _error = null; });
     try {
       final leads = await MapsService.findBusinesses(_city.text.trim(), _type.text.trim());
-      await StorageService.saveLeads(leads);
+      final saved = await ApiService.addLeads(leads);
       setState(() { _results = leads; _loading = false; });
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found ${leads.length} businesses!'), backgroundColor: const Color(0xFF4ECDC4)));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found ${leads.length} businesses, $saved saved to server.'), backgroundColor: const Color(0xFF4ECDC4)));
     } catch (e) { setState(() { _error = e.toString(); _loading = false; }); }
   }
 

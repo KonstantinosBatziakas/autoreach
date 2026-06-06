@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../services/storage_service.dart';
-import '../services/scraper_service.dart';
+import '../services/api_service.dart';
 import '../models/lead.dart';
 import '../widgets/app_drawer.dart';
 
@@ -26,30 +25,28 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   @override
   void initState() { super.initState(); _load(); }
-  Future<void> _load() async { setState(() => _loading = true); _leads = await StorageService.getLeads(); setState(() => _loading = false); }
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      _leads = await ApiService.getAllLeads();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFFF6B6B)));
+    }
+    setState(() => _loading = false);
+  }
 
   Future<void> _scrapeEmails() async {
     setState(() => _scraping = true);
-    final leads = List<Lead>.from(_leads);
-    for (int i = 0; i < leads.length; i++) {
-      if (leads[i].email.isNotEmpty) continue;
-      final email = await ScraperService.findEmailForBusiness(leads[i].website);
-      if (email.isNotEmpty) { leads[i] = leads[i].copyWith(email: email); await StorageService.updateLeadEmail(leads[i].name, email); }
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Scraping emails on the server...'), backgroundColor: Color(0xFF4ECDC4)));
+    // Trigger server-side scraping via the web UI route
+    try {
+      await ApiService.triggerScrape();
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email scraping complete!'), backgroundColor: Color(0xFF4ECDC4)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Scrape error: $e'), backgroundColor: const Color(0xFFFF6B6B)));
     }
-    setState(() { _leads = leads; _scraping = false; });
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email scraping complete!'), backgroundColor: Color(0xFF4ECDC4)));
-  }
-
-  Future<void> _exportCsv() async {
-    final csv = await StorageService.exportLeadsCsv();
-    if (mounted) {
-      showDialog(context: context, builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
-        title: const Text('Export CSV', style: TextStyle(color: Colors.white)),
-        content: SingleChildScrollView(child: Text(csv, style: const TextStyle(color: Color(0xFF888AAA), fontSize: 11, fontFamily: 'monospace'))),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
-      ));
-    }
+    setState(() => _scraping = false);
   }
 
   List<Lead> get _filtered {
@@ -68,7 +65,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
         actions: [
           if (_scraping) const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
           else IconButton(icon: const Icon(Icons.web), tooltip: 'Scrape Emails', onPressed: _leads.isEmpty ? null : _scrapeEmails),
-          IconButton(icon: const Icon(Icons.download), tooltip: 'Export CSV', onPressed: _leads.isEmpty ? null : _exportCsv),
           IconButton(icon: const Icon(Icons.person_add), onPressed: () => Navigator.pushNamed(context, '/add_lead').then((_) => _load())),
         ],
       ),
@@ -117,7 +113,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           stages: _stages,
                           stageColors: _stageColors,
                           onStageChanged: (stage) async {
-                            await StorageService.updateLeadStage(filtered[i].name, stage);
+                            await ApiService.updateLeadStage(filtered[i].name, stage);
                             await _load();
                           },
                         ),

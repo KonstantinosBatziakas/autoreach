@@ -38,3 +38,6 @@ desktop.ini
 # ── LEGACY ───────────────────────────────────────────────────
 static/style.css
 README_DASHBOARD.md
+
+# ── ARIA client-side key (not for public repo) ────────────────
+docs/aria-key.js

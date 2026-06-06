@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../models/lead.dart';
 import '../widgets/app_drawer.dart';
 
@@ -21,7 +21,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    await StorageService.addLead(Lead(name: _name.text.trim(), address: _address.text.trim(), phone: _phone.text.trim(), website: _website.text.trim(), email: _email.text.trim()));
+    await ApiService.addLead(Lead(name: _name.text.trim(), address: _address.text.trim(), phone: _phone.text.trim(), website: _website.text.trim(), email: _email.text.trim()));
     setState(() => _saving = false);
     if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added ${_name.text}!'), backgroundColor: const Color(0xFF4ECDC4))); Navigator.pop(context); }
   }

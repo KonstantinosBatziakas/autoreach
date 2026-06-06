@@ -24,6 +24,16 @@ class Lead {
     stage:   map['stage']   ?? 'New',
   );
 
+  /// Factory for JSON responses from the AutoReach API (dynamic values).
+  factory Lead.fromApiMap(Map<String, dynamic> map) => Lead(
+    name:    map['name']?.toString()    ?? '',
+    address: map['address']?.toString() ?? '',
+    phone:   map['phone']?.toString()   ?? '',
+    website: map['website']?.toString() ?? '',
+    email:   map['email']?.toString()   ?? '',
+    stage:   map['stage']?.toString()   ?? 'New',
+  );
+
   Lead copyWith({String? name, String? address, String? phone, String? website, String? email, String? stage}) => Lead(
     name:    name    ?? this.name,
     address: address ?? this.address,

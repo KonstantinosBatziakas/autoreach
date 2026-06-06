@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../widgets/app_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -9,15 +9,28 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _totalLeads = 0, _leadsWithEmail = 0, _emailsSent = 0;
+  int _totalLeads = 0, _leadsWithEmail = 0, _emailsSent = 0, _followups = 0, _replied = 0;
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
-    final leads = await StorageService.getLeads();
-    final sent  = await StorageService.getSentEmails();
-    setState(() { _totalLeads = leads.length; _leadsWithEmail = leads.where((l) => l.email.isNotEmpty).length; _emailsSent = sent.length; });
+    setState(() { _loading = true; _error = null; });
+    try {
+      final stats = await ApiService.getStats();
+      setState(() {
+        _totalLeads    = stats['total_leads']    ?? 0;
+        _leadsWithEmail= stats['leads_with_emails'] ?? 0;
+        _emailsSent    = stats['emails_sent']    ?? 0;
+        _followups     = stats['followups_sent'] ?? 0;
+        _replied       = stats['replied']        ?? 0;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() { _error = e.toString(); _loading = false; });
+    }
   }
 
   @override
@@ -30,7 +43,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child: _loading
+            ? const Center(child: Padding(padding: EdgeInsets.only(top: 60), child: CircularProgressIndicator()))
+            : _error != null
+              ? Center(child: Padding(padding: const EdgeInsets.only(top: 40), child: Text(_error!, style: const TextStyle(color: Color(0xFFFF6B6B)))))
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('AutoReach', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
             const Text('Lead generation & email outreach', style: TextStyle(color: Color(0xFF888AAA), fontSize: 14)),
             const SizedBox(height: 24),
@@ -40,6 +57,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(child: _Stat(label: 'With Email', value: '$_leadsWithEmail', icon: Icons.email, color: const Color(0xFF4ECDC4))),
               const SizedBox(width: 12),
               Expanded(child: _Stat(label: 'Emails Sent', value: '$_emailsSent', icon: Icons.send, color: const Color(0xFFFFD166))),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: _Stat(label: 'Follow-ups', value: '$_followups', icon: Icons.repeat, color: const Color(0xFFFF9F43))),
+              const SizedBox(width: 12),
+              Expanded(child: _Stat(label: 'Replied', value: '$_replied', icon: Icons.reply, color: const Color(0xFF27C93F))),
+              const SizedBox(width: 12),
+              Expanded(child: _Stat(label: 'Remaining', value: '${_leadsWithEmail - _emailsSent < 0 ? 0 : _leadsWithEmail - _emailsSent}', icon: Icons.pending, color: const Color(0xFF888AAA))),
             ]),
             const SizedBox(height: 28),
             const Text('Quick Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),

@@ -438,6 +438,95 @@ def report():
 def api_stats():
     return jsonify(count_stats())
 
+@app.route('/api/add-lead', methods=['POST'])
+@web_login_required
+def api_add_lead():
+    """Add a single lead via JSON (used by the Flutter app)."""
+    try:
+        data    = request.get_json(force=True)
+        name    = (data.get('name') or '').strip()
+        address = (data.get('address') or '').strip()
+        phone   = (data.get('phone') or '').strip()
+        website = (data.get('website') or '').strip()
+        email   = (data.get('email') or '').strip()
+        notes   = (data.get('notes') or '').strip()
+        if not name:
+            return jsonify({'error': 'name is required'}), 400
+        db = get_db()
+        # Skip if already exists
+        existing = db.execute('SELECT id FROM businesses WHERE name = ?', (name,)).fetchone()
+        if existing:
+            db.close()
+            return jsonify({'ok': True, 'skipped': True})
+        db.execute(
+            'INSERT INTO businesses (name, address, phone, website, email, stage, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (name, address, phone, website, email, 'New', notes)
+        )
+        db.commit()
+        db.close()
+        return jsonify({'ok': True, 'skipped': False})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/scrape', methods=['POST'])
+@web_login_required
+def api_scrape():
+    """Trigger email scraping in a background thread (used by the Flutter app)."""
+    try:
+        thread = threading.Thread(target=scrape_emails, daemon=True)
+        thread.start()
+        return jsonify({'ok': True, 'message': 'Scraping started in background.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/all-leads')
+@web_login_required
+def api_all_leads():
+    """Return every lead in the database (for the Flutter leads screen)."""
+    try:
+        db = get_db()
+        rows = db.execute(
+            "SELECT name, address, phone, website, email, stage, notes FROM businesses ORDER BY id"
+        ).fetchall()
+        db.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+@app.route('/api/sent')
+@web_login_required
+def api_sent():
+    """Return the sent email log (for the Flutter sent screen)."""
+    try:
+        db = get_db()
+        rows = db.execute(
+            "SELECT id, business_name, email, subject, date_sent FROM sent_log ORDER BY id DESC"
+        ).fetchall()
+        db.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+@app.route('/api/update-stage', methods=['POST'])
+@web_login_required
+def api_update_stage():
+    """Update a lead's pipeline stage."""
+    try:
+        data  = request.get_json(force=True)
+        name  = data.get('name', '').strip()
+        stage = data.get('stage', '').strip()
+        if not name or not stage:
+            return jsonify({'error': 'name and stage required'}), 400
+        db = get_db()
+        db.execute("UPDATE businesses SET stage = ? WHERE name = ?", (stage, name))
+        db.commit()
+        db.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ── ARIA Rate Limiter (20 requests / IP / hour) ───────────────
 _aria_requests = defaultdict(list)  # ip -> [timestamps]
 ARIA_MAX_REQUESTS = 20
