@@ -14,7 +14,7 @@ class _AriaScreenState extends State<AriaScreen> {
   final _input = TextEditingController();
   final _scrollController = ScrollController();
   final List<_Message> _messages = [
-    _Message(text: "Hey! I'm ARIA — AutoReach's Intelligent Assistant. Ask me anything about setting up AutoReach, finding leads, or sending campaigns 🚀", isAria: true),
+    _Message(text: "Hey! I'm ARIA — AutoReach's Intelligent Assistant. I'm here to help you get the most out of AutoReach — whether that's finding leads, setting up Resend for email, configuring your API keys, or using the Android app. What can I help you with? 🚀", isAria: true),
   ];
   bool _loading = false;
 
