@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../widgets/app_drawer.dart';
+import '../constants.dart';
 
 class AriaScreen extends StatefulWidget {
   const AriaScreen({super.key});
@@ -17,14 +18,16 @@ class _AriaScreenState extends State<AriaScreen> {
   ];
   bool _loading = false;
 
-  static const _railwayUrl = 'https://app.autoreach.dev/aria/chat';
+  static const _ariaUrl = '$kBaseUrl/aria/chat';
   static const _suggestions = [
     'How do I install AutoReach?',
     'How do I get a Google Maps API key?',
-    'How do I set up Gmail?',
+    'How do I set up Resend for emails?',
     'How many emails can I send per day?',
     'How does email scraping work?',
   ];
+
+  final List<Map<String, String>> _history = [];
 
   Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
@@ -37,11 +40,17 @@ class _AriaScreenState extends State<AriaScreen> {
 
     try {
       final res = await http.post(
-        Uri.parse(_railwayUrl),
+        Uri.parse(_ariaUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'message': text.trim(), 'history': [], 'system': ''}),
+        body: jsonEncode({
+          'message': text.trim(),
+          'history': _history.take(8).toList(),
+          'system': '',
+        }),
       ).timeout(const Duration(seconds: 20));
-      final reply = jsonDecode(res.body)['reply'] ?? "Sorry, I couldn't get a response.";
+      final reply = (jsonDecode(res.body)['reply'] as String?) ?? "Sorry, I couldn't get a response.";
+      _history.add({'role': 'user', 'content': text.trim()});
+      _history.add({'role': 'assistant', 'content': reply});
       setState(() { _messages.add(_Message(text: reply, isAria: true)); _loading = false; });
     } catch (_) {
       setState(() { _messages.add(_Message(text: "Can't reach ARIA right now. Check your connection and try again.", isAria: true)); _loading = false; });

@@ -1114,7 +1114,7 @@ footer a:hover { color: var(--teal); }
 <section id="how">
     <div class="how">
         <div class="section-label" data-en="How it works" data-gr="Πώς λειτουργεί">How it works</div>
-        <h2 class="section-title" data-en="From zero to sent<br><span class='accent'>in four steps.</span>" data-gr="Από το μηδέν στην αποστολή<br><span class='accent'>σε τέσσερα βήματα.</span>">From zero to sent<br><span class="accent">in four steps.</span></h2>
+        <h2 class="section-title" data-en="From zero to sent<br><span class='accent'>in five steps.</span>" data-gr="Από το μηδέν στην αποστολή<br><span class='accent'>σε πέντε βήματα.</span>">From zero to sent<br><span class="accent">in five steps.</span></h2>
 
         <div class="steps">
             <div class="step reveal reveal-delay-1">
@@ -1436,7 +1436,8 @@ runTerminal(currentLang);
 #aria-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:320px}
 #aria-messages::-webkit-scrollbar{width:3px}
 #aria-messages::-webkit-scrollbar-thumb{background:rgba(78,205,196,0.2);border-radius:3px}
-.aria-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:12px;line-height:1.6}
+.aria-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:12px;line-height:1.6;word-break:break-word;overflow-wrap:anywhere}
+.aria-msg a{color:#4ecdc4;text-decoration:underline;word-break:break-all}
 .aria-msg.bot{background:rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.15);color:#cde0de;align-self:flex-start;border-bottom-left-radius:4px}
 .aria-msg.user{background:rgba(232,128,106,0.12);border:1px solid rgba(232,128,106,0.2);color:#cde0de;align-self:flex-end;border-bottom-right-radius:4px}
 .aria-typing{display:flex;gap:4px;align-items:center;padding:10px 13px;background:rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.15);border-radius:12px;border-bottom-left-radius:4px;align-self:flex-start}
@@ -1512,7 +1513,13 @@ GitHub: https://github.com/KonstantinosBatziakas/autoreach`;
     input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg()}});
     sendBtn.addEventListener('click',sendMsg);
 
-    function addMsg(text,role){const d=document.createElement('div');d.className='aria-msg '+role;d.innerHTML=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+    function formatMsg(text){
+        return text
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+            .replace(/(^|[\s(])(https?:\/\/[^\s<)"]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>')
+            .replace(/\n/g,'<br>');
+    }
+    function addMsg(text,role){const d=document.createElement('div');d.className='aria-msg '+role;d.innerHTML=formatMsg(text);msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
     function showTyping(){const d=document.createElement('div');d.className='aria-typing';d.id='aria-typing-ind';d.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
     function removeTyping(){const t=document.getElementById('aria-typing-ind');if(t)t.remove()}
 
@@ -1529,7 +1536,7 @@ GitHub: https://github.com/KonstantinosBatziakas/autoreach`;
             const data=await res.json();removeTyping();
             const reply=data.reply||"Sorry, I couldn't get a response. Try again!";
             history.push({role:'assistant',content:reply});
-            addMsg(reply.replace(/\n/g,'<br>'),'bot');
+            addMsg(reply,'bot');
         }catch(e){removeTyping();addMsg("Can't reach ARIA right now. Try again in a moment!","bot")}
         sendBtn.disabled=false;input.focus();
     }

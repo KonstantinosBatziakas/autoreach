@@ -117,9 +117,11 @@
           <div class="flash-error">{{ message }}</div>
         {% endfor %}
       {% endwith %}
-      <form method="POST">
+      <form method="POST" autocomplete="on">
         <label for="password">Dashboard password</label>
-        <input type="password" id="password" name="password" autofocus placeholder="••••••••">
+        <input type="password" id="password" name="password"
+               autofocus placeholder="••••••••"
+               autocomplete="current-password">
         <button type="submit">Sign in →</button>
       </form>
     </div>

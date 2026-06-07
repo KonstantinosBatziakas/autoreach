@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/lead.dart';
 import '../services/auth_service.dart';
+import '../constants.dart';
 
-const _base = 'https://app.autoreach.dev';
+const _base = kBaseUrl;
 
 /// Central API service — all calls go to the live AutoReach backend.
 class ApiService {
@@ -122,7 +123,9 @@ class ApiService {
 
   static void _checkAuth(http.Response resp) {
     if (resp.statusCode == 401 || resp.statusCode == 302) {
-      throw Exception('Not authenticated. Please log in again.');
+      // Clear the stale token so the app redirects to login on next startup
+      AuthService.clearToken();
+      throw Exception('Session expired. Please log in again.');
     }
   }
 }

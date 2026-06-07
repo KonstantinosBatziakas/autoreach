@@ -14,7 +14,7 @@ class MapsService {
           ? {'pagetoken': pageToken, 'key': apiKey}
           : {'query': '$businessType in $city', 'key': apiKey};
       final uri = Uri.parse('https://maps.googleapis.com/maps/api/place/textsearch/json').replace(queryParameters: params);
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
       final data = jsonDecode(response.body);
       for (final place in data['results'] ?? []) {
         final details = await _details(place['place_id'], apiKey);
@@ -28,7 +28,7 @@ class MapsService {
 
   static Future<Map<String, String>> _details(String placeId, String apiKey) async {
     final uri = Uri.parse('https://maps.googleapis.com/maps/api/place/details/json').replace(queryParameters: {'place_id': placeId, 'fields': 'formatted_phone_number,website', 'key': apiKey});
-    final data = jsonDecode((await http.get(uri)).body)['result'] ?? {};
+    final data = jsonDecode((await http.get(uri).timeout(const Duration(seconds: 10))).body)['result'] ?? {};
     return {'phone': data['formatted_phone_number'] ?? '', 'website': data['website'] ?? ''};
   }
 }

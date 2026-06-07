@@ -1,7 +1,6 @@
 flask
 requests
 groq
-python-dotenv
 beautifulsoup4
 schedule
 gunicorn

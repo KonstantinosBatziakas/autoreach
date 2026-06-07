@@ -15,18 +15,29 @@ class _FindLeadsScreenState extends State<FindLeadsScreen> {
   final _city = TextEditingController();
   final _type = TextEditingController();
   bool _loading = false;
+  bool _missingKey = false;
   List<Lead>? _results;
   String? _error;
 
   Future<void> _search() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _loading = true; _results = null; _error = null; });
+    setState(() { _loading = true; _results = null; _error = null; _missingKey = false; });
     try {
       final leads = await MapsService.findBusinesses(_city.text.trim(), _type.text.trim());
       final saved = await ApiService.addLeads(leads);
       setState(() { _results = leads; _loading = false; });
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found ${leads.length} businesses, $saved saved to server.'), backgroundColor: const Color(0xFF4ECDC4)));
-    } catch (e) { setState(() { _error = e.toString(); _loading = false; }); }
+    } catch (e) {
+      final msg = e.toString();
+      final isMissingKey = msg.contains('GOOGLE_MAPS_API_KEY') || msg.contains('API key') || msg.contains('REQUEST_DENIED');
+      setState(() {
+        _error = isMissingKey
+            ? 'Google Maps API key is missing or invalid. Please go to Settings and add your Google Maps API key.'
+            : msg;
+        _missingKey = isMissingKey;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -70,7 +81,22 @@ class _FindLeadsScreenState extends State<FindLeadsScreen> {
         )),
         if (_error != null) ...[
           const SizedBox(height: 16),
-          Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: const Color(0xFFFF6B6B).withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.4))), child: Text(_error!, style: const TextStyle(color: Color(0xFFFF6B6B)))),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: const Color(0xFFFF6B6B).withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.4))),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(_error!, style: const TextStyle(color: Color(0xFFFF6B6B))),
+              if (_missingKey) ...[
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                  icon: const Icon(Icons.settings, size: 16),
+                  label: const Text('Go to Settings'),
+                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF4ECDC4), side: const BorderSide(color: Color(0xFF4ECDC4))),
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/settings'),
+                )),
+              ],
+            ]),
+          ),
         ],
         if (_results != null) ...[
           const SizedBox(height: 24),

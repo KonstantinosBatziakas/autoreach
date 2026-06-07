@@ -437,21 +437,21 @@ class AutoReachApp(ctk.CTk):
         ctk.CTkLabel(frame, text="Generate, preview, and send AI cold emails", font=FONT_S, text_color=DIM).pack(anchor="w", pady=(2, 20))
 
         cfg = db.get_all_config(self.conn)
-        # Require Groq. Gmail creds may come from sender_accounts instead.
+        # Require Groq. Resend credentials checked below.
         if not cfg.get("groq_api_key"):
             card = card_frame(frame)
             card.pack(fill="x")
             ctk.CTkLabel(card, text="⚠  Groq API key not configured.\nGo to Settings to add it.",
                          font=FONT_S, text_color=CORAL, justify="center").pack(pady=30)
             return
-        # Check at least one sender is available
+        # Check Resend is configured
         try:
             get_next_sender(self.conn)  # dry-run check
         except NoSendersAvailable:
             card = card_frame(frame)
             card.pack(fill="x")
             ctk.CTkLabel(card,
-                text="⚠  No sender accounts configured.\nAdd one in the Accounts tab, or set Gmail credentials in Settings.",
+                text="⚠  Resend API key not configured.\nGo to Settings and add your Resend API key and from_email.",
                 font=FONT_S, text_color=CORAL, justify="center").pack(pady=30)
             return
 
@@ -568,26 +568,26 @@ class AutoReachApp(ctk.CTk):
 
             def task():
                 try:
-                    sender_user, sender_pwd = get_next_sender(self.conn)
+                    resend_key, from_email = get_next_sender(self.conn)
                 except NoSendersAvailable as e:
                     lead_label_var.set(f"✗ No sender available: {e}")
                     send_btn.configure(state="normal")
                     return
 
-                html = build_html(self._current_body[0], lead["name"], sender_user)
+                html = build_html(self._current_body[0], lead["name"], lead["email"])
                 try:
                     send_email(lead["email"], self._current_subj[0], html,
-                               sender_user, sender_pwd)
+                               resend_key, from_email)
                     db.log_sent(self.conn, lead["id"], lead["name"], lead["email"],
                                 self._current_subj[0], self._current_body[0],
-                                lang_var.get(), "sent", sender_user)
+                                lang_var.get(), "sent", from_email)
                     # Schedule follow-ups
                     delays_cfg = db.get_config(self.conn, "followup_delays", "3,7,14")
                     delays = [int(d.strip()) for d in delays_cfg.split(",")][:3]
                     db.schedule_followups(self.conn, lead["id"], lead["name"],
                                           lead["email"], lang_var.get(), delays)
                     lead_label_var.set(
-                        f"✓ [{sender_user}] Sent → follow-ups at +{delays[0]}d, +{delays[1]}d, +{delays[2]}d"
+                        f"✓ [{from_email}] Sent → follow-ups at +{delays[0]}d, +{delays[1]}d, +{delays[2]}d"
                     )
                     self._current_idx[0] += 1
                     time.sleep(1)
@@ -596,7 +596,7 @@ class AutoReachApp(ctk.CTk):
                     lead_label_var.set(f"✗ Send failed: {e}")
                     db.log_sent(self.conn, lead["id"], lead["name"], lead["email"],
                                 self._current_subj[0], self._current_body[0],
-                                lang_var.get(), "failed", sender_user)
+                                lang_var.get(), "failed", from_email)
                     send_btn.configure(state="normal")
 
             threading.Thread(target=task, daemon=True).start()
@@ -656,7 +656,7 @@ class AutoReachApp(ctk.CTk):
 
         ctk.CTkLabel(inner, text="Run Follow-ups", font=FONT_M, text_color=WHITE).pack(anchor="w", pady=(0, 6))
         ctk.CTkLabel(inner,
-                     text="Checks Gmail for replies first, then sends any overdue follow-up emails.",
+                     text="Checks the database for replied leads first, then sends any overdue follow-up emails via Resend.",
                      font=FONT_XS, text_color=DIM).pack(anchor="w", pady=(0, 14))
 
         log_text = ctk.CTkTextbox(inner, height=180, fg_color=BG_DARK, text_color=TEXT,
@@ -672,7 +672,7 @@ class AutoReachApp(ctk.CTk):
 
         def run_fu():
             cfg = db.get_all_config(self.conn)
-            missing = [k for k in ("groq_api_key",) if not cfg.get(k)]
+            missing = [k for k in ("groq_api_key", "resend_api_key") if not cfg.get(k)]
             if missing:
                 append_log(f"✗ Missing config: {', '.join(missing)} — go to Settings.")
                 return
@@ -746,21 +746,14 @@ class AutoReachApp(ctk.CTk):
             threading.Thread(target=task, daemon=True).start()
 
         def check_replies_only():
-            cfg = db.get_all_config(self.conn)
-            if not cfg.get("gmail_user") or not cfg.get("gmail_app_password"):
-                append_log("✗ Gmail credentials not set — go to Settings.")
-                return
             check_btn.configure(state="disabled")
 
             def task():
                 try:
-                    n = check_for_replies(
-                        self.conn, cfg["gmail_user"], cfg["gmail_app_password"],
-                        progress_cb=append_log
-                    )
+                    n = check_for_replies(self.conn, progress_cb=append_log)
                     append_log(f"\n✓ {n} new reply(ies) detected." if n else "\n→ No new replies found.")
                 except Exception as e:
-                    append_log(f"✗ IMAP error: {e}")
+                    append_log(f"✗ Error: {e}")
                 finally:
                     check_btn.configure(state="normal")
 
@@ -813,15 +806,15 @@ class AutoReachApp(ctk.CTk):
                     ctk.CTkLabel(r, text=val, font=FONT_XS, text_color=colour,
                                  width=w, anchor="w").pack(side="left", padx=(12, 0))
 
-    # ── Accounts (sender rotation) ────────────────────────────────────────
+    # ── Accounts (Resend sender status) ──────────────────────────────────
 
     def _build_accounts(self):
         frame = ctk.CTkScrollableFrame(self.content, fg_color="transparent")
         frame.pack(fill="both", expand=True, padx=28, pady=24)
 
-        ctk.CTkLabel(frame, text="Sender Accounts", font=FONT_XL, text_color=WHITE).pack(anchor="w")
+        ctk.CTkLabel(frame, text="Sender", font=FONT_XL, text_color=WHITE).pack(anchor="w")
         ctk.CTkLabel(frame,
-                     text="Add multiple Gmail accounts for round-robin sending — scale past 150/day",
+                     text="AutoReach sends email via the Resend API — configure your key in Settings",
                      font=FONT_S, text_color=DIM).pack(anchor="w", pady=(2, 20))
 
         # ── Capacity overview ──────────────────────────────────────────
@@ -834,154 +827,32 @@ class AutoReachApp(ctk.CTk):
         capacity = get_all_sender_capacity(self.conn)
 
         if not capacity:
-            ctk.CTkLabel(cap_inner, text="No accounts yet. Add one below.",
+            ctk.CTkLabel(cap_inner,
+                         text="Resend API key not set. Go to Settings to add it.",
                          font=FONT_XS, text_color=DIM).pack(anchor="w")
         else:
-            total_remaining = sum(s["remaining"] for s in capacity if s["enabled"])
-            total_limit     = sum(s["daily_limit"] for s in capacity if s["enabled"])
+            s = capacity[0]
+            remaining_c = GREEN if s["remaining"] > 0 else RED_C
             ctk.CTkLabel(cap_inner,
-                         text=f"Combined remaining today: {total_remaining} / {total_limit}  "
-                              f"({len([s for s in capacity if s['enabled']])} active account(s))",
-                         font=FONT_S, text_color=TEAL).pack(anchor="w", pady=(0, 10))
-
-        # ── Account table ──────────────────────────────────────────────
-        table_card = card_frame(frame)
-        table_card.pack(fill="x", pady=(0, 16))
-
-        hdr = ctk.CTkFrame(table_card, fg_color=BG_DARK, corner_radius=0)
-        hdr.pack(fill="x")
-        for col, w in [("Email", 240), ("Daily Limit", 100), ("Sent Today", 100), ("Remaining", 90), ("Status", 70), ("Actions", 120)]:
-            ctk.CTkLabel(hdr, text=col, font=FONT_XS, text_color=TEAL,
-                         width=w, anchor="w").pack(side="left", padx=(12, 0), pady=8)
-
-        scroll = ctk.CTkScrollableFrame(table_card, fg_color="transparent", height=200)
-        scroll.pack(fill="x")
-
-        def refresh_table():
-            for w in scroll.winfo_children():
-                w.destroy()
-            rows = get_all_sender_capacity(self.conn)
-            if not rows:
-                ctk.CTkLabel(scroll, text="No accounts yet.",
-                             font=FONT_S, text_color=DIM).pack(pady=16)
-                return
-            for s in rows:
-                r = ctk.CTkFrame(scroll, fg_color="transparent", height=32)
-                r.pack(fill="x")
-                r.pack_propagate(False)
-                status_col  = GREEN if s["enabled"] else DIM
-                status_text = "on" if s["enabled"] else "off"
-                for val, w, col in [
-                    (s["email"][:30],         240, TEXT),
-                    (str(s["daily_limit"]),    100, DIM),
-                    (str(s["sent_today"]),     100, CORAL if s["sent_today"] else DIM),
-                    (str(s["remaining"]),       90, GREEN if s["remaining"] > 0 else RED_C),
-                    (status_text,               70, status_col),
-                ]:
-                    ctk.CTkLabel(r, text=val, font=FONT_XS, text_color=col,
-                                 width=w, anchor="w").pack(side="left", padx=(12, 0))
-
-                act_frame = ctk.CTkFrame(r, fg_color="transparent")
-                act_frame.pack(side="left", padx=(8, 0))
-
-                if s["id"] is not None:
-                    acct_id  = s["id"]
-                    enabled  = s["enabled"]
-
-                    def toggle(aid=acct_id, cur=enabled):
-                        db.set_sender_account_enabled(self.conn, aid, not cur)
-                        self._show_tab("accounts")
-
-                    def remove(aid=acct_id):
-                        if messagebox.askyesno("Remove account",
-                                               "Remove this sender account?"):
-                            db.remove_sender_account(self.conn, aid)
-                            self._show_tab("accounts")
-
-                    tog_text  = "Disable" if enabled else "Enable"
-                    tog_color = DIM if enabled else TEAL
-                    styled_btn(act_frame, tog_text,  toggle, colour=BG_DARK, fg=tog_color, width=70, height=26, font=FONT_XS).pack(side="left", padx=2)
-                    styled_btn(act_frame, "Remove",  remove, colour=BG_DARK, fg=RED_C,     width=66, height=26, font=FONT_XS).pack(side="left", padx=2)
-
-        refresh_table()
-
-        # ── Add account form ───────────────────────────────────────────
-        add_card = card_frame(frame)
-        add_card.pack(fill="x")
-        add_inner = ctk.CTkFrame(add_card, fg_color="transparent")
-        add_inner.pack(padx=24, pady=18, fill="x")
-
-        ctk.CTkLabel(add_inner, text="Add Sender Account", font=FONT_M, text_color=WHITE).pack(anchor="w", pady=(0, 10))
-
-        row_email = ctk.CTkFrame(add_inner, fg_color="transparent")
-        row_email.pack(fill="x", pady=(0, 8))
-        ctk.CTkLabel(row_email, text="Gmail address", font=FONT_XS, text_color=DIM, width=140, anchor="w").pack(side="left")
-        email_entry = ctk.CTkEntry(row_email, fg_color=BG_DARK, border_color=BORDER,
-                                   text_color=TEXT, font=FONT_S, width=280)
-        email_entry.pack(side="left")
-
-        row_pwd = ctk.CTkFrame(add_inner, fg_color="transparent")
-        row_pwd.pack(fill="x", pady=(0, 8))
-        ctk.CTkLabel(row_pwd, text="App Password", font=FONT_XS, text_color=DIM, width=140, anchor="w").pack(side="left")
-        pwd_entry = ctk.CTkEntry(row_pwd, fg_color=BG_DARK, border_color=BORDER,
-                                 text_color=TEXT, font=FONT_S, width=280, show="•")
-        pwd_entry.pack(side="left")
-
-        row_limit = ctk.CTkFrame(add_inner, fg_color="transparent")
-        row_limit.pack(fill="x", pady=(0, 8))
-        ctk.CTkLabel(row_limit, text="Daily limit", font=FONT_XS, text_color=DIM, width=140, anchor="w").pack(side="left")
-        limit_entry = ctk.CTkEntry(row_limit, fg_color=BG_DARK, border_color=BORDER,
-                                   text_color=TEXT, font=FONT_S, width=100)
-        limit_entry.insert(0, "150")
-        limit_entry.pack(side="left")
-        ctk.CTkLabel(row_limit, text="  (Gmail free tier: ~150/day per account)",
-                     font=FONT_XS, text_color=DIM).pack(side="left")
-
-        row_notes = ctk.CTkFrame(add_inner, fg_color="transparent")
-        row_notes.pack(fill="x", pady=(0, 12))
-        ctk.CTkLabel(row_notes, text="Notes (optional)", font=FONT_XS, text_color=DIM, width=140, anchor="w").pack(side="left")
-        notes_entry = ctk.CTkEntry(row_notes, fg_color=BG_DARK, border_color=BORDER,
-                                   text_color=TEXT, font=FONT_S, width=280)
-        notes_entry.pack(side="left")
-
-        status_var = ctk.StringVar(value="")
-
-        def add_account():
-            email_val = email_entry.get().strip()
-            pwd_val   = pwd_entry.get().strip()
-            limit_val = limit_entry.get().strip()
-            if not email_val or not pwd_val:
-                status_var.set("✗  Email and App Password are required.")
-                return
-            try:
-                limit_int = int(limit_val) if limit_val else 150
-            except ValueError:
-                status_var.set("✗  Daily limit must be a number.")
-                return
-            db.add_sender_account(self.conn, email_val, pwd_val, limit_int,
-                                  notes_entry.get().strip())
-            status_var.set(f"✓  Added {email_val}")
-            email_entry.delete(0, "end")
-            pwd_entry.delete(0, "end")
-            notes_entry.delete(0, "end")
-            self._show_tab("accounts")
-
-        styled_btn(add_inner, "Add Account", add_account, width=180).pack(anchor="w")
-        ctk.CTkLabel(add_inner, textvariable=status_var, font=FONT_XS, text_color=GREEN).pack(anchor="w", pady=(6, 0))
+                         text=f"From: {s['email']}",
+                         font=FONT_S, text_color=TEAL).pack(anchor="w")
+            ctk.CTkLabel(cap_inner,
+                         text=f"Sent today: {s['sent_today']}  ·  Remaining: {s['remaining']} / {s['daily_limit']}",
+                         font=FONT_S, text_color=remaining_c).pack(anchor="w", pady=(4, 0))
 
         # ── Help note ──────────────────────────────────────────────────
         note_card = card_frame(frame)
         note_card.pack(fill="x", pady=(16, 0))
         note_inner = ctk.CTkFrame(note_card, fg_color="transparent")
         note_inner.pack(padx=24, pady=16, fill="x")
-        ctk.CTkLabel(note_inner, text="How rotation works", font=FONT_S, text_color=WHITE).pack(anchor="w", pady=(0, 6))
+        ctk.CTkLabel(note_inner, text="About Resend", font=FONT_S, text_color=WHITE).pack(anchor="w", pady=(0, 6))
         for line in [
-            "Each send picks the account with the fewest emails sent today.",
-            "If multiple accounts tie, the one with the lower ID wins (stable order).",
-            "Any account at its daily limit is skipped automatically.",
-            "All enabled inboxes are checked for replies on each follow-up run.",
+            "Resend is a developer-friendly email API — free tier: 3 000 emails/month.",
+            "Sign up at resend.com, verify your domain or use onboarding@resend.dev for testing.",
+            "Set resend_api_key and from_email in Settings.",
             "",
-            "Gmail App Passwords:  Google Account → Security → 2-Step → App Passwords",
+            "Replies are detected from the database (leads marked 'replied').",
+            "You can mark a lead as replied directly in the Leads list.",
         ]:
             ctk.CTkLabel(note_inner, text=line, font=FONT_XS, text_color=DIM, anchor="w").pack(anchor="w")
 
@@ -1001,17 +872,13 @@ class AutoReachApp(ctk.CTk):
 
         cfg = db.get_all_config(self.conn)
 
-        ctk.CTkLabel(inner,
-                     text="Single-account settings (legacy). For multiple accounts use the Accounts tab.",
-                     font=FONT_XS, text_color=DIM).pack(anchor="w", pady=(0, 10))
-
         fields_cfg = [
-            ("groq_api_key",        "Groq API Key",                    True),
-            ("gmail_user",          "Gmail Address (single-account)",  False),
-            ("gmail_app_password",  "Gmail App Password",              True),
-            ("google_maps_api_key", "Google Maps API Key",             True),
-            ("daily_limit",         "Daily limit (single-account)",    False),
-            ("delay_seconds",       "Delay between sends (s)",         False),
+            ("groq_api_key",        "Groq API Key",                         True),
+            ("resend_api_key",      "Resend API Key  (resend.com)",          True),
+            ("from_email",          "From Email  (verified in Resend)",      False),
+            ("google_maps_api_key", "Google Maps API Key",                   True),
+            ("daily_limit",         "Daily limit (default 500)",             False),
+            ("delay_seconds",       "Delay between sends (s)",               False),
             ("followup_delays",     "Follow-up delays (days, e.g. 3,7,14)", False),
         ]
 
@@ -1047,7 +914,8 @@ class AutoReachApp(ctk.CTk):
         ctk.CTkLabel(info_inner, text="Where to get your API keys", font=FONT_S, text_color=WHITE).pack(anchor="w", pady=(0, 8))
         for line in [
             "Groq API key     →  console.groq.com  (free)",
-            "Gmail password   →  Google Account → Security → App Passwords",
+            "Resend API key   →  resend.com  (free tier: 3 000 emails/month)",
+            "From email       →  must be a verified domain/address in Resend",
             "Google Maps key  →  console.cloud.google.com → Places API",
             "",
             f"Config stored at: {db.DB_PATH}",

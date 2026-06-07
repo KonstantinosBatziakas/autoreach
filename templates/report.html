@@ -17,13 +17,23 @@
     <div class="stat-value">{{ report.today_count }}</div>
     <div class="stat-desc">last 24 hours</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-label">Follow-ups</div>
+    <div class="stat-value" style="color:#f59e0b;">{{ report.followups_sent }}</div>
+    <div class="stat-desc">total follow-up emails</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Replied</div>
+    <div class="stat-value" style="color:#22c55e;">{{ report.replied }}</div>
+    <div class="stat-desc">leads who responded</div>
+  </div>
 </div>
 
 <div class="card">
   <div class="card-header">
     <div class="card-title">All Contacted Businesses</div>
   </div>
-  <div class="table-wrap" style="border:none; border-radius:0; margin:-20px; margin-top:0;">
+  <div class="table-wrap table-scroll" style="border:none; border-radius:0; margin:-20px; margin-top:0;">
     <table>
       <thead>
         <tr>

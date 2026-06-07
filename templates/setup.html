@@ -129,18 +129,19 @@
             </div>
 
             <div class="step">
-                <div class="step-title">2 — Email Sending</div>
+                <div class="step-title">2 — Email Sending (Resend)</div>
                 <div class="form-group">
-                    <label>Gmail Address</label>
-                    <input type="email" name="gmail_user" placeholder="you@gmail.com">
+                    <label>Resend API Key <span class="optional">(for server-side follow-ups)</span></label>
+                    <input type="text" name="resend_api_key" placeholder="re_…">
+                    <div class="label-hint">
+                        Free at <a href="https://resend.com" target="_blank">resend.com</a> — 3,000 emails/month.
+                        Campaign emails are sent directly from your browser; this key is used only for automatic follow-ups.
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Gmail App Password</label>
-                    <input type="password" name="gmail_pass" placeholder="16-character app password">
-                    <div class="label-hint">
-                        Not your Gmail password. Generate one at
-                        <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a>
-                    </div>
+                    <label>From Email <span class="optional">(for follow-ups)</span></label>
+                    <input type="text" name="from_email" placeholder="AutoReach &lt;you@yourdomain.com&gt;">
+                    <div class="label-hint">Must be a verified sender in your Resend account. Leave blank to use <code style="color:#4ecdc4;">onboarding@resend.dev</code> for testing.</div>
                 </div>
             </div>
 

@@ -76,10 +76,10 @@ def cmd_config(args, conn):
 
     fields = [
         ("groq_api_key",        "Groq API key"),
-        ("gmail_user",          "Gmail address"),
-        ("gmail_app_password",  "Gmail App Password"),
+        ("resend_api_key",      "Resend API key  (resend.com — free tier available)"),
+        ("from_email",          "From email address  (must be verified in Resend)"),
         ("google_maps_api_key", "Google Maps API key"),
-        ("daily_limit",         "Max emails per day (default 30)"),
+        ("daily_limit",         "Max emails per day (default 500)"),
         ("delay_seconds",       "Seconds between sends (default 8)"),
         ("followup_delays",     "Follow-up delays in days (default 3,7,14)"),
     ]
@@ -99,74 +99,26 @@ def cmd_config(args, conn):
 
 
 def cmd_accounts(args, conn):
-    """Manage sender accounts for round-robin rotation."""
+    """Show Resend sender status (rotation is no longer Gmail-based)."""
     header()
-    sub = args.accounts_cmd
-
-    if sub == "list" or sub is None:
-        capacity = get_all_sender_capacity(conn)
-        if not capacity:
-            warn("No sender accounts configured.")
-            info("Add one:  autoreach accounts add")
-            return
-        print(c(f"  {'#':<4} {'Email':<35} {'Limit':>6} {'Today':>6} {'Left':>6} Status", BOLD + WHITE))
-        divider()
-        for s in capacity:
-            status_c = GREEN if s["enabled"] else DIM
-            status_t = "on " if s["enabled"] else "off"
-            remaining_c = GREEN if s["remaining"] > 0 else RED
-            id_str = str(s["id"]) if s["id"] else "—"
-            print(
-                f"  {id_str:<4} {s['email'][:33]:<35} "
-                f"{c(str(s['daily_limit']), DIM):>6}  "
-                f"{c(str(s['sent_today']), YELLOW):>6}  "
-                f"{c(str(s['remaining']), remaining_c):>6}  "
-                f"{c(status_t, status_c)}"
-            )
-        divider()
-        total_rem = total_remaining_today(conn)
-        total_lim = sum(s["daily_limit"] for s in capacity if s["enabled"])
-        dim(f"Combined remaining today: {total_rem} / {total_lim}")
-
-    elif sub == "add":
-        email = getattr(args, "email", None) or input(c("  Gmail address: ", CYAN)).strip()
-        pwd   = getattr(args, "password", None) or input(c("  App Password:  ", CYAN)).strip()
-        if not email or not pwd:
-            error("Email and password are required.")
-            sys.exit(1)
-        limit_str = getattr(args, "limit", None)
-        limit = int(limit_str) if limit_str else 150
-        notes = getattr(args, "notes", None) or ""
-        db.add_sender_account(conn, email, pwd, limit, notes)
-        success(f"Added {email}  (daily limit: {limit})")
-
-    elif sub == "remove":
-        acct_id = getattr(args, "id", None)
-        if acct_id is None:
-            error("Provide account id:  autoreach accounts remove --id N")
-            sys.exit(1)
-        db.remove_sender_account(conn, int(acct_id))
-        success(f"Removed account #{acct_id}")
-
-    elif sub == "enable":
-        acct_id = getattr(args, "id", None)
-        if acct_id is None:
-            error("Provide account id:  autoreach accounts enable --id N")
-            sys.exit(1)
-        db.set_sender_account_enabled(conn, int(acct_id), True)
-        success(f"Account #{acct_id} enabled.")
-
-    elif sub == "disable":
-        acct_id = getattr(args, "id", None)
-        if acct_id is None:
-            error("Provide account id:  autoreach accounts disable --id N")
-            sys.exit(1)
-        db.set_sender_account_enabled(conn, int(acct_id), False)
-        success(f"Account #{acct_id} disabled.")
-
-    else:
-        error(f"Unknown accounts sub-command: {sub}")
-        info("Usage:  autoreach accounts [list|add|remove|enable|disable]")
+    capacity = get_all_sender_capacity(conn)
+    if not capacity:
+        warn("Resend API key not configured.")
+        info("Run:  autoreach config  to add your Resend API key and from_email.")
+        return
+    print(c(f"  {'From Email':<40} {'Limit':>6} {'Today':>6} {'Left':>6}", BOLD + WHITE))
+    divider()
+    for s in capacity:
+        remaining_c = GREEN if s["remaining"] > 0 else RED
+        print(
+            f"  {s['email'][:38]:<40} "
+            f"{c(str(s['daily_limit']), DIM):>6}  "
+            f"{c(str(s['sent_today']), YELLOW):>6}  "
+            f"{c(str(s['remaining']), remaining_c):>6}"
+        )
+    divider()
+    dim(f"Remaining today: {total_remaining_today(conn)}")
+    dim("To change credentials run:  autoreach config")
 
 
 def cmd_find(args, conn):
@@ -245,8 +197,8 @@ def cmd_send(args, conn):
 
     remaining_today = total_remaining_today(conn)
     if remaining_today <= 0:
-        warn("All sender accounts have reached their daily limit.")
-        info("Check status with:  autoreach accounts list")
+        warn("Daily send limit reached for your Resend sender.")
+        info("Check status with:  autoreach accounts")
         return
 
     leads    = [dict(r) for r in db.get_leads(conn, with_email_only=True)]
@@ -326,20 +278,20 @@ def cmd_send(args, conn):
         else:
             choice = "s"
 
-        # Pick sender via rotation
+        # Get Resend credentials
         try:
-            sender_user, sender_pwd = get_next_sender(conn)
+            resend_key, from_email = get_next_sender(conn)
         except NoSendersAvailable as e:
             error(f"No sender available: {e}")
             break
 
-        # Send
-        html = build_html(body, lead["name"], sender_user)
+        # Send via Resend
+        html = build_html(body, lead["name"], lead["email"])
         try:
-            send_email(lead["email"], subject, html, sender_user, sender_pwd)
+            send_email(lead["email"], subject, html, resend_key, from_email)
             db.log_sent(conn, lead["id"], lead["name"], lead["email"],
-                        subject, body, language, "sent", sender_user)
-            success(f"[{sender_user}] Sent → {lead['email']}")
+                        subject, body, language, "sent", from_email)
+            success(f"[{from_email}] Sent → {lead['email']}")
             sent_count += 1
             # Schedule follow-ups
             delays_cfg = db.get_config(conn, "followup_delays", "3,7,14")
@@ -349,7 +301,7 @@ def cmd_send(args, conn):
         except Exception as e:
             error(f"Send failed: {e}")
             db.log_sent(conn, lead["id"], lead["name"], lead["email"],
-                        subject, body, language, "failed", sender_user)
+                        subject, body, language, "failed", from_email)
             failed_count += 1
 
         if i < len(pending) - 1:
@@ -417,7 +369,7 @@ def cmd_export(args, conn):
 def cmd_followup(args, conn):
     """Run due follow-ups (check replies + send scheduled follow-ups)."""
     header()
-    cfg = require_config(conn, "groq_api_key", "gmail_user", "gmail_app_password")
+    cfg = require_config(conn, "groq_api_key", "resend_api_key")
 
     fa = db.get_followup_analytics(conn)
     info(f"Follow-up queue — Pending: {fa['pending']}  Sent: {fa['sent']}  Replied: {fa['replied']}")
@@ -465,21 +417,19 @@ def cmd_followup(args, conn):
 
 
 def cmd_replies(args, conn):
-    """Check Gmail inbox for replies from leads."""
+    """Check database for leads that have replied (status='replied')."""
     header()
-    cfg = require_config(conn, "gmail_user", "gmail_app_password")
-    info("Connecting to Gmail IMAP…")
     from autoreach_core.followup import check_for_replies
     try:
-        n = check_for_replies(conn, cfg["gmail_user"], cfg["gmail_app_password"],
-                              progress_cb=lambda m: info(m))
+        n = check_for_replies(conn, progress_cb=lambda m: info(m))
         divider()
         if n:
             success(f"{n} new reply(ies) detected — follow-ups cancelled for those leads.")
         else:
             info("No new replies found.")
+        info("To mark a lead as replied, update their status in the Leads list.")
     except Exception as e:
-        error(f"IMAP error: {e}")
+        error(f"Error checking replies: {e}")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────
@@ -491,11 +441,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent(f"""
   {CYAN}Examples:{RESET}
-    autoreach config                  # set API keys
-    autoreach accounts list           # show sender accounts + capacity
-    autoreach accounts add            # add a Gmail account (interactive)
-    autoreach accounts add --email x@gmail.com --password xxxx --limit 150
-    autoreach accounts disable --id 2 # pause an account
+    autoreach config                  # set API keys (Groq, Resend, Google Maps)
+    autoreach accounts                # show Resend sender status + daily capacity
     autoreach find --city Athens --type restaurants
     autoreach scrape                  # scrape emails from websites
     autoreach send                    # preview & send (interactive)
@@ -503,9 +450,9 @@ def main():
     autoreach send --language greek   # send in Greek
     autoreach followup                # send due follow-ups (interactive)
     autoreach followup --auto         # send due follow-ups automatically
-    autoreach replies                 # check Gmail for replies
+    autoreach replies                 # check DB for replied leads
     autoreach leads                   # list all leads
-    autoreach stats                   # show analytics + per-account breakdown
+    autoreach stats                   # show analytics
     autoreach export --output my_leads.csv
         """)
     )
@@ -515,25 +462,7 @@ def main():
     sub.add_parser("config",  help="Set API keys and settings")
 
     # ── Accounts ─────────────────────────────────────────────────────────
-    p_acct = sub.add_parser("accounts", help="Manage sender accounts for rotation")
-    acct_sub = p_acct.add_subparsers(dest="accounts_cmd")
-
-    acct_sub.add_parser("list", help="List all sender accounts and daily capacity")
-
-    p_add = acct_sub.add_parser("add", help="Add a sender account")
-    p_add.add_argument("--email",    help="Gmail address")
-    p_add.add_argument("--password", help="Gmail App Password")
-    p_add.add_argument("--limit",    type=int, default=150, help="Daily send limit (default: 150)")
-    p_add.add_argument("--notes",    default="",            help="Optional label/notes")
-
-    p_rem = acct_sub.add_parser("remove", help="Remove a sender account by id")
-    p_rem.add_argument("--id", type=int, required=True)
-
-    p_en = acct_sub.add_parser("enable", help="Enable a sender account")
-    p_en.add_argument("--id", type=int, required=True)
-
-    p_dis = acct_sub.add_parser("disable", help="Disable a sender account")
-    p_dis.add_argument("--id", type=int, required=True)
+    sub.add_parser("accounts", help="Show Resend sender status and daily capacity")
 
     # ── Find ──────────────────────────────────────────────────────────────
     p_find = sub.add_parser("find", help="Find leads from Google Maps")
@@ -549,7 +478,7 @@ def main():
     p_fu = sub.add_parser("followup", help="Send due follow-up emails")
     p_fu.add_argument("--auto", action="store_true", help="Skip preview prompts")
 
-    sub.add_parser("replies", help="Check Gmail inbox for replies from leads")
+    sub.add_parser("replies", help="Check database for leads that have replied")
     sub.add_parser("leads",   help="List all leads")
     sub.add_parser("stats",   help="Show analytics")
 

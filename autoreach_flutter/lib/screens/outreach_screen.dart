@@ -4,8 +4,9 @@ import 'package:http/http.dart' as http;
 import '../services/settings_service.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_drawer.dart';
+import '../constants.dart';
 
-const _baseUrl = 'https://app.autoreach.dev';
+const _baseUrl = kBaseUrl;
 
 class OutreachScreen extends StatefulWidget {
   const OutreachScreen({super.key});

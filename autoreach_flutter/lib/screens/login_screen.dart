@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ── OAuth: open Railway URL; deep-link callback handled in main.dart ───────
+  // ── OAuth: open Render URL; deep-link callback handled in main.dart ───────
   Future<void> _oauthLogin(String provider) async {
     setState(() { _loadingProvider = provider; _error = null; });
     try {

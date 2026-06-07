@@ -37,14 +37,35 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   Future<void> _scrapeEmails() async {
     setState(() => _scraping = true);
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Scraping emails on the server...'), backgroundColor: Color(0xFF4ECDC4)));
-    // Trigger server-side scraping via the web UI route
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(
+          content: Text('Scraping emails on the server — this takes ~30 seconds...'),
+          backgroundColor: Color(0xFF4ECDC4),
+          duration: Duration(seconds: 35),
+        ));
+    }
     try {
       await ApiService.triggerScrape();
+      // Wait for the background scrape to finish (it crawls websites, takes time)
+      await Future.delayed(const Duration(seconds: 35));
       await _load();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email scraping complete!'), backgroundColor: Color(0xFF4ECDC4)));
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Scraping complete! Pull down to refresh.'),
+          backgroundColor: Color(0xFF27C93F),
+        ));
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Scrape error: $e'), backgroundColor: const Color(0xFFFF6B6B)));
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString().contains('409') ? 'Scraping already in progress — please wait.' : 'Scrape error: $e'),
+          backgroundColor: const Color(0xFFFF6B6B),
+        ));
+      }
     }
     setState(() => _scraping = false);
   }

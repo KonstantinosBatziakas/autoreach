@@ -506,19 +506,92 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
 
+    /* ── Mobile hamburger button ── */
+    .menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-2);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      margin-right: 6px;
+      line-height: 1;
+    }
+
+    /* ── Overlay behind open sidebar ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 99;
+    }
+    .sidebar-overlay.active { display: block; }
+
+    /* ── Scrollable table wrapper (applied in templates) ── */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
-      :root { --sidebar: 0px; }
-      .sidebar { display: none; }
+      :root { --sidebar: 220px; }
+
+      /* Sidebar slides in from left; hidden off-screen by default */
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .22s ease;
+        z-index: 100;
+      }
+      .sidebar.open { transform: translateX(0); }
+
       .main { margin-left: 0; }
-      .content { padding: 16px; }
-      .topbar { padding: 0 16px; }
+      .content { padding: 14px 16px; }
+
+      .topbar {
+        padding: 0 12px;
+        height: 48px;
+      }
+
+      /* Show hamburger */
+      .menu-btn { display: block; }
+
+      /* Topbar actions — allow horizontal scroll if too many buttons */
+      .topbar > div:last-child {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        max-width: 60vw;
+        scrollbar-width: none;
+      }
+      .topbar > div:last-child::-webkit-scrollbar { display: none; }
+
+      /* Stats grid — 2 cols max on mobile */
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* Action bar stacks vertically */
+      .action-bar { flex-direction: column; align-items: flex-start; }
+
+      /* Form rows collapse to single column */
+      .form-row { grid-template-columns: 1fr; }
+
+      /* Stat value smaller */
+      .stat-value { font-size: 22px; }
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .stat-value { font-size: 20px; }
     }
   </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <img src="{{ url_for('static', filename='logo-full.svg') }}" alt="AutoReach">
   </div>
@@ -574,11 +647,14 @@
 
 <div class="main">
   <div class="topbar">
-    <div>
-      <div class="topbar-title">{% block page_title %}AutoReach{% endblock %}</div>
-      <div class="topbar-sub">{% block page_subtitle %}{% endblock %}</div>
+    <div style="display:flex; align-items:center; gap:2px; min-width:0;">
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+      <div style="min-width:0;">
+        <div class="topbar-title">{% block page_title %}AutoReach{% endblock %}</div>
+        <div class="topbar-sub">{% block page_subtitle %}{% endblock %}</div>
+      </div>
     </div>
-    <div style="display:flex; align-items:center; gap:8px;">
+    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
       {% block topbar_actions %}{% endblock %}
     </div>
   </div>
@@ -598,5 +674,27 @@
   </div>
 </div>
 
+<script>
+(function() {
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebar-overlay');
+  const menuBtn  = document.getElementById('menu-btn');
+
+  function open()  { sidebar.classList.add('open');  overlay.classList.add('active');  }
+  function close() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+
+  menuBtn.addEventListener('click', function() {
+    sidebar.classList.contains('open') ? close() : open();
+  });
+  overlay.addEventListener('click', close);
+
+  // Close on nav link tap (mobile feels snappier)
+  sidebar.querySelectorAll('nav a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      if (window.innerWidth <= 768) close();
+    });
+  });
+})();
+</script>
 </body>
 </html>

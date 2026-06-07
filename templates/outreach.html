@@ -4,6 +4,12 @@
 {% block page_subtitle %}AI-generated cold emails sent from your browser{% endblock %}
 
 {% block content %}
+<style>
+  @media (max-width: 600px) {
+    #template-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    #start-btn, #stop-btn { flex: 1; justify-content: center; }
+  }
+</style>
 <div style="max-width:660px;">
 
   <div class="notice notice-info" style="margin-bottom:20px;">
@@ -116,7 +122,7 @@
   </div>
 
   <!-- Buttons -->
-  <div style="display:flex; gap:8px; margin-bottom:16px;">
+  <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
     <button id="start-btn" onclick="startCampaign()" class="btn btn-success">▶ Start Campaign</button>
     <button id="stop-btn" onclick="stopCampaign()" class="btn btn-danger" style="display:none;">⏹ Stop</button>
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>

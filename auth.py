@@ -8,7 +8,7 @@ Handles:
       → on success: redirect to  autoreach://callback?token=<JWT>
       → on failure: redirect to  autoreach://callback?error=<message>
 
-Required environment variables (set in Railway):
+Required environment variables (set in Render → Environment):
   SECRET_KEY          – random 32-byte hex string, used to sign JWTs
   GITHUB_CLIENT_ID
   GITHUB_CLIENT_SECRET
@@ -16,7 +16,7 @@ Required environment variables (set in Railway):
   DISCORD_CLIENT_SECRET
   GOOGLE_CLIENT_ID
   GOOGLE_CLIENT_SECRET
-  BASE_URL            – your Railway public URL, e.g. https://app.autoreach.dev
+  BASE_URL            – your public URL, e.g. https://app.autoreach.dev
 """
 
 import os

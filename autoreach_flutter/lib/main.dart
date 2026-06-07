@@ -16,7 +16,13 @@ final _navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final loggedIn = await AuthService.isLoggedIn();
+  // First do a fast local JWT expiry check, then verify with the server
+  // (server check runs async so startup isn't blocked if offline)
+  final localOk = await AuthService.isLoggedIn();
+  bool loggedIn = localOk;
+  if (localOk) {
+    loggedIn = await AuthService.verifyWithServer();
+  }
   runApp(AutoReachApp(loggedIn: loggedIn));
 }
 

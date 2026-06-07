@@ -2,13 +2,16 @@
 Follow-up sequence engine.
 
 Responsibilities:
-  1. check_for_replies()   — poll Gmail via IMAP, mark replied leads
+  1. check_for_replies()   — check DB for leads already marked as replied
   2. run_due_followups()   — send any follow-ups whose date has arrived
   3. generate_followup_email() — AI-written follow-up, aware it's a follow-up
+
+Reply detection no longer uses Gmail IMAP.  Replies are recorded in the
+DB when a lead emails back and the user (or the web app) marks them as
+replied, or via the unsubscribe link.  The desktop/CLI user can manually
+mark a lead replied from the Leads tab.
 """
 
-import imaplib
-import email as email_lib
 import time
 from datetime import datetime
 
@@ -23,128 +26,33 @@ MAX_FOLLOWUPS  = 3
 
 # ── Reply detection ────────────────────────────────────────────────────────
 
-def _scan_inbox_for_replies(gmail_user: str, gmail_app_password: str,
-                             lead_map: dict, progress_cb=None) -> tuple[int, dict]:
+def check_for_replies(conn, progress_cb=None) -> int:
     """
-    Scan a single Gmail inbox for replies from leads in lead_map.
-    Returns (replies_found, remaining_lead_map) so callers can chain
-    across multiple inboxes.
+    Check the local DB for leads whose status is 'replied' but whose
+    pending follow-ups have not yet been marked as replied/skipped.
+
+    This replaces the old Gmail IMAP scan.  Any reply recorded in the DB
+    (e.g. by the user clicking "Mark Replied" or via the web app) will be
+    picked up here and used to skip overdue follow-ups.
+
+    Returns the number of leads newly detected as having replied.
     """
     if progress_cb:
-        progress_cb(f"Connecting to Gmail IMAP as {gmail_user}…")
+        progress_cb("Checking database for replied leads…")
 
-    try:
-        mail = imaplib.IMAP4_SSL("imap.gmail.com")
-        mail.login(gmail_user, gmail_app_password)
-        mail.select("inbox")
-    except Exception as e:
-        if progress_cb:
-            progress_cb(f"⚠ IMAP login failed for {gmail_user}: {e}")
-        return 0, lead_map
-
-    found = 0
-    try:
-        # Only search last 60 days — avoids scanning entire inbox history
-        since_date = (datetime.now().replace(day=1) - __import__('datetime').timedelta(days=60)).strftime("%d-%b-%Y")
-        _, data = mail.search(None, f'(SINCE "{since_date}")')
-        msg_ids = data[0].split()
-
-        if not msg_ids:
-            return 0, lead_map
-
-        if progress_cb:
-            progress_cb(f"  Scanning {len(msg_ids)} recent message(s)…")
-
-        # Batch-fetch all headers in one IMAP round trip
-        id_range = ",".join(m.decode() for m in msg_ids)
-        _, fetch_data = mail.fetch(id_range, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")
-
-        for item in fetch_data:
-            if not lead_map:
-                break
-            if not isinstance(item, tuple):
-                continue
-            try:
-                raw = item[1].decode("utf-8", errors="ignore")
-                parsed = email_lib.message_from_string(raw)
-                from_header    = parsed.get("From", "").lower()
-                subject_header = parsed.get("Subject", "").strip().lower()
-
-                sender_addr = from_header
-                if "<" in from_header:
-                    sender_addr = from_header.split("<")[1].rstrip(">").strip()
-
-                if sender_addr in lead_map:
-                    lead_id, conn = lead_map[sender_addr]
-                    is_unsub = "unsubscribe" in subject_header
-
-                    db.mark_lead_replied(conn, lead_id, sender_addr)
-                    if is_unsub:
-                        conn.execute(
-                            "UPDATE leads SET status='unsubscribed' WHERE id=?", (lead_id,)
-                        )
-                        conn.commit()
-                        if progress_cb:
-                            progress_cb(f"🚫 Unsubscribed: {sender_addr}")
-                    else:
-                        if progress_cb:
-                            progress_cb(f"↩ Reply from {sender_addr}")
-
-                    found += 1
-                    del lead_map[sender_addr]
-
-            except Exception:
-                continue
-
-    finally:
-        try:
-            mail.logout()
-        except Exception:
-            pass
-
-    return found, lead_map
-
-
-def check_for_replies(conn, gmail_user: str, gmail_app_password: str,
-                      progress_cb=None) -> int:
-    """
-    Scan Gmail inboxes for replies from known leads and mark them.
-
-    Checks ALL enabled sender accounts (not just the one passed as args)
-    so replies sent to any rotation account are detected.  Falls back
-    gracefully to checking only gmail_user if no accounts table exists.
-
-    Returns the total number of new replies detected.
-    """
     leads = db.get_leads(conn, with_email_only=True)
-    # lead_map: {lead_email_lower: (lead_id, conn)}
-    lead_map = {
-        row["email"].lower(): (row["id"], conn)
-        for row in leads
-        if not db.has_replied(conn, row["id"])
-    }
+    found = 0
+    for row in leads:
+        if row["status"] == "replied":
+            if not db.has_replied(conn, row["id"]):
+                db.mark_lead_replied(conn, row["id"], row["email"])
+                found += 1
+                if progress_cb:
+                    progress_cb(f"↩ Marked {row['email']} as replied.")
 
-    if not lead_map:
-        return 0
-
-    # Build list of (user, password) pairs to poll
-    accounts_to_poll: list[tuple[str, str]] = []
-    accts = db.get_enabled_sender_accounts(conn)
-    if accts:
-        for acct in accts:
-            accounts_to_poll.append((acct["email"], acct["app_password"]))
-    else:
-        # Legacy single-account fallback
-        accounts_to_poll = [(gmail_user, gmail_app_password)]
-
-    total_found = 0
-    for user, pwd in accounts_to_poll:
-        if not lead_map:
-            break
-        n, lead_map = _scan_inbox_for_replies(user, pwd, lead_map, progress_cb)
-        total_found += n
-
-    return total_found
+    if progress_cb and not found:
+        progress_cb("No new replies found in database.")
+    return found
 
 
 # ── Follow-up email generation ─────────────────────────────────────────────
@@ -218,6 +126,11 @@ def run_due_followups(conn, cfg: dict, auto: bool = True,
     """
     Check for replies first, then send all due follow-ups.
 
+    cfg must contain:
+      groq_api_key   — Groq API key for email generation
+      resend_api_key — Resend API key for sending
+      from_email     — sender address (optional, defaults to onboarding@resend.dev)
+
     progress_cb(message: str)              — status updates
     confirm_cb(followup_row, subj, body)   — for interactive mode;
         should return 's' send / 'r' regen / 'k' skip
@@ -226,22 +139,17 @@ def run_due_followups(conn, cfg: dict, auto: bool = True,
     """
     counts = {"sent": 0, "skipped": 0, "failed": 0, "replies_found": 0}
 
-    # 1. Check for replies first
+    # 1. Check for replies first (DB-based, no IMAP needed)
     if progress_cb:
-        progress_cb("Checking Gmail inbox for replies…")
+        progress_cb("Checking database for replied leads…")
     try:
-        new_replies = check_for_replies(
-            conn,
-            cfg["gmail_user"],
-            cfg["gmail_app_password"],
-            progress_cb=progress_cb,
-        )
+        new_replies = check_for_replies(conn, progress_cb=progress_cb)
         counts["replies_found"] = new_replies
         if progress_cb and new_replies:
             progress_cb(f"✓ {new_replies} new reply(ies) detected — follow-ups cancelled for those leads.")
     except Exception as e:
         if progress_cb:
-            progress_cb(f"⚠ IMAP check failed (skipping reply detection): {e}")
+            progress_cb(f"⚠ Reply check failed (skipping): {e}")
 
     # 2. Get due follow-ups
     due = db.get_due_followups(conn)
@@ -304,26 +212,26 @@ def run_due_followups(conn, cfg: dict, auto: bool = True,
                 counts["failed"] += 1
                 continue
 
-        # Pick sender via rotation
+        # Get Resend credentials
         try:
-            sender_user, sender_pwd = get_next_sender(conn)
+            resend_key, from_email = get_next_sender(conn)
         except NoSendersAvailable as e:
             if progress_cb:
-                progress_cb(f"✗ No senders available: {e}")
+                progress_cb(f"✗ No sender configured: {e}")
             counts["failed"] += 1
             continue
 
-        # Send
-        html = build_html(body, lead["name"], sender_user)
+        # Send via Resend
+        html = build_html(body, lead["name"], row["email"])
         try:
-            send_email(row["email"], subj, html, sender_user, sender_pwd)
+            send_email(row["email"], subj, html, resend_key, from_email)
             db.mark_followup_sent(conn, row["id"], subj, body)
-            # Log to sent_log so rotation counts are accurate
+            # Log to sent_log so daily counts are accurate
             db.log_sent(conn, lead["id"], lead["name"], row["email"],
-                        subj, body, row["language"], "sent", sender_user)
+                        subj, body, row["language"], "sent", from_email)
             counts["sent"] += 1
             if progress_cb:
-                progress_cb(f"✓ [{sender_user}] Sent follow-up #{row['sequence_num']} → {row['email']}")
+                progress_cb(f"✓ [{from_email}] Sent follow-up #{row['sequence_num']} → {row['email']}")
         except Exception as e:
             counts["failed"] += 1
             if progress_cb:

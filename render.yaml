@@ -10,13 +10,25 @@ services:
       - key: WEB_PASSWORD
         value: changeme
       - key: BASE_URL
-        value: https://autoreach.onrender.com
+        value: https://app.autoreach.dev
       - key: GROQ_API_KEY
         value: your-groq-api-key
-      - key: GMAIL_USER
-        value: your@gmail.com
-      - key: GMAIL_APP_PASSWORD
-        value: your-gmail-app-password
+      - key: RESEND_API_KEY
+        value: your-resend-api-key
+      - key: FROM_EMAIL
+        value: onboarding@resend.dev
+      - key: GITHUB_CLIENT_ID
+        value: your-github-client-id
+      - key: GITHUB_CLIENT_SECRET
+        value: your-github-client-secret
+      - key: DISCORD_CLIENT_ID
+        value: your-discord-client-id
+      - key: DISCORD_CLIENT_SECRET
+        value: your-discord-client-secret
+      - key: GOOGLE_CLIENT_ID
+        value: your-google-client-id
+      - key: GOOGLE_CLIENT_SECRET
+        value: your-google-client-secret
       - key: GOOGLE_MAPS_API_KEY
         value: your-google-maps-api-key
       - key: TURSO_DB_URL

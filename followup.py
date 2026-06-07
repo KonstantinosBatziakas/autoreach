@@ -1,26 +1,27 @@
 """
 AutoReach Follow-up Email Sequences
 =====================================
-Sends follow-up emails at +3, +7, +14 days after the initial outreach.
-Stops if a reply is detected via IMAP.
+Sends follow-up emails at +3, +7, and +14 days after the initial outreach.
+Uses Resend HTTP API (same as the main outreach flow) — avoids Render SMTP blocks.
 
 All data is now persisted in Turso (or local SQLite fallback) via db.py.
 """
 
-import imaplib
 import os
-import smtplib
+import requests as _http
 from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 from groq import Groq
 from db import get_db
 
 # ── Config ────────────────────────────────────────────────────────────────────
-GMAIL_USER   = os.getenv('GMAIL_USER', '')
-GMAIL_PASS   = os.getenv('GMAIL_APP_PASSWORD', '')
-GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+GROQ_API_KEY   = os.getenv('GROQ_API_KEY', '')
+# RESEND_API_KEY and FROM_EMAIL are optional server-side overrides.
+# If not set, follow-ups are skipped (user must run them manually from the web UI
+# with their own Resend key passed via the outreach form).
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
+FROM_EMAIL     = os.getenv('FROM_EMAIL', 'onboarding@resend.dev')
+BASE_URL       = os.getenv('BASE_URL', 'https://app.autoreach.dev').rstrip('/')
 
 # Days after initial email to send each follow-up
 FOLLOWUP_SCHEDULE = [3, 7, 14]
@@ -71,29 +72,37 @@ def _steps_already_sent(email_addr):
     db.close()
     return {int(row[0]) for row in rows}
 
-# ── IMAP reply detection ──────────────────────────────────────────────────────
-
-def _has_replied(to_email: str) -> bool:
-    """Checks Gmail INBOX for any message FROM to_email."""
-    if not GMAIL_USER or not GMAIL_PASS:
+def _is_unsubscribed(email_addr: str) -> bool:
+    """Check if the lead has unsubscribed."""
+    db = get_db()
+    row = db.execute(
+        "SELECT unsubscribed FROM businesses WHERE LOWER(email) = LOWER(?)",
+        (email_addr,)
+    ).fetchone()
+    db.close()
+    if row is None:
         return False
-    try:
-        mail = imaplib.IMAP4_SSL('imap.gmail.com', 993)
-        mail.login(GMAIL_USER, GMAIL_PASS)
-        mail.select('INBOX')
-        status, data = mail.search(None, f'FROM "{to_email}"')
-        mail.logout()
-        if status == 'OK' and data[0]:
-            return True
-    except Exception as e:
-        print(f'[followup] IMAP check failed for {to_email}: {e}')
-    return False
+    return bool(row['unsubscribed'])
+
+def _has_replied(email_addr: str) -> bool:
+    """Check if the lead's stage is 'Replied' in the DB."""
+    db = get_db()
+    row = db.execute(
+        "SELECT stage FROM businesses WHERE LOWER(email) = LOWER(?)",
+        (email_addr,)
+    ).fetchone()
+    db.close()
+    if row is None:
+        return False
+    return (row['stage'] or '').lower() == 'replied'
 
 # ── Email generation ──────────────────────────────────────────────────────────
 
 def _generate_followup(business_name: str, step: int) -> tuple[str, str]:
     """Returns (subject, body) for the given follow-up step."""
     global groq_client
+    if not GROQ_API_KEY:
+        raise ValueError('GROQ_API_KEY not configured — cannot generate follow-up email.')
     if not groq_client:
         groq_client = Groq(api_key=GROQ_API_KEY)
 
@@ -122,7 +131,12 @@ Return only the email body text, no subject line."""
     }
     return subjects[step], body
 
-def _build_html(body: str) -> str:
+def _build_html(body: str, to_email: str = '') -> str:
+    import urllib.parse
+    year = datetime.now().year
+    unsub_url = f"{BASE_URL}/unsubscribe?email={urllib.parse.quote(to_email)}"
+    unsub_link = f'<a href="{unsub_url}" style="color:#aaa;text-decoration:underline;font-size:11px;">Unsubscribe</a>'
+    body_html = body.replace('\n', '<br>')
     return (
         "<!DOCTYPE html><html><head><style>"
         "body{margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;}"
@@ -134,20 +148,32 @@ def _build_html(body: str) -> str:
         ".footer{padding:20px 40px;border-top:1px solid #eee;color:#aaa;font-size:12px;}"
         "</style></head><body><div class='wrapper'>"
         "<div class='header'><h1>AUTOREACH</h1><p>Digital Presence Services</p></div>"
-        f"<div class='body'><p>{body}</p></div>"
-        "<div class='footer'>&copy; 2025 AutoReach. All rights reserved.</div>"
+        f"<div class='body'><p>{body_html}</p></div>"
+        f"<div class='footer'>&copy; {year} AutoReach. All rights reserved. &nbsp;|&nbsp; {unsub_link}</div>"
         "</div></body></html>"
     )
 
-def _send_email(to_email: str, subject: str, html_body: str):
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = GMAIL_USER
-    msg['To'] = to_email
-    msg.attach(MIMEText(html_body, 'html'))
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-        server.login(GMAIL_USER, GMAIL_PASS)
-        server.sendmail(GMAIL_USER, to_email, msg.as_string())
+def _send_via_resend(to_email: str, subject: str, html_body: str):
+    """Send email via Resend HTTP API (avoids Render SMTP blocks)."""
+    if not RESEND_API_KEY:
+        raise ValueError('RESEND_API_KEY not configured — cannot send follow-up email.')
+    resp = _http.post(
+        'https://api.resend.com/emails',
+        headers={
+            'Authorization': f'Bearer {RESEND_API_KEY}',
+            'Content-Type': 'application/json',
+        },
+        json={
+            'from': FROM_EMAIL,
+            'to': [to_email],
+            'subject': subject,
+            'html': html_body,
+        },
+        timeout=15,
+    )
+    if not resp.ok:
+        err = resp.json().get('message', resp.text)
+        raise Exception(f'Resend error: {err}')
 
 # ── Main entry point ──────────────────────────────────────────────────────────
 
@@ -156,8 +182,11 @@ def run_followups() -> dict:
     Check all sent emails and send any due follow-ups.
     Returns a summary dict: {sent: int, skipped_replied: int, skipped_not_due: int, errors: int}
     """
-    if not GMAIL_USER or not GMAIL_PASS:
-        print('[followup] Gmail credentials not configured — skipping.')
+    if not RESEND_API_KEY:
+        print('[followup] RESEND_API_KEY not configured — skipping.')
+        return {'sent': 0, 'skipped_replied': 0, 'skipped_not_due': 0, 'errors': 0}
+    if not GROQ_API_KEY:
+        print('[followup] GROQ_API_KEY not configured — skipping.')
         return {'sent': 0, 'skipped_replied': 0, 'skipped_not_due': 0, 'errors': 0}
 
     sent_log = _read_sent_log()
@@ -172,10 +201,22 @@ def run_followups() -> dict:
         if not email_addr or not date_sent_str:
             continue
 
+        # Skip unsubscribed leads
+        if _is_unsubscribed(email_addr):
+            continue
+
+        # Skip leads who replied
+        if _has_replied(email_addr):
+            summary['skipped_replied'] += 1
+            continue
+
         try:
             original_date = datetime.strptime(date_sent_str, '%Y-%m-%d %H:%M:%S')
         except ValueError:
-            continue
+            try:
+                original_date = datetime.strptime(date_sent_str[:10], '%Y-%m-%d')
+            except ValueError:
+                continue
 
         steps_sent = _steps_already_sent(email_addr)
 
@@ -188,15 +229,10 @@ def run_followups() -> dict:
                 summary['skipped_not_due'] += 1
                 continue
 
-            if _has_replied(email_addr):
-                print(f'[followup] {email_addr} replied — stopping sequence.')
-                summary['skipped_replied'] += 1
-                break
-
             try:
                 subject, body = _generate_followup(business_name, step)
-                html = _build_html(body)
-                _send_email(email_addr, subject, html)
+                html = _build_html(body, email_addr)
+                _send_via_resend(email_addr, subject, html)
                 _log_followup(business_name, email_addr, date_sent_str, step, subject, body)
                 print(f'[followup] Sent step {step} to {email_addr}')
                 summary['sent'] += 1

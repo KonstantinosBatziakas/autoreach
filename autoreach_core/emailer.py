@@ -1,11 +1,11 @@
 """
 Email generation + sending with rate limiting and unsubscribe footer.
+Uses the Resend HTTP API (https://resend.com) instead of SMTP.
 """
-import smtplib
 import time
 import re
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import urllib.parse
+import requests
 from groq import Groq
 
 # Rate limit: max N emails per session, with a delay between each
@@ -55,10 +55,16 @@ def generate_email(business: dict, language: str, groq_api_key: str) -> tuple[st
     return subject, body
 
 
-def build_html(body: str, business_name: str, sender_email: str) -> str:
+def build_html(body: str, business_name: str, to_email: str,
+               base_url: str = "https://app.autoreach.dev") -> str:
+    """
+    Build the HTML email.
+    to_email is the recipient's address, used for the unsubscribe link.
+    base_url should point to the running AutoReach server if self-hosting.
+    """
     # Sanitise newlines
     body_html = body.replace("\n", "<br>")
-    unsub_href = f"mailto:{sender_email}?subject=UNSUBSCRIBE"
+    unsub_href = f"{base_url.rstrip('/')}/unsubscribe?email={urllib.parse.quote(to_email)}"
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -188,17 +194,34 @@ def build_html(body: str, business_name: str, sender_email: str) -> str:
 
 
 def send_email(to_email: str, subject: str, html_body: str,
-               gmail_user: str, gmail_pass: str) -> bool:
-    """Returns True on success, False on failure."""
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"]    = gmail_user
-        msg["To"]      = to_email
-        msg.attach(MIMEText(html_body, "html"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, to_email, msg.as_string())
-        return True
-    except Exception as e:
-        raise RuntimeError(f"SMTP error: {e}") from e
+               resend_api_key: str, from_email: str) -> bool:
+    """
+    Send via the Resend HTTP API.
+    Returns True on success, raises RuntimeError on failure.
+    """
+    if not resend_api_key:
+        raise RuntimeError("resend_api_key is not configured. Add it via Settings or autoreach config.")
+    if not from_email:
+        from_email = "onboarding@resend.dev"
+
+    resp = requests.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "from": from_email,
+            "to": [to_email],
+            "subject": subject,
+            "html": html_body,
+        },
+        timeout=20,
+    )
+    if resp.status_code not in (200, 201):
+        try:
+            detail = resp.json().get("message", resp.text)
+        except Exception:
+            detail = resp.text
+        raise RuntimeError(f"Resend error {resp.status_code}: {detail}")
+    return True

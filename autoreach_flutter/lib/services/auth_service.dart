@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import '../constants.dart';
 
 const _storage = FlutterSecureStorage(
   aOptions: AndroidOptions(encryptedSharedPreferences: true),
 );
 
 const _tokenKey = 'auth_token';
-const _baseUrl = 'https://app.autoreach.dev';
+const _baseUrl = kBaseUrl;
 
 class AuthUser {
   final int id;
@@ -90,7 +91,28 @@ class AuthService {
     throw body['error'] ?? 'Registration failed';
   }
 
-  // ── OAuth URLs (browser opens these; Railway handles the exchange) ──────────
+  /// Verify with the server that the token is still valid.
+  /// Returns false (and clears the stored token) if the server rejects it.
+  static Future<bool> verifyWithServer() async {
+    final token = await getToken();
+    if (token == null) return false;
+    try {
+      final resp = await http.get(
+        Uri.parse('$_baseUrl/auth/me'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 10));
+      if (resp.statusCode == 401) {
+        await clearToken();
+        return false;
+      }
+      return resp.statusCode == 200;
+    } catch (_) {
+      // Network error — assume still logged in (offline tolerance)
+      return true;
+    }
+  }
+
+  // ── OAuth URLs (browser opens these; Render handles the exchange) ──────────
   static Uri githubAuthUrl()  => Uri.parse('$_baseUrl/auth/github');
   static Uri discordAuthUrl() => Uri.parse('$_baseUrl/auth/discord');
   static Uri googleAuthUrl()  => Uri.parse('$_baseUrl/auth/google');
