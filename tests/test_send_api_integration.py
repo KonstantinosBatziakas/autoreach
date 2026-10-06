@@ -37,6 +37,17 @@ class SendApiIntegrationTests(unittest.TestCase):
         self.assertIn("acceptable-use", response.get_json()["policy_url"])
         self.assertEqual(gate.call_count, 1)
 
+    def test_campaign_instructions_save_uses_save_moderation_checkpoint(self):
+        decision = self.app_module.Decision("allow")
+        with patch.object(self.app_module, "moderate_and_queue", return_value=(decision, None)) as moderate:
+            response = self.app_module.app.test_client().post(
+                "/api/moderation/check",
+                json={"checkpoint": "save", "content_type": "campaign_instructions",
+                      "content": "Mention the business's opening hours."},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(moderate.call_args.args[2:4], ("save", "campaign_instructions"))
+
     def test_password_login_requires_policy_acceptance(self):
         response = self.app_module.app.test_client().post(
             "/auth/login", json={"email": "person@example.com", "password": "correct horse"}
