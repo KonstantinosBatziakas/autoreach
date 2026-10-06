@@ -9,6 +9,7 @@ const _storage = FlutterSecureStorage(
 
 const _tokenKey = 'auth_token';
 const _baseUrl = kBaseUrl;
+const acceptableUseVersion = '2026-10-07-v1';
 
 class AuthUser {
   final int id;
@@ -40,7 +41,8 @@ class AuthService {
       );
       final exp = payload['exp'] as int?;
       if (exp == null) return false;
-      return DateTime.fromMillisecondsSinceEpoch(exp * 1000).isAfter(DateTime.now());
+      return DateTime.fromMillisecondsSinceEpoch(exp * 1000)
+          .isAfter(DateTime.now());
     } catch (_) {
       return false;
     }
@@ -68,23 +70,37 @@ class AuthService {
   // ── Email + Password ───────────────────────────────────────────────────────
   /// Returns the JWT string on success, throws on failure.
   static Future<String> emailLogin(String email, String password) async {
-    final resp = await http.post(
-      Uri.parse('$_baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    ).timeout(const Duration(seconds: 15));
+    final resp = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': email,
+            'password': password,
+            'accepted_aup_version': acceptableUseVersion
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
 
     final body = jsonDecode(resp.body);
     if (resp.statusCode == 200) return body['token'] as String;
     throw body['error'] ?? 'Login failed';
   }
 
-  static Future<String> emailRegister(String name, String email, String password) async {
-    final resp = await http.post(
-      Uri.parse('$_baseUrl/auth/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name, 'email': email, 'password': password}),
-    ).timeout(const Duration(seconds: 15));
+  static Future<String> emailRegister(
+      String name, String email, String password) async {
+    final resp = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'name': name,
+            'email': email,
+            'password': password,
+            'accepted_aup_version': acceptableUseVersion
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
 
     final body = jsonDecode(resp.body);
     if (resp.statusCode == 201) return body['token'] as String;
@@ -105,7 +121,13 @@ class AuthService {
         await clearToken();
         return false;
       }
-      return resp.statusCode == 200;
+      if (resp.statusCode != 200) return false;
+      final user = jsonDecode(resp.body) as Map<String, dynamic>;
+      if (user['accepted_aup_version'] != acceptableUseVersion) {
+        await clearToken();
+        return false;
+      }
+      return true;
     } catch (_) {
       // Network error — assume still logged in (offline tolerance)
       return true;
@@ -113,7 +135,27 @@ class AuthService {
   }
 
   // ── OAuth URLs (browser opens these; Render handles the exchange) ──────────
-  static Uri githubAuthUrl()  => Uri.parse('$_baseUrl/auth/github');
-  static Uri discordAuthUrl() => Uri.parse('$_baseUrl/auth/discord');
-  static Uri googleAuthUrl()  => Uri.parse('$_baseUrl/auth/google');
+  static Future<void> acceptTerms() async {
+    final token = await getToken();
+    if (token == null) throw 'Sign in before accepting the policy.';
+    final resp = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/accept-terms'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+          },
+          body: jsonEncode({'version': acceptableUseVersion}),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (resp.statusCode != 200) throw 'Could not record policy acceptance.';
+  }
+
+  static Uri acceptableUseUrl() => Uri.parse('$_baseUrl/acceptable-use');
+  static Uri githubAuthUrl() => Uri.parse(
+      '$_baseUrl/auth/github?accepted_aup_version=$acceptableUseVersion');
+  static Uri discordAuthUrl() => Uri.parse(
+      '$_baseUrl/auth/discord?accepted_aup_version=$acceptableUseVersion');
+  static Uri googleAuthUrl() => Uri.parse(
+      '$_baseUrl/auth/google?accepted_aup_version=$acceptableUseVersion');
 }

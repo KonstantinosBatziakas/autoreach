@@ -157,7 +157,9 @@ let _selectedTemplate = 'classic';
 const _LS = 'autoreach_outreach_settings';
 
 function _save() {
-  localStorage.setItem(_LS, JSON.stringify({
+  let current = {};
+  try { current = JSON.parse(localStorage.getItem(_LS) || '{}'); } catch(e) {}
+  localStorage.setItem(_LS, JSON.stringify({ ...current,
     senderName: document.getElementById('sender-name').value,
     groqKey:    document.getElementById('groq-key').value,
     resendKey:  document.getElementById('resend-key').value,
@@ -218,7 +220,7 @@ async function callGroq(apiKey, name, address, lang, senderName) {
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: prompts[lang] || prompts.english }], temperature: 0.7, max_tokens: 300 }),
+    body: JSON.stringify({ model: 'openai/gpt-oss-20b', messages: [{ role: 'user', content: prompts[lang] || prompts.english }], temperature: 0.7, max_tokens: 300 }),
   });
   if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Groq ${r.status}`); }
   return (await r.json()).choices[0].message.content.trim();
@@ -281,6 +283,21 @@ async function startCampaign() {
     }
 
     const subject = lang === 'greek' ? `Γρήγορη ερώτηση για ${lead.name}` : `Quick question for ${lead.name}`;
+
+    try {
+      const check = await fetch('/api/moderation/check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint: 'generate', content_type: 'email', content: `Subject: ${subject}\n\n${body}`,
+          payload: { business_name: lead.name, email: lead.email, subject, body, resend_api_key: resendKey, from_email: fromEmail, template_id: _selectedTemplate, sender_name: senderName }
+        }),
+      });
+      const moderation = await check.json();
+      if (!check.ok || check.status === 202) throw new Error(`${moderation.error || 'Email held for moderation.'} Policy: ${moderation.policy_url || '/acceptable-use'}`);
+    } catch(e) {
+      _log(`  ⏸ Moderation: ${e.message}`, 'var(--amber)');
+      errors++; continue;
+    }
 
     try {
       const r = await fetch('/api/send-email', {

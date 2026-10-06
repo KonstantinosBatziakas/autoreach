@@ -1,0 +1,21 @@
+# Greek vulgarity and abuse terms; normalization also checks common Greeklish.
+γαμ*
+σκατ*
+πουταν*
+αρχιδ*
+μουν*
+καριολ*
+μαλακ*
+ηλιθι*
+βλακ*
+ψοφ*
+αντε γαμησου
+gamw*
+gamo*
+gamis*
+skata*
+malak*
+poutan*
+arxid*
+moun*
+kariol*

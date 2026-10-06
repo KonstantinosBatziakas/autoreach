@@ -1,6 +1,6 @@
 # AUTOREACH
 
-> Your own cold outreach machine. Open source, self-hosted, AI-powered.
+> Your own cold outreach machine. Source available, self-hosted, AI-powered.
 
 AutoReach finds businesses on Google Maps, scrapes their emails, writes personalised cold emails with Groq AI, and sends them via Gmail — fully automated, zero SaaS fees.
 
@@ -20,7 +20,7 @@ After deploying, open your Render URL and the setup wizard will guide you throug
 
 - **Lead Discovery** — search Google Maps by city and business type
 - **Email Scraping** — auto-finds emails from business websites
-- **AI Email Generation** — Groq / Llama 3.1 writes a unique email per business (English or Greek)
+- **AI Email Generation** — OpenAI GPT OSS 20B via Groq writes a unique email per business (English or Greek)
 - **Automated Sending** — Gmail SMTP, never emails the same lead twice
 - **Follow-up Sequences** — auto follow-ups at +3, +7, +14 days, stops if they reply
 - **Lead Pipeline** — Kanban board with New / Contacted / Replied / Closed stages

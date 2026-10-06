@@ -31,6 +31,29 @@ class SettingsService {
   static Future<void> setGroqApiKey(String v) async =>
       _storage.write(key: 'groq_api_key', value: v);
 
+  // ── In-app ARIA model settings ────────────────────────────────────────────
+  // Accept any provider exposing an OpenAI-compatible chat completions API.
+  static Future<String> getAriaApiBaseUrl() async =>
+      await _storage.read(key: 'aria_api_base_url') ??
+      'https://api.groq.com/openai/v1';
+  static Future<void> setAriaApiBaseUrl(String v) async =>
+      _storage.write(key: 'aria_api_base_url', value: v);
+
+  static Future<String> getAriaModel() async =>
+      await _storage.read(key: 'aria_model') ?? 'openai/gpt-oss-20b';
+  static Future<void> setAriaModel(String v) async =>
+      _storage.write(key: 'aria_model', value: v);
+
+  static Future<String> getAriaApiKey() async =>
+      await _storage.read(key: 'aria_api_key') ?? await getGroqApiKey();
+  static Future<void> setAriaApiKey(String v) async =>
+      _storage.write(key: 'aria_api_key', value: v);
+
+  static Future<String> getAriaCustomPrompt() async =>
+      await _storage.read(key: 'aria_custom_prompt') ?? '';
+  static Future<void> setAriaCustomPrompt(String v) async =>
+      _storage.write(key: 'aria_custom_prompt', value: v);
+
   // ── Display name (non-sensitive, but kept here for API consistency) ───────
   static Future<String> getSenderName() async =>
       await _storage.read(key: 'sender_name') ?? 'AutoReach';

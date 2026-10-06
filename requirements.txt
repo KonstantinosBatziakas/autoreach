@@ -6,3 +6,4 @@ schedule
 gunicorn
 flask-cors
 PyJWT
+cryptography>=42.0.0

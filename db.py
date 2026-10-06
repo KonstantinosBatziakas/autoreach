@@ -12,6 +12,8 @@ import os
 import sqlite3
 import json
 import requests as _requests
+from datetime import datetime, timezone
+from pathlib import Path
 
 TURSO_DB_URL     = os.getenv('TURSO_DB_URL', '')      # e.g. libsql://autoreach-xxx.turso.io
 TURSO_AUTH_TOKEN = os.getenv('TURSO_AUTH_TOKEN', '')
@@ -230,4 +232,44 @@ def init_db():
                     conn._pending.clear()   # discard queued Turso stmt
             else:
                 raise
+    _run_versioned_migrations(conn)
     conn.close()
+
+
+def _run_versioned_migrations(conn):
+    """Apply checked-in SQL migrations once, tolerating partially applied ALTERs."""
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
+    )
+    conn.commit()
+    migrations_dir = Path(__file__).with_name('migrations')
+    for path in sorted(migrations_dir.glob('[0-9][0-9][0-9]_*.sql')):
+        version = int(path.name.split('_', 1)[0])
+        found = conn.execute('SELECT version FROM schema_migrations WHERE version = ?', (version,)).fetchone()
+        if found:
+            continue
+        source_lines = []
+        for line in path.read_text(encoding='utf-8').splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith('--'):
+                continue
+            source_lines.append(line)
+        for statement in '\n'.join(source_lines).split(';'):
+            statement = statement.strip()
+            if not statement:
+                continue
+            try:
+                conn.execute(statement)
+                conn.commit()
+            except Exception as exc:
+                message = str(exc).lower()
+                if 'duplicate column' in message or 'already exists' in message:
+                    if hasattr(conn, '_pending'):
+                        conn._pending.clear()
+                    continue
+                raise
+        conn.execute(
+            'INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)',
+            (version, datetime.now(timezone.utc).isoformat(timespec='seconds')),
+        )
+        conn.commit()

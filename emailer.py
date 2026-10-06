@@ -3,10 +3,11 @@ Legacy standalone emailer — used by the root-level scripts only.
 Sends email via the Resend HTTP API.
 """
 import os
-import requests
 from groq import Groq
 from datetime import datetime
 from db import get_db
+from moderation.delivery import DeliveryBlocked, DeliveryQueued, send_moderated
+from moderation.service import moderate_and_queue
 
 groq_client = None  # initialized lazily on first use
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
@@ -74,10 +75,24 @@ def generate_email(business, language="english"):
         )
 
     response = groq_client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=[{"role": "user", "content": prompt}]
     )
-    return response.choices[0].message.content.strip()
+    body = response.choices[0].message.content.strip()
+    conn = get_db()
+    try:
+        decision, queue_id = moderate_and_queue(
+            body, 0, 'generate', 'email', conn,
+            payload={'business_name': business.get('name', ''), 'email': business.get('email', ''),
+                     'body': body}, api_key=os.getenv('GROQ_API_KEY'),
+        )
+    finally:
+        conn.close()
+    if decision.verdict == 'block':
+        raise DeliveryBlocked(decision)
+    if decision.verdict == 'review':
+        raise DeliveryQueued(queue_id or '', decision)
+    return body
 
 
 def build_html(body):
@@ -109,18 +124,19 @@ def send_email(to_email, subject, html_body,
             "RESEND_API_KEY environment variable is not set. "
             "Add it to your .env file or environment."
         )
-    resp = requests.post(
-        "https://api.resend.com/emails",
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-        json={"from": frm, "to": [to_email], "subject": subject, "html": html_body},
-        timeout=20,
-    )
-    if resp.status_code not in (200, 201):
-        try:
-            detail = resp.json().get("message", resp.text)
-        except Exception:
-            detail = resp.text
-        raise RuntimeError(f"Resend error {resp.status_code}: {detail}")
+    from html.parser import HTMLParser
+    class _Text(HTMLParser):
+        def __init__(self): super().__init__(); self.parts=[]
+        def handle_data(self, data): self.parts.append(data)
+    parser = _Text(); parser.feed(html_body)
+    conn = get_db()
+    try:
+        send_moderated({
+            'email': to_email, 'subject': subject, 'body': ' '.join(parser.parts),
+            'html': html_body, 'resend_api_key': key, 'from_email': frm,
+        }, 0, conn, api_key=os.getenv('GROQ_API_KEY'))
+    finally:
+        conn.close()
     print(f"Email sent to {to_email}")
 
 

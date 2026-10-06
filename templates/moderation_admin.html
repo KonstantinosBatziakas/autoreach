@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Moderation Admin — AutoReach{% endblock %}
+{% block page_title %}Moderation Administration{% endblock %}
+{% block page_subtitle %}Audit content checks, per-user blocklists, and strike status{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Moderation log</h3>
+  <div class="form-row"><input id="filter-user" type="number" placeholder="User ID (optional)"><input id="filter-category" placeholder="Category (optional)"></div>
+  <button class="btn btn-secondary" onclick="loadLogs()">Filter</button>
+  <pre id="logs" style="white-space:pre-wrap;max-height:420px;overflow:auto"></pre>
+</div>
+<div class="card">
+  <h3>Blocklist entry</h3>
+  <div class="form-row"><input id="target-user" type="number" placeholder="Target user ID"><input id="phrase" placeholder="Phrase, regex, or domain"></div>
+  <div class="form-row"><select id="entry-type"><option>word</option><option>regex</option><option>domain</option></select><input id="language" placeholder="Language code (en/el/und)" value="und"></div>
+  <button class="btn btn-primary" onclick="addEntry()">Add scoped entry</button>
+  <button class="btn btn-secondary" onclick="loadBlocklist()">List scoped entries</button>
+  <pre id="blocklist" style="white-space:pre-wrap"></pre>
+</div>
+<div class="card">
+  <h3>Strike management</h3>
+  <div class="form-row"><input id="strike-user" type="number" placeholder="User ID"><select id="strike-status"><option>active</option><option>warned</option><option>rate_limited</option><option>suspended</option></select><input id="strike-count" type="number" min="0" value="0"></div>
+  <input id="strike-notes" placeholder="Admin note">
+  <button class="btn btn-secondary" onclick="viewStrike()">View strike status</button>
+  <button class="btn btn-secondary" onclick="manageStrike('override')">Override status</button>
+  <button class="btn btn-danger" onclick="manageStrike('reset')">Reset strikes</button>
+  <pre id="strike-result"></pre>
+</div>
+<script>
+const adminHeaders={'Content-Type':'application/json'};
+async function loadLogs(){const q=new URLSearchParams();if(document.getElementById('filter-user').value)q.set('user_id',document.getElementById('filter-user').value);if(document.getElementById('filter-category').value)q.set('category',document.getElementById('filter-category').value);const r=await fetch('/api/admin/moderation?'+q);document.getElementById('logs').textContent=JSON.stringify(await r.json(),null,2)}
+async function addEntry(){const r=await fetch('/api/admin/blocklist',{method:'POST',headers:adminHeaders,body:JSON.stringify({user_id:Number(document.getElementById('target-user').value),phrase:document.getElementById('phrase').value,type:document.getElementById('entry-type').value,language:document.getElementById('language').value})});document.getElementById('blocklist').textContent=JSON.stringify(await r.json(),null,2)}
+async function loadBlocklist(){const id=document.getElementById('target-user').value;const r=await fetch('/api/admin/blocklist?user_id='+encodeURIComponent(id));document.getElementById('blocklist').textContent=JSON.stringify(await r.json(),null,2)}
+async function manageStrike(action){const id=document.getElementById('strike-user').value;const r=await fetch('/api/admin/strikes/'+encodeURIComponent(id),{method:'POST',headers:adminHeaders,body:JSON.stringify({action,status:document.getElementById('strike-status').value,strike_count:Number(document.getElementById('strike-count').value),notes:document.getElementById('strike-notes').value})});document.getElementById('strike-result').textContent=JSON.stringify(await r.json(),null,2)}
+async function viewStrike(){const id=document.getElementById('strike-user').value;const r=await fetch('/api/admin/strikes/'+encodeURIComponent(id));document.getElementById('strike-result').textContent=JSON.stringify(await r.json(),null,2)}
+loadLogs();
+</script>
+{% endblock %}

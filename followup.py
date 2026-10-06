@@ -8,11 +8,12 @@ All data is now persisted in Turso (or local SQLite fallback) via db.py.
 """
 
 import os
-import requests as _http
 from datetime import datetime, timedelta
 
 from groq import Groq
 from db import get_db
+from moderation.delivery import DeliveryBlocked, DeliveryQueued, send_moderated
+from moderation.service import moderate_and_queue
 
 # ── Config ────────────────────────────────────────────────────────────────────
 GROQ_API_KEY   = os.getenv('GROQ_API_KEY', '')
@@ -118,7 +119,7 @@ Follow-up context: {step_context[step]}
 Return only the email body text, no subject line."""
 
     response = groq_client.chat.completions.create(
-        model='llama-3.1-8b-instant',
+        model='openai/gpt-oss-20b',
         messages=[{'role': 'user', 'content': prompt}],
         temperature=0.7,
         max_tokens=200,
@@ -129,7 +130,20 @@ Return only the email body text, no subject line."""
         7:  f'One more thing for {business_name}',
         14: f'Last note — {business_name}',
     }
-    return subjects[step], body
+    subject = subjects[step]
+    moderation_db = get_db()
+    try:
+        decision, queue_id = moderate_and_queue(
+            f"Subject: {subject}\n\n{body}", 0, 'generate', 'email_followup', moderation_db,
+            payload={'business_name': business_name, 'subject': subject, 'body': body},
+        )
+    finally:
+        moderation_db.close()
+    if decision.verdict == 'block':
+        raise DeliveryBlocked(decision)
+    if decision.verdict == 'review':
+        raise DeliveryQueued(queue_id or '', decision)
+    return subject, body
 
 def _build_html(body: str, to_email: str = '') -> str:
     import urllib.parse
@@ -153,27 +167,24 @@ def _build_html(body: str, to_email: str = '') -> str:
         "</div></body></html>"
     )
 
-def _send_via_resend(to_email: str, subject: str, html_body: str):
-    """Send email via Resend HTTP API (avoids Render SMTP blocks)."""
+def _send_via_resend(to_email: str, subject: str, html_body: str, business_name: str = ''):
+    """Run the authoritative moderation check and send through Resend."""
     if not RESEND_API_KEY:
         raise ValueError('RESEND_API_KEY not configured — cannot send follow-up email.')
-    resp = _http.post(
-        'https://api.resend.com/emails',
-        headers={
-            'Authorization': f'Bearer {RESEND_API_KEY}',
-            'Content-Type': 'application/json',
-        },
-        json={
-            'from': FROM_EMAIL,
-            'to': [to_email],
-            'subject': subject,
-            'html': html_body,
-        },
-        timeout=15,
-    )
-    if not resp.ok:
-        err = resp.json().get('message', resp.text)
-        raise Exception(f'Resend error: {err}')
+    from html.parser import HTMLParser
+    class _Text(HTMLParser):
+        def __init__(self): super().__init__(); self.parts=[]
+        def handle_data(self, data): self.parts.append(data)
+    parser = _Text(); parser.feed(html_body)
+    moderation_db = get_db()
+    try:
+        send_moderated({
+            'business_name': business_name, 'email': to_email, 'subject': subject,
+            'body': ' '.join(parser.parts), 'html': html_body,
+            'resend_api_key': RESEND_API_KEY, 'from_email': FROM_EMAIL,
+        }, 0, moderation_db)
+    finally:
+        moderation_db.close()
 
 # ── Main entry point ──────────────────────────────────────────────────────────
 
@@ -232,7 +243,7 @@ def run_followups() -> dict:
             try:
                 subject, body = _generate_followup(business_name, step)
                 html = _build_html(body, email_addr)
-                _send_via_resend(email_addr, subject, html)
+                _send_via_resend(email_addr, subject, html, business_name)
                 _log_followup(business_name, email_addr, date_sent_str, step, subject, body)
                 print(f'[followup] Sent step {step} to {email_addr}')
                 summary['sent'] += 1

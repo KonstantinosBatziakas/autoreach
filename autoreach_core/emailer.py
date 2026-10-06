@@ -7,6 +7,9 @@ import re
 import urllib.parse
 import requests
 from groq import Groq
+from autoreach_core import db
+from moderation.delivery import DeliveryBlocked, DeliveryQueued, send_moderated
+from moderation.service import moderate_and_queue
 
 # Rate limit: max N emails per session, with a delay between each
 MAX_PER_RUN   = 50
@@ -48,10 +51,27 @@ def generate_email(business: dict, language: str, groq_api_key: str) -> tuple[st
         subject = f"Quick idea for {name}"
 
     response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=[{"role": "user", "content": prompt}]
     )
     body = response.choices[0].message.content.strip()
+    conn = db.get_conn()
+    draft_payload = {
+        "business_name": name, "email": business.get("email", ""), "subject": subject,
+        "body": body, "html": build_html(body, name, business.get("email", "")),
+        "resend_api_key": db.get_config(conn, "resend_api_key") or "",
+        "from_email": db.get_config(conn, "from_email") or "onboarding@resend.dev",
+        "moderation_api_key": groq_api_key,
+    }
+    decision, _ = moderate_and_queue(
+        f"Subject: {subject}\n\n{body}", 0, "generate", "email", conn,
+        payload=draft_payload, api_key=groq_api_key,
+    )
+    conn.close()
+    if decision.verdict == "block":
+        raise DeliveryBlocked(decision)
+    if decision.verdict == "review":
+        raise DeliveryQueued("", decision)
     return subject, body
 
 
@@ -194,7 +214,9 @@ def build_html(body: str, business_name: str, to_email: str,
 
 
 def send_email(to_email: str, subject: str, html_body: str,
-               resend_api_key: str, from_email: str) -> bool:
+               resend_api_key: str, from_email: str, *, moderation_text: str | None = None,
+               business_name: str = "", user_id: int = 0,
+               moderation_api_key: str | None = None) -> bool:
     """
     Send via the Resend HTTP API.
     Returns True on success, raises RuntimeError on failure.
@@ -204,24 +226,20 @@ def send_email(to_email: str, subject: str, html_body: str,
     if not from_email:
         from_email = "onboarding@resend.dev"
 
-    resp = requests.post(
-        "https://api.resend.com/emails",
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "from": from_email,
-            "to": [to_email],
-            "subject": subject,
-            "html": html_body,
-        },
-        timeout=20,
-    )
-    if resp.status_code not in (200, 201):
-        try:
-            detail = resp.json().get("message", resp.text)
-        except Exception:
-            detail = resp.text
-        raise RuntimeError(f"Resend error {resp.status_code}: {detail}")
+    if moderation_text is None:
+        from html.parser import HTMLParser
+        class _Text(HTMLParser):
+            def __init__(self): super().__init__(); self.parts=[]
+            def handle_data(self, data): self.parts.append(data)
+        parser = _Text(); parser.feed(html_body); moderation_text = " ".join(parser.parts)
+    conn = db.get_conn()
+    payload = {
+        "business_name": business_name, "email": to_email, "subject": subject,
+        "body": moderation_text, "html": html_body, "resend_api_key": resend_api_key,
+        "from_email": from_email, "moderation_api_key": moderation_api_key,
+    }
+    try:
+        send_moderated(payload, user_id, conn, api_key=moderation_api_key)
+    finally:
+        conn.close()
     return True

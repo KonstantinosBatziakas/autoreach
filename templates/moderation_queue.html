@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Moderation Queue — AutoReach{% endblock %}
+{% block page_title %}Moderation Queue{% endblock %}
+{% block page_subtitle %}Edit held content and submit it for a fresh check{% endblock %}
+{% block content %}
+<div class="notice notice-info"><span class="notice-icon">ℹ</span><div>Items are checked again when you resubmit. See the <a href="{{ url_for('acceptable_use') }}">Acceptable Use Policy</a>.</div></div>
+<div id="queue-items"></div>
+<script>
+async function loadQueue() {
+  const host = document.getElementById('queue-items');
+  host.textContent = 'Loading…';
+  const response = await fetch('/api/moderation/queue');
+  const items = await response.json();
+  if (!response.ok) { host.textContent = items.error || 'Could not load the queue.'; return; }
+  if (!items.length) { host.textContent = 'Nothing is waiting for moderation.'; return; }
+  host.replaceChildren();
+  for (const item of items) {
+    const card = document.createElement('section'); card.className = 'card';
+    const title = document.createElement('h3'); title.textContent = `${item.content_type} · ${item.status} · ${item.categories.join(', ')}`;
+    card.append(title);
+    const subject = document.createElement('input'); subject.placeholder = 'Subject'; subject.value = item.payload.subject || '';
+    const body = document.createElement('textarea'); body.rows = 8; body.value = item.payload.body || item.payload.content || '';
+    const status = document.createElement('p'); status.textContent = item.status === 'retry' ? 'The moderation provider is temporarily unavailable; this will be checked again automatically.' : 'You can edit this content and submit it for another check.';
+    const button = document.createElement('button'); button.className = 'btn btn-primary'; button.textContent = 'Edit and resubmit'; button.disabled = item.status !== 'needs_review';
+    button.onclick = async () => {
+      const result = await fetch(`/api/moderation/queue/${encodeURIComponent(item.id)}/resubmit`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({subject:subject.value, body:body.value, content:body.value})});
+      const data = await result.json();
+      if (result.ok && data.status === 'saved' && item.content_type === 'aria_prompt') {
+        try { const saved = JSON.parse(localStorage.getItem('autoreach_outreach_settings') || '{}'); saved.ariaCustomPrompt = body.value; localStorage.setItem('autoreach_outreach_settings', JSON.stringify(saved)); } catch (_) {}
+      }
+      status.textContent = data.error || (data.status === 'sent' ? 'Email sent after moderation.' : data.status === 'saved' ? 'Content accepted and saved on this device.' : 'Content queued for another check.');
+      if (result.ok || result.status === 202) setTimeout(loadQueue, 700);
+    };
+    card.append(status);
+    if (item.content_type === 'email' || item.content_type === 'email_followup') card.append(subject);
+    card.append(body, button); host.append(card);
+  }
+}
+loadQueue();
+</script>
+{% endblock %}
