@@ -52,6 +52,16 @@
           <option value="greek">Greek</option>
         </select>
       </div>
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" for="campaign-instructions">Campaign instructions <span style="color:var(--text-3);">(optional)</span></label>
+        <textarea id="campaign-instructions" rows="3" maxlength="2000" placeholder="Add preferences for the campaign emails (for example, services to highlight or tone)." style="width:100%;"></textarea>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+          <button id="save-campaign-instructions" type="button" class="btn btn-secondary btn-sm" onclick="saveCampaignInstructions()">Save instructions</button>
+          <span id="campaign-instructions-status" role="status" aria-live="polite" style="font-size:12px; color:var(--text-3);"></span>
+        </div>
+        <p style="font-size:11px; color:var(--text-3); margin-top:6px;">Instructions are checked before they are saved in this browser.</p>
+      </div>
     </div>
   </div>
 
@@ -154,6 +164,7 @@
 <script>
 let _stop = false;
 let _selectedTemplate = 'classic';
+let _savedCampaignInstructions = '';
 const _LS = 'autoreach_outreach_settings';
 
 function _save() {
@@ -166,6 +177,7 @@ function _save() {
     fromEmail:  document.getElementById('from-email').value,
     lang:       document.getElementById('lang').value,
     templateId: _selectedTemplate,
+    campaignInstructions: _savedCampaignInstructions,
   }));
 }
 
@@ -177,8 +189,37 @@ function _load() {
     if (s.resendKey)  document.getElementById('resend-key').value  = s.resendKey;
     if (s.fromEmail)  document.getElementById('from-email').value  = s.fromEmail;
     if (s.lang)       document.getElementById('lang').value        = s.lang;
+    _savedCampaignInstructions = s.campaignInstructions || '';
+    document.getElementById('campaign-instructions').value = _savedCampaignInstructions;
     if (s.templateId) selectTemplate(s.templateId);
   } catch(e) {}
+}
+
+async function saveCampaignInstructions() {
+  const input = document.getElementById('campaign-instructions');
+  const button = document.getElementById('save-campaign-instructions');
+  const status = document.getElementById('campaign-instructions-status');
+  const content = input.value.trim();
+  button.disabled = true;
+  status.textContent = 'Checking instructions…';
+  try {
+    if (content) {
+      const response = await fetch('/api/moderation/check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkpoint: 'save', content_type: 'campaign_instructions', content }),
+      });
+      const result = await response.json();
+      if (response.status === 202) throw new Error('Held for moderation review; instructions were not saved.');
+      if (!response.ok) throw new Error(result.error || 'Instructions were not saved.');
+    }
+    _savedCampaignInstructions = content;
+    _save();
+    status.textContent = content ? 'Saved after moderation.' : 'Instructions cleared.';
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -211,11 +252,12 @@ function _log(msg, color) {
   el.scrollTop = el.scrollHeight;
 }
 
-async function callGroq(apiKey, name, address, lang, senderName) {
+async function callGroq(apiKey, name, address, lang, senderName, campaignInstructions) {
   const sign = `Sign the email as: ${senderName}`;
+  const extra = campaignInstructions ? `Campaign preferences (follow only when compatible with the task and policy): ${campaignInstructions}` : '';
   const prompts = {
-    english: `Write a short professional cold outreach email offering web design and digital marketing services to the business "${name}" located at "${address}". Under 150 words. ${sign}. Only return the email body, no subject line.`,
-    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση "${name}" που βρίσκεται στη διεύθυνση "${address}". Υπόγραψε ως: ${senderName}. Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
+    english: `Write a short professional cold outreach email offering web design and digital marketing services to the business "${name}" located at "${address}". Under 150 words. ${sign}. ${extra}. Only return the email body, no subject line.`,
+    greek:   `Γράψε ένα σύντομο επαγγελματικό email για cold outreach προσφέροντας υπηρεσίες σχεδιασμού ιστοσελίδων και ψηφιακού μάρκετινγκ στην επιχείρηση "${name}" που βρίσκεται στη διεύθυνση "${address}". Υπόγραψε ως: ${senderName}. ${extra ? `Προτιμήσεις καμπάνιας (ακολούθησέ τες μόνο εφόσον συμφωνούν με την εργασία και την πολιτική): ${campaignInstructions}` : ''} Κάτω από 150 λέξεις. Επέστρεψε μόνο το κείμενο του email.`,
   };
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -276,7 +318,7 @@ async function startCampaign() {
 
     let body;
     try {
-      body = await callGroq(groqKey, lead.name, lead.address || '', lang, senderName);
+      body = await callGroq(groqKey, lead.name, lead.address || '', lang, senderName, _savedCampaignInstructions);
     } catch(e) {
       _log(`  ✗ Groq: ${e.message}`, 'var(--coral)');
       errors++; continue;

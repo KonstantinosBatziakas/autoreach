@@ -57,7 +57,7 @@ Each item is assessed against the reviewed HEAD. “Not fixed” means the findi
 
 | Prompt section | Status | Deviations |
 |---|---|---|
-| 3.1 Moderation checkpoints | Partially implemented | Save checks cover email templates and custom ARIA prompts; generation checks cover web, Flutter, core/CLI and follow-up generation; all direct sends and both follow-up senders recheck server-side. `campaign_instructions` is accepted as a moderation content type, but this repo has no campaign-instructions editor/storage flow to hook. Flutter/CLI generation tests are not full device/terminal end-to-end tests. |
+| 3.1 Moderation checkpoints | Implemented with client limitations | Save checks cover email templates, custom ARIA prompts, and browser campaign instructions; generation checks cover web, Flutter, core/CLI and follow-up generation; all direct sends and both follow-up senders recheck server-side. Campaign instructions are stored in browser local storage only after the save checkpoint allows them. Flutter/CLI generation tests are not full device/terminal end-to-end tests. |
 | 3.2 Layered checks | Partially implemented | Implemented local normalization/data lists, configured LLM provider and cold-email heuristics in that order. The Groq default is configurable; the currently documented `openai/gpt-oss-safeguard-20b` is a Preview model. The OpenAI moderation-endpoint adapter uses OpenAI's built-in category taxonomy, whose coverage is not equivalent to the requested scam/impersonation/deceptive-claims taxonomy. Heuristics send uncertain content to review; provider behavior and false-positive rates require live evaluation. |
 | 3.3 Database | Implemented with schema differences | Added versioned SQLite/Turso SQL migration and matching local core tables. `categories` is JSON-serialized text, not a database-native JSON type. Excerpt storage defaults off. Encrypted queue is an additional table beyond the listed tables. User data outside the moderation tables remains shared in legacy schemas. |
 | 3.4 Enforcement | Implemented with client limitations | Blocks refuse, return plain categories/policy links and add strikes; review/retry items are encrypted and rechecked; strike ladder, decay, admin reset/override and admin log/blocklist screens exist. The admin role must be assigned through the database or `MODERATION_ADMIN_USER_IDS`; no admin provisioning UI was added. The in-process retry worker is not durable across process loss, though queued rows persist and retry on the next worker run. The optional admin review screen for deciding held messages was not added. |
@@ -68,7 +68,7 @@ Each item is assessed against the reviewed HEAD. “Not fixed” means the findi
 
 1. Add authoritative duplicate-send and unsubscribe/suppression checks to `/api/send-email`; add signed unsubscribe tokens and bounce ingestion.
 2. Replace the insecure `SECRET_KEY` fallback, harden setup secrets, and finish login rate limits, CSRF controls and redirect validation.
-3. Add an actual campaign model and a campaign-instructions save path; then enforce moderation at that save point.
+3. Add server-side campaign settings persistence; campaign instructions currently stay in browser local storage after moderation.
 4. Run provider integration and false-positive trials with authorized Groq/OpenAI and Resend test accounts; tune Greek/Greeklish fixtures based on results.
 5. Add CI, dependency/security checks, secret-history scanning and a reliable Flutter analyzer environment.
 6. Move retry/follow-up work to a durable worker/queue and add queue retention cleanup. Existing queue content and delivery keys remain encrypted in rows after delivery until database cleanup.
@@ -92,7 +92,7 @@ Each item is assessed against the reviewed HEAD. “Not fixed” means the findi
 
 **Passed:**
 
-- Python moderation and API integration suite: **13 tests passed**.
+- Python moderation and API integration suite: **14 tests passed**.
 - Flutter test suite: **8 tests passed**.
 - Python `compileall`: passed.
 - `git diff --check`: passed before commits.
