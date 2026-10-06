@@ -1,6 +1,6 @@
 # AUTOREACH
 
-> Your own cold outreach machine. Open source, self-hosted, AI-powered.
+> Your own cold outreach machine. Source available, self-hosted, AI-powered.
 
 AutoReach finds businesses on Google Maps, scrapes their emails, writes personalised cold emails with Groq AI, and sends them via Gmail — fully automated, zero SaaS fees.
 

@@ -83,6 +83,31 @@ def _init_schema(conn: sqlite3.Connection):
         email       TEXT NOT NULL,
         detected_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS moderation_log (
+        id TEXT PRIMARY KEY, user_id INTEGER NOT NULL,
+        checkpoint TEXT NOT NULL CHECK (checkpoint IN ('save','generate','send')),
+        content_type TEXT NOT NULL, content_hash TEXT NOT NULL, content_excerpt TEXT,
+        verdict TEXT NOT NULL CHECK (verdict IN ('allow','review','block')),
+        categories TEXT NOT NULL DEFAULT '[]',
+        layer TEXT NOT NULL CHECK (layer IN ('local','llm','heuristic')),
+        action_taken TEXT NOT NULL, created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS user_strikes (
+        user_id INTEGER PRIMARY KEY, strike_count INTEGER NOT NULL DEFAULT 0,
+        last_strike_at TEXT, status TEXT NOT NULL DEFAULT 'active', notes TEXT NOT NULL DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS blocklist (
+        id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, phrase TEXT NOT NULL,
+        language TEXT NOT NULL DEFAULT 'und', type TEXT NOT NULL,
+        added_by INTEGER NOT NULL, created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS moderation_queue (
+        id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, checkpoint TEXT NOT NULL,
+        content_type TEXT NOT NULL, payload_enc TEXT NOT NULL, status TEXT NOT NULL,
+        categories TEXT NOT NULL DEFAULT '[]', attempts INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
     """)
     conn.commit()
     _migrate(conn)

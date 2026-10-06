@@ -83,3 +83,9 @@ If you encounter any issues:
 2. Check that your virtual environment is activated
 3. Verify your `.env` file has the correct SMTP credentials
 4. Make sure port 5000 is not in use by another application
+
+## Content moderation
+
+All email sends pass a server-side moderation check. Save and generation checks run before content is accepted or shown. Configure the classifier and queue encryption with the `MODERATION_*` variables in `.env.example`. Groq is the default provider; OpenAI's moderation endpoint is available with `MODERATION_PROVIDER=openai`. `MODERATION_STORE_EXCERPT` defaults to `false`, so moderation logs store hashes rather than excerpts. See [the moderation privacy notes](docs/PRIVACY_MODERATION.md) before deployment and include this provider processing in the public privacy notice.
+
+The acceptable-use policy is at `/acceptable-use`; pending items appear at `/moderation-queue`. Admin functions require an admin user or explicit `MODERATION_ADMIN_USER_IDS` configuration.

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Acceptable Use — AutoReach{% endblock %}
+{% block page_title %}Acceptable Use Policy{% endblock %}
+{% block page_subtitle %}Required before saving prompts or sending outreach{% endblock %}
+{% block content %}
+<div class="card" style="max-width:820px;">
+  <h2>Use AutoReach for lawful, honest outreach</h2>
+  <p>{{ policy_en }}</p>
+  <hr>
+  <p lang="el">{{ policy_el }}</p>
+  <small>Policy version {{ version }}</small>
+  <form method="post" action="{{ url_for('accept_use', next=request.args.get('next', '')) }}" style="margin-top:20px;">
+    <label style="display:flex;gap:10px;align-items:flex-start;">
+      <input type="checkbox" name="accept" value="yes" required>
+      <span>I have read and agree to follow the AutoReach Acceptable Use Policy.</span>
+    </label>
+    <button class="btn btn-primary" type="submit" style="margin-top:14px;">Accept and continue</button>
+  </form>
+</div>
+{% endblock %}

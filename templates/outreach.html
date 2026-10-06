@@ -285,6 +285,21 @@ async function startCampaign() {
     const subject = lang === 'greek' ? `Γρήγορη ερώτηση για ${lead.name}` : `Quick question for ${lead.name}`;
 
     try {
+      const check = await fetch('/api/moderation/check', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint: 'generate', content_type: 'email', content: `Subject: ${subject}\n\n${body}`,
+          payload: { business_name: lead.name, email: lead.email, subject, body, resend_api_key: resendKey, from_email: fromEmail, template_id: _selectedTemplate, sender_name: senderName }
+        }),
+      });
+      const moderation = await check.json();
+      if (!check.ok || check.status === 202) throw new Error(`${moderation.error || 'Email held for moderation.'} Policy: ${moderation.policy_url || '/acceptable-use'}`);
+    } catch(e) {
+      _log(`  ⏸ Moderation: ${e.message}`, 'var(--amber)');
+      errors++; continue;
+    }
+
+    try {
       const r = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

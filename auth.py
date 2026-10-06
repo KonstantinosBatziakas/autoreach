@@ -30,6 +30,7 @@ import jwt
 import requests as req_lib
 from flask import Blueprint, request, jsonify, redirect
 from db import get_db, init_db
+from moderation.policy import AUP_VERSION
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -92,27 +93,27 @@ def check_password(password: str, stored: str) -> bool:
         return False
 
 # ── OAuth state helpers ───────────────────────────────────────────────────────
-def new_state(provider: str) -> str:
+def new_state(provider: str, accepted_aup_version: str | None = None) -> str:
     state = secrets.token_urlsafe(32)
     db = get_db()
     db.execute("DELETE FROM oauth_state WHERE created_at < datetime('now', '-10 minutes')")
-    db.execute("INSERT INTO oauth_state (state, provider) VALUES (?, ?)", (state, provider))
+    db.execute("INSERT INTO oauth_state (state, provider, accepted_aup_version) VALUES (?, ?, ?)", (state, provider, accepted_aup_version))
     db.commit()
     db.close()
     return state
 
-def consume_state(state: str) -> str | None:
-    """Returns the provider if state is valid, else None. Deletes it."""
+def consume_state(state: str) -> dict | None:
+    """Returns state metadata if valid, else None. Deletes it."""
     db = get_db()
     row = db.execute(
-        "SELECT provider FROM oauth_state WHERE state = ? AND created_at > datetime('now', '-10 minutes')",
+        "SELECT provider, accepted_aup_version FROM oauth_state WHERE state = ? AND created_at > datetime('now', '-10 minutes')",
         (state,)
     ).fetchone()
     if row:
         db.execute("DELETE FROM oauth_state WHERE state = ?", (state,))
         db.commit()
         db.close()
-        return row['provider']
+        return dict(row)
     db.close()
     return None
 
@@ -134,6 +135,16 @@ def upsert_user(provider, provider_id, email=None, name=None, avatar_url=None):
     db.close()
     return user
 
+
+def _record_aup_acceptance(user_id: int, version: str | None) -> None:
+    if version != AUP_VERSION:
+        return
+    db = get_db()
+    db.execute('UPDATE users SET accepted_aup_version = ?, accepted_aup_at = ? WHERE id = ?',
+               (AUP_VERSION, datetime.now(timezone.utc).isoformat(timespec='seconds'), user_id))
+    db.commit()
+    db.close()
+
 # ── Email + Password ──────────────────────────────────────────────────────────
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -141,11 +152,14 @@ def register():
     email    = (data.get('email') or '').strip().lower()
     password = data.get('password') or ''
     name     = (data.get('name') or email.split('@')[0]).strip()
+    accepted_version = data.get('accepted_aup_version')
 
     if not email or '@' not in email:
         return jsonify({'error': 'Valid email required'}), 400
     if len(password) < 8:
         return jsonify({'error': 'Password must be at least 8 characters'}), 400
+    if accepted_version != AUP_VERSION:
+        return jsonify({'error': 'You must accept the current acceptable-use policy to create an account.', 'code': 'aup_required', 'policy_url': '/acceptable-use'}), 428
 
     db = get_db()
     existing = db.execute(
@@ -156,9 +170,9 @@ def register():
         return jsonify({'error': 'Account already exists — please log in'}), 409
 
     db.execute("""
-        INSERT INTO users (provider, provider_id, email, name, password_hash)
-        VALUES ('email', ?, ?, ?, ?)
-    """, (email, email, name, hash_password(password)))
+        INSERT INTO users (provider, provider_id, email, name, password_hash, accepted_aup_version, accepted_aup_at)
+        VALUES ('email', ?, ?, ?, ?, ?, ?)
+    """, (email, email, name, hash_password(password), AUP_VERSION, datetime.now(timezone.utc).isoformat(timespec='seconds')))
     db.commit()
     user = db.execute(
         "SELECT * FROM users WHERE provider = 'email' AND provider_id = ?", (email,)
@@ -174,9 +188,13 @@ def login():
     data = request.get_json(silent=True) or {}
     email    = (data.get('email') or '').strip().lower()
     password = data.get('password') or ''
+    accepted_version = data.get('accepted_aup_version')
 
     if not email or not password:
         return jsonify({'error': 'Email and password required'}), 400
+
+    if accepted_version != AUP_VERSION:
+        return jsonify({'error': 'Accept the current acceptable-use policy before signing in.', 'code': 'aup_required', 'policy_url': '/acceptable-use'}), 428
 
     db = get_db()
     user = db.execute(
@@ -187,13 +205,21 @@ def login():
     if not user or not check_password(password, user['password_hash'] or ''):
         return jsonify({'error': 'Invalid email or password'}), 401
 
+    _record_aup_acceptance(user['id'], accepted_version)
+    refreshed = get_db()
+    user = refreshed.execute("SELECT * FROM users WHERE id = ?", (user['id'],)).fetchone()
+    refreshed.close()
+
     token = make_jwt(user['id'], user['email'], user['name'])
     return jsonify({'token': token, 'user': {'id': user['id'], 'email': user['email'], 'name': user['name']}})
 
 # ── GitHub OAuth ──────────────────────────────────────────────────────────────
 @auth_bp.route('/github')
 def github_start():
-    state = new_state('github')
+    version = request.args.get('accepted_aup_version')
+    if version != AUP_VERSION:
+        return redirect('/acceptable-use')
+    state = new_state('github', version)
     url = (
         f"https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}"
@@ -208,7 +234,8 @@ def github_callback():
     code  = request.args.get('code')
     state = request.args.get('state')
 
-    if not consume_state(state):
+    state_data = consume_state(state)
+    if not state_data:
         return redirect(f"{FLUTTER_SCHEME}?error=invalid_state")
 
     # Exchange code for access token
@@ -239,13 +266,17 @@ def github_callback():
         name=user_resp.get('name') or user_resp.get('login'),
         avatar_url=user_resp.get('avatar_url'),
     )
+    _record_aup_acceptance(user['id'], state_data.get('accepted_aup_version'))
     token = make_jwt(user['id'], user['email'] or '', user['name'] or '')
     return redirect(f"{FLUTTER_SCHEME}?token={token}")
 
 # ── Discord OAuth ─────────────────────────────────────────────────────────────
 @auth_bp.route('/discord')
 def discord_start():
-    state = new_state('discord')
+    version = request.args.get('accepted_aup_version')
+    if version != AUP_VERSION:
+        return redirect('/acceptable-use')
+    state = new_state('discord', version)
     url = (
         f"https://discord.com/oauth2/authorize"
         f"?client_id={DISCORD_CLIENT_ID}"
@@ -261,7 +292,8 @@ def discord_callback():
     code  = request.args.get('code')
     state = request.args.get('state')
 
-    if not consume_state(state):
+    state_data = consume_state(state)
+    if not state_data:
         return redirect(f"{FLUTTER_SCHEME}?error=invalid_state")
 
     resp = req_lib.post(
@@ -298,13 +330,17 @@ def discord_callback():
         name=user_resp.get('global_name') or user_resp.get('username'),
         avatar_url=avatar_url,
     )
+    _record_aup_acceptance(user['id'], state_data.get('accepted_aup_version'))
     token = make_jwt(user['id'], user['email'] or '', user['name'] or '')
     return redirect(f"{FLUTTER_SCHEME}?token={token}")
 
 # ── Google OAuth ──────────────────────────────────────────────────────────────
 @auth_bp.route('/google')
 def google_start():
-    state = new_state('google')
+    version = request.args.get('accepted_aup_version')
+    if version != AUP_VERSION:
+        return redirect('/acceptable-use')
+    state = new_state('google', version)
     url = (
         f"https://accounts.google.com/o/oauth2/v2/auth"
         f"?client_id={GOOGLE_CLIENT_ID}"
@@ -321,7 +357,8 @@ def google_callback():
     code  = request.args.get('code')
     state = request.args.get('state')
 
-    if not consume_state(state):
+    state_data = consume_state(state)
+    if not state_data:
         return redirect(f"{FLUTTER_SCHEME}?error=invalid_state")
 
     resp = req_lib.post(
@@ -353,6 +390,7 @@ def google_callback():
         name=user_resp.get('name'),
         avatar_url=user_resp.get('picture'),
     )
+    _record_aup_acceptance(user['id'], state_data.get('accepted_aup_version'))
     token = make_jwt(user['id'], user['email'] or '', user['name'] or '')
     return redirect(f"{FLUTTER_SCHEME}?token={token}")
 
@@ -360,7 +398,20 @@ def google_callback():
 @auth_bp.route('/me')
 @jwt_required
 def me():
-    return jsonify(request.user)
+    db = get_db()
+    row = db.execute('SELECT id, email, name, role, accepted_aup_version, accepted_aup_at FROM users WHERE id = ?', (request.user['sub'],)).fetchone()
+    db.close()
+    return jsonify(dict(row) if row else request.user)
+
+
+@auth_bp.route('/accept-terms', methods=['POST'])
+@jwt_required
+def accept_terms():
+    data = request.get_json(silent=True) or {}
+    if data.get('version') != AUP_VERSION:
+        return jsonify({'error': 'The acceptable-use policy version is missing or outdated.', 'policy_url': '/acceptable-use'}), 400
+    _record_aup_acceptance(int(request.user['sub']), AUP_VERSION)
+    return jsonify({'ok': True, 'version': AUP_VERSION})
 
 # ── Init DB on import ─────────────────────────────────────────────────────────
 # init_db() is called from app.py on startup via db.init_db()

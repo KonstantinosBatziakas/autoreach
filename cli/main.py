@@ -22,6 +22,9 @@ from autoreach_core.lead_finder import find_businesses
 from autoreach_core.scraper     import scrape_leads
 from autoreach_core.followup    import run_due_followups, DEFAULT_DELAYS
 from autoreach_core.rotation    import get_next_sender, get_all_sender_capacity, total_remaining_today, NoSendersAvailable
+from moderation.delivery import DeliveryBlocked, DeliveryQueued, send_moderated
+from moderation.queue import retry_queued
+from moderation.service import decrypt_payload, utc_now
 
 # ── Colours ───────────────────────────────────────────────────────────────
 RESET  = "\033[0m"
@@ -432,6 +435,68 @@ def cmd_replies(args, conn):
         error(f"Error checking replies: {e}")
 
 
+def cmd_moderation(args, conn):
+    """Retry provider-outage items or edit and resubmit held emails."""
+    def record_delivered(payload, _user_id):
+        lead = conn.execute("SELECT id FROM leads WHERE LOWER(email)=LOWER(?) LIMIT 1", (payload.get("email", ""),)).fetchone()
+        db.log_sent(conn, lead["id"] if lead else None, payload.get("business_name", ""),
+                    payload.get("email", ""), payload.get("subject", ""), payload.get("body", ""),
+                    payload.get("language", "english"))
+
+    if args.retry:
+        try:
+            print(retry_queued(conn, user_id=0, on_delivered=record_delivered))
+        except Exception as exc:
+            error(f"Moderation retry failed safely: {exc}")
+            return
+
+    rows = conn.execute(
+        "SELECT id, checkpoint, content_type, payload_enc, status, categories FROM moderation_queue "
+        "WHERE user_id=0 AND status='needs_review' ORDER BY created_at"
+    ).fetchall()
+    if not rows:
+        info("No items are waiting for review.")
+        return
+    print("\nHeld moderation items:")
+    for row in rows:
+        try:
+            payload = decrypt_payload(row["payload_enc"])
+        except Exception:
+            print(f"  {row['id']} · unreadable encrypted payload")
+            continue
+        print(f"  {row['id']} · {row['content_type']} · {payload.get('email', '')} · {row['categories']}")
+    queue_id = input("Item ID to edit and resubmit (blank to exit): ").strip()
+    row = next((item for item in rows if item["id"] == queue_id), None)
+    if not row:
+        return
+    payload = decrypt_payload(row["payload_enc"])
+    if not payload.get("email") or row["content_type"] not in {"email", "email_followup"}:
+        warn("This CLI can resubmit held email. Use the web moderation queue for prompts and templates.")
+        return
+    payload["subject"] = input(f"Subject [{payload.get('subject', '')}]: ").strip() or payload.get("subject", "")
+    payload["body"] = input("Edit email body (blank keeps current): ").strip() or payload.get("body", "")
+    payload["html"] = build_html(payload["body"], payload.get("business_name", ""), payload["email"])
+    try:
+        send_moderated(payload, 0, conn, api_key=payload.get("moderation_api_key"))
+    except DeliveryBlocked as exc:
+        error(str(exc))
+        return
+    except DeliveryQueued as exc:
+        warn(f"Resubmission queued for another moderation check: {exc.queue_id}")
+        conn.execute("UPDATE moderation_queue SET status='cancelled', updated_at=? WHERE id=?", (utc_now(), queue_id))
+        conn.commit()
+        return
+    except Exception as exc:
+        error(f"Resubmission failed safely: {exc}")
+        return
+    lead = conn.execute("SELECT id FROM leads WHERE LOWER(email)=LOWER(?) LIMIT 1", (payload["email"],)).fetchone()
+    db.log_sent(conn, lead["id"] if lead else None, payload.get("business_name", ""), payload["email"],
+                payload["subject"], payload["body"], payload.get("language", "english"))
+    conn.execute("UPDATE moderation_queue SET status='delivered', updated_at=? WHERE id=?", (utc_now(), queue_id))
+    conn.commit()
+    success("Email passed moderation and was sent.")
+
+
 # ── Entry point ───────────────────────────────────────────────────────────
 
 def main():
@@ -479,6 +544,8 @@ def main():
     p_fu.add_argument("--auto", action="store_true", help="Skip preview prompts")
 
     sub.add_parser("replies", help="Check database for leads that have replied")
+    p_mod = sub.add_parser("moderation", help="Review held emails or retry moderation-provider outages")
+    p_mod.add_argument("--retry", action="store_true", help="Retry queued moderation-provider failures first")
     sub.add_parser("leads",   help="List all leads")
     sub.add_parser("stats",   help="Show analytics")
 
@@ -502,6 +569,7 @@ def main():
         "send":     cmd_send,
         "followup": cmd_followup,
         "replies":  cmd_replies,
+        "moderation": cmd_moderation,
         "leads":    cmd_leads,
         "stats":    cmd_stats,
         "export":   cmd_export,

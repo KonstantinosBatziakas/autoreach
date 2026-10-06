@@ -18,6 +18,8 @@ from datetime import datetime
 from autoreach_core import db
 from autoreach_core.emailer import generate_email as _gen_initial, build_html, send_email
 from autoreach_core.rotation import get_next_sender, NoSendersAvailable
+from moderation.delivery import DeliveryBlocked, DeliveryQueued
+from moderation.service import moderate_and_queue
 
 # Default follow-up schedule (days after initial send)
 DEFAULT_DELAYS = [3, 7, 14]
@@ -119,6 +121,19 @@ def generate_followup_email(business: dict, sequence_num: int,
     return subject, body
 
 
+def _moderate_generated_followup(conn, row, subject: str, body: str, api_key: str) -> None:
+    decision, queue_id = moderate_and_queue(
+        f"Subject: {subject}\n\n{body}", 0, "generate", "email_followup", conn,
+        payload={"email": row["email"], "business_name": row["business_name"],
+                 "subject": subject, "body": body, "moderation_api_key": api_key},
+        api_key=api_key,
+    )
+    if decision.verdict == "block":
+        raise DeliveryBlocked(decision)
+    if decision.verdict == "review":
+        raise DeliveryQueued(queue_id or "", decision)
+
+
 # ── Main runner ────────────────────────────────────────────────────────────
 
 def run_due_followups(conn, cfg: dict, auto: bool = True,
@@ -182,6 +197,12 @@ def run_due_followups(conn, cfg: dict, auto: bool = True,
             subj, body = generate_followup_email(
                 lead, row["sequence_num"], row["language"], cfg["groq_api_key"]
             )
+            _moderate_generated_followup(conn, row, subj, body, cfg["groq_api_key"])
+        except (DeliveryBlocked, DeliveryQueued) as e:
+            if progress_cb:
+                progress_cb(f"Follow-up held by moderation: {e}")
+            counts["skipped"] += 1
+            continue
         except Exception as e:
             if progress_cb:
                 progress_cb(f"✗ Generation failed: {e}")
@@ -206,6 +227,12 @@ def run_due_followups(conn, cfg: dict, auto: bool = True,
                 subj, body = generate_followup_email(
                     lead, row["sequence_num"], row["language"], cfg["groq_api_key"]
                 )
+                _moderate_generated_followup(conn, row, subj, body, cfg["groq_api_key"])
+            except (DeliveryBlocked, DeliveryQueued) as e:
+                if progress_cb:
+                    progress_cb(f"Regenerated follow-up held by moderation: {e}")
+                counts["skipped"] += 1
+                continue
             except Exception as e:
                 if progress_cb:
                     progress_cb(f"✗ Regen failed: {e}")
