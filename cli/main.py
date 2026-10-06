@@ -226,7 +226,7 @@ def cmd_send(args, conn):
         dim(f"Email: {lead['email']}")
 
         # Generate
-        info("Generating email with Groq Llama 3.1...")
+        info("Generating email with Groq GPT OSS 20B...")
         try:
             subject, body = generate_email(lead, language, cfg["groq_api_key"])
         except Exception as e:

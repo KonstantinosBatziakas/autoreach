@@ -157,7 +157,9 @@ let _selectedTemplate = 'classic';
 const _LS = 'autoreach_outreach_settings';
 
 function _save() {
-  localStorage.setItem(_LS, JSON.stringify({
+  let current = {};
+  try { current = JSON.parse(localStorage.getItem(_LS) || '{}'); } catch(e) {}
+  localStorage.setItem(_LS, JSON.stringify({ ...current,
     senderName: document.getElementById('sender-name').value,
     groqKey:    document.getElementById('groq-key').value,
     resendKey:  document.getElementById('resend-key').value,
@@ -218,7 +220,7 @@ async function callGroq(apiKey, name, address, lang, senderName) {
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: prompts[lang] || prompts.english }], temperature: 0.7, max_tokens: 300 }),
+    body: JSON.stringify({ model: 'openai/gpt-oss-20b', messages: [{ role: 'user', content: prompts[lang] || prompts.english }], temperature: 0.7, max_tokens: 300 }),
   });
   if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Groq ${r.status}`); }
   return (await r.json()).choices[0].message.content.trim();
