@@ -15,10 +15,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Email form ─────────────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl  = TextEditingController();
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
+  final _passCtrl = TextEditingController();
   bool _obscurePass = true;
+  bool _acceptedAup = false;
 
   // ── Loading / error ────────────────────────────────────────────────────────
   String? _loadingProvider;
@@ -34,13 +35,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── OAuth: open Render URL; deep-link callback handled in main.dart ───────
   Future<void> _oauthLogin(String provider) async {
-    setState(() { _loadingProvider = provider; _error = null; });
+    if (!_acceptedAup) {
+      setState(() => _error =
+          'Read and accept the Acceptable Use Policy before continuing.');
+      return;
+    }
+    setState(() {
+      _loadingProvider = provider;
+      _error = null;
+    });
     try {
       final uri = switch (provider) {
-        'github'  => AuthService.githubAuthUrl(),
+        'github' => AuthService.githubAuthUrl(),
         'discord' => AuthService.discordAuthUrl(),
-        'google'  => AuthService.googleAuthUrl(),
-        _         => throw 'Unknown provider',
+        'google' => AuthService.googleAuthUrl(),
+        _ => throw 'Unknown provider',
       };
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw 'Could not open browser';
@@ -57,7 +66,15 @@ class _LoginScreenState extends State<LoginScreen> {
   // ── Email + password submit ────────────────────────────────────────────────
   Future<void> _emailSubmit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() { _loadingProvider = 'email'; _error = null; });
+    if (!_acceptedAup) {
+      setState(() => _error =
+          'Read and accept the Acceptable Use Policy before continuing.');
+      return;
+    }
+    setState(() {
+      _loadingProvider = 'email';
+      _error = null;
+    });
     try {
       final String token;
       if (_isRegister) {
@@ -101,15 +118,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _Logo(),
+                  const SizedBox(height: 22),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _acceptedAup,
+                        onChanged: (value) =>
+                            setState(() => _acceptedAup = value ?? false),
+                        activeColor: const Color(0xFF4ECDC4),
+                      ),
+                      const Expanded(
+                          child: Text(
+                              'I agree to follow the AutoReach Acceptable Use Policy.',
+                              style: TextStyle(
+                                  color: Color(0xFFCDD6F4), fontSize: 12))),
+                      TextButton(
+                        onPressed: () => launchUrl(
+                            AuthService.acceptableUseUrl(),
+                            mode: LaunchMode.externalApplication),
+                        child: const Text('Read policy'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 48),
-
                   if (!_showEmailForm) ...[
                     _oauthButton(
                       label: 'Continue with GitHub',
                       provider: 'github',
                       color: const Color(0xFF24292E),
                       borderColor: const Color(0xFF444466),
-                      icon: const Icon(Icons.code, color: Colors.white, size: 20),
+                      icon:
+                          const Icon(Icons.code, color: Colors.white, size: 20),
                     ),
                     const SizedBox(height: 12),
                     _oauthButton(
@@ -117,7 +157,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       provider: 'discord',
                       color: const Color(0xFF5865F2),
                       borderColor: const Color(0xFF5865F2),
-                      icon: const Icon(Icons.discord, color: Colors.white, size: 20),
+                      icon: const Icon(Icons.discord,
+                          color: Colors.white, size: 20),
                     ),
                     const SizedBox(height: 12),
                     _oauthButton(
@@ -132,7 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Expanded(child: Divider(color: Color(0xFF333355))),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('or', style: TextStyle(color: Color(0xFF555577), fontSize: 12)),
+                        child: Text('or',
+                            style: TextStyle(
+                                color: Color(0xFF555577), fontSize: 12)),
                       ),
                       const Expanded(child: Divider(color: Color(0xFF333355))),
                     ]),
@@ -144,9 +187,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           foregroundColor: const Color(0xFF888AAA),
                           side: const BorderSide(color: Color(0xFF444466)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: () => setState(() { _showEmailForm = true; _error = null; }),
+                        onPressed: () => setState(() {
+                          _showEmailForm = true;
+                          _error = null;
+                        }),
                         child: const Text('Continue with Email'),
                       ),
                     ),
@@ -159,36 +206,44 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscurePass: _obscurePass,
                       isRegister: _isRegister,
                       loading: _loadingProvider == 'email',
-                      onToggleObscure: () => setState(() => _obscurePass = !_obscurePass),
+                      onToggleObscure: () =>
+                          setState(() => _obscurePass = !_obscurePass),
                       onSubmit: _emailSubmit,
                       onToggleMode: () => setState(() {
                         _isRegister = !_isRegister;
                         _error = null;
                       }),
-                      onBack: () => setState(() { _showEmailForm = false; _error = null; }),
+                      onBack: () => setState(() {
+                        _showEmailForm = false;
+                        _error = null;
+                      }),
                     ),
                   ],
-
                   if (_error != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF6B6B).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFF6B6B).withOpacity(0.3)),
+                        border: Border.all(
+                            color: const Color(0xFFFF6B6B).withOpacity(0.3)),
                       ),
                       child: Row(children: [
-                        const Icon(Icons.error_outline, color: Color(0xFFFF6B6B), size: 16),
+                        const Icon(Icons.error_outline,
+                            color: Color(0xFFFF6B6B), size: 16),
                         const SizedBox(width: 8),
-                        Expanded(child: Text(_error!, style: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 13))),
+                        Expanded(
+                            child: Text(_error!,
+                                style: const TextStyle(
+                                    color: Color(0xFFFF6B6B), fontSize: 13))),
                       ]),
                     ),
                   ],
-
                   const SizedBox(height: 40),
                   const Text(
-                    'Open source · Free forever · Self-hosted',
+                    'Source available · Free to use · Self-hosted',
                     style: TextStyle(color: Color(0xFF444466), fontSize: 11),
                   ),
                 ],
@@ -215,7 +270,8 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: (_loadingProvider != null) ? null : () => _oauthLogin(provider),
+          onTap:
+              (_loadingProvider != null) ? null : () => _oauthLogin(provider),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
             decoration: BoxDecoration(
@@ -224,10 +280,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               loading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
                   : icon,
               const SizedBox(width: 12),
-              Text(label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(label,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600)),
             ]),
           ),
         ),
@@ -244,10 +308,17 @@ class _EmailForm extends StatelessWidget {
   final VoidCallback onToggleObscure, onSubmit, onToggleMode, onBack;
 
   const _EmailForm({
-    required this.formKey, required this.nameCtrl, required this.emailCtrl,
-    required this.passCtrl, required this.obscurePass, required this.isRegister,
-    required this.loading, required this.onToggleObscure,
-    required this.onSubmit, required this.onToggleMode, required this.onBack,
+    required this.formKey,
+    required this.nameCtrl,
+    required this.emailCtrl,
+    required this.passCtrl,
+    required this.obscurePass,
+    required this.isRegister,
+    required this.loading,
+    required this.onToggleObscure,
+    required this.onSubmit,
+    required this.onToggleMode,
+    required this.onBack,
   });
 
   @override
@@ -263,47 +334,48 @@ class _EmailForm extends StatelessWidget {
           ),
           Text(
             isRegister ? 'Create account' : 'Sign in',
-            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ]),
         const SizedBox(height: 20),
-
         if (isRegister) ...[
-          _field(nameCtrl, 'Your name', Icons.person, validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'Name is required' : null),
+          _field(nameCtrl, 'Your name', Icons.person,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Name is required' : null),
           const SizedBox(height: 14),
         ],
-
         _field(emailCtrl, 'Email address', Icons.email,
             keyboardType: TextInputType.emailAddress,
-            validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null),
+            validator: (v) =>
+                (v == null || !v.contains('@')) ? 'Enter a valid email' : null),
         const SizedBox(height: 14),
-
         _field(passCtrl, 'Password', Icons.lock,
             obscure: obscurePass,
             suffixIcon: IconButton(
               icon: Icon(obscurePass ? Icons.visibility : Icons.visibility_off,
                   color: const Color(0xFF888AAA), size: 18),
               onPressed: onToggleObscure,
-            ),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Password is required';
-              if (isRegister && v.length < 8) return 'At least 8 characters';
-              return null;
-            }),
+            ), validator: (v) {
+          if (v == null || v.isEmpty) return 'Password is required';
+          if (isRegister && v.length < 8) return 'At least 8 characters';
+          return null;
+        }),
         const SizedBox(height: 24),
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: loading ? null : onSubmit,
             child: loading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : Text(isRegister ? 'Create account' : 'Sign in'),
           ),
         ),
         const SizedBox(height: 16),
-
         Center(
           child: GestureDetector(
             onTap: onToggleMode,
@@ -311,10 +383,14 @@ class _EmailForm extends StatelessWidget {
               text: TextSpan(
                 style: const TextStyle(fontSize: 13, color: Color(0xFF888AAA)),
                 children: [
-                  TextSpan(text: isRegister ? 'Already have an account? ' : "Don't have an account? "),
+                  TextSpan(
+                      text: isRegister
+                          ? 'Already have an account? '
+                          : "Don't have an account? "),
                   TextSpan(
                     text: isRegister ? 'Sign in' : 'Register',
-                    style: const TextStyle(color: Color(0xFF6C63FF), fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        color: Color(0xFF6C63FF), fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -325,9 +401,14 @@ class _EmailForm extends StatelessWidget {
     );
   }
 
-  Widget _field(TextEditingController ctrl, String label, IconData icon, {
-    bool obscure = false, Widget? suffixIcon,
-    TextInputType? keyboardType, String? Function(String?)? validator,
+  Widget _field(
+    TextEditingController ctrl,
+    String label,
+    IconData icon, {
+    bool obscure = false,
+    Widget? suffixIcon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: ctrl,
@@ -350,16 +431,28 @@ class _Logo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        width: 80, height: 80,
+        width: 80,
+        height: 80,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)]),
-          boxShadow: [BoxShadow(color: const Color(0xFF6C63FF).withOpacity(0.4), blurRadius: 24, spreadRadius: 2)],
+          gradient: const LinearGradient(
+              colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)]),
+          boxShadow: [
+            BoxShadow(
+                color: const Color(0xFF6C63FF).withOpacity(0.4),
+                blurRadius: 24,
+                spreadRadius: 2)
+          ],
         ),
         child: const Icon(Icons.rocket_launch, color: Colors.white, size: 40),
       ),
       const SizedBox(height: 20),
-      const Text('AutoReach', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5)),
+      const Text('AutoReach',
+          style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: -0.5)),
       const SizedBox(height: 8),
       const Text('Automated lead generation & cold email outreach',
           textAlign: TextAlign.center,
@@ -372,9 +465,16 @@ class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 20, height: 20,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-      child: const Center(child: Text('G', style: TextStyle(color: Color(0xFF4285F4), fontSize: 13, fontWeight: FontWeight.bold))),
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(4)),
+      child: const Center(
+          child: Text('G',
+              style: TextStyle(
+                  color: Color(0xFF4285F4),
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold))),
     );
   }
 }

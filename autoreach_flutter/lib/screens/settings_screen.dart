@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../constants.dart';
+import '../services/auth_service.dart';
 import '../services/aria_prompt_service.dart';
 import '../services/openai_compatible_endpoint.dart';
 import '../services/settings_service.dart';
+import 'moderation_queue_screen.dart';
 import '../widgets/app_drawer.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -55,6 +60,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ariaSettingsError = 'Enter a model ID for ARIA.';
     }
     setState(() => _saving = true);
+    if (ariaSettingsError == null && _ariaPrompt.text.trim().isNotEmpty) {
+      try {
+        final token = await AuthService.getToken();
+        if (token == null)
+          throw Exception('Sign in again before saving an ARIA prompt.');
+        final response = await http
+            .post(
+              Uri.parse('$kBaseUrl/api/moderation/check'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token'
+              },
+              body: jsonEncode({
+                'checkpoint': 'save',
+                'content_type': 'aria_prompt',
+                'content': _ariaPrompt.text.trim()
+              }),
+            )
+            .timeout(const Duration(seconds: 20));
+        if (response.statusCode != 200) {
+          final result = jsonDecode(response.body) as Map<String, dynamic>;
+          throw Exception(
+              result['error'] ?? 'The prompt was not cleared for saving.');
+        }
+      } catch (error) {
+        setState(() => _saving = false);
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(error.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red.shade700,
+          ));
+        return;
+      }
+    }
     await SettingsService.setGoogleApiKey(_googleKey.text.trim());
     await SettingsService.setResendApiKey(_resendKey.text.trim());
     await SettingsService.setFromEmail(_fromEmail.text.trim());
@@ -149,6 +188,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(color: Color(0xFF888AAA), fontSize: 12)),
           ),
           const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.rule),
+              label: const Text('Review moderation queue'),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const ModerationQueueScreen(),
+              )),
+            ),
+          ),
+          const SizedBox(height: 12),
           SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

@@ -1,0 +1,16 @@
+# One word or phrase per line. Edit through the admin blocklist for per-user additions.
+fuck*
+shit*
+bullshit*
+bitch*
+asshole*
+bastard*
+cunt*
+whore*
+slut*
+motherfucker*
+nigger*
+faggot*
+retard*
+kill yourself
+go die

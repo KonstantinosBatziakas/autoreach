@@ -5,7 +5,7 @@ echo.
 cd /d %~dp0..
 
 :: Install dependencies if needed
-pip install customtkinter pyinstaller groq requests beautifulsoup4 python-dotenv
+pip install customtkinter pyinstaller groq requests beautifulsoup4 python-dotenv cryptography
 
 :: Build
 pyinstaller ^
@@ -14,7 +14,9 @@ pyinstaller ^
   --windowed ^
   --icon "desktop\icon.ico" ^
   --add-data "autoreach_core;autoreach_core" ^
+  --add-data "moderation;moderation" ^
   --hidden-import "customtkinter" ^
+  --collect-submodules "moderation" ^
   --hidden-import "groq" ^
   --hidden-import "bs4" ^
   --collect-all customtkinter ^

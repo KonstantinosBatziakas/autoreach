@@ -629,11 +629,15 @@
     <a href="{{ url_for('email_templates') }}" class="{{ 'active' if request.endpoint == 'email_templates' else '' }}">
       <span class="nav-icon">◧</span> Templates
     </a>
+    <a href="{{ url_for('moderation_queue_page') }}" class="{{ 'active' if request.endpoint == 'moderation_queue_page' else '' }}">
+      <span class="nav-icon">✓</span> Moderation Queue
+    </a>
 
     <div class="nav-section">Reports</div>
     <a href="{{ url_for('report') }}" class="{{ 'active' if request.endpoint == 'report' else '' }}">
       <span class="nav-icon">◱</span> Report
     </a>
+    <a href="{{ url_for('acceptable_use') }}">Acceptable Use Policy</a>
   </nav>
 
   <div class="sidebar-footer">
