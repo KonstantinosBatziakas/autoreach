@@ -1,0 +1,8 @@
+{
+  "name": "autoreach-aria-proxy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node api/chat.test.js"
+  }
+}
